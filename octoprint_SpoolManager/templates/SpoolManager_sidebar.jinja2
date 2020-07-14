@@ -1,0 +1,32 @@
+<div id="sidebar_spool_select" class="control-group">
+<!--   TODO support for multiple spools for multiple tools -->
+
+
+  <select id="selectSpoolSidebar"
+          data-bind="options: allSpoolsForSidebar,
+                     optionsCaption: 'Select Spool...',
+                     optionsText: buildSpoolNameForSidebar,
+                     value: selectedSpoolForSidebar
+                    ">
+<!--                     event: { change: onSelectSpoolItemForSidebar } ">-->
+  </select>
+  <a href="#" data-bind="click: loadSpoolsForSidebar" title="Reload spools entries"><span class="icon-refresh"></span></a>
+  <div>
+    <small>Order: last used. Limit: 30</small>
+  </div>
+
+<!--doesn't work button group
+<div class="input-append">
+  <input class="span2" id="appendedDropdownButton" type="text">
+  <div class="btn-group">
+    <button class="btn dropdown-toggle" data-toggle="dropdown">
+      Action
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+        <li>Hallo</li>
+    </ul>
+  </div>
+</div>
+-->
+</div>

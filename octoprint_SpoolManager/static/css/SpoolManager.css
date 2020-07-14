@@ -1,0 +1,76 @@
+
+
+.control-group.no-bottom-gap {
+    margin-bottom:3px
+}
+
+.debug-blue {
+    outline: 1px solid blue;
+}
+.debug-red {
+    outline: 1px solid red;
+}
+.debug-magenta {
+    outline: 1px solid magenta;
+}.debug-green {
+    outline: 1px solid green;
+}
+
+.hack-flowbreak {
+    overflow:visible !important;
+}
+
+        .color-preview{
+            border:1px solid #ccc;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;-webkit-box-shadow:inset 0 0 2px 2px rgba(0,0,0,0.075);-moz-box-shadow:inset 0 0 2px 2px rgba(0,0,0,0.075);box-shadow:inset 0 0 2px 2px rgba(0,0,0,0.075);height:1.429em;width:1.429em;display:inline-block;cursor:pointer;margin-right:5px}div.pick-a-color-markup .color-preview.current-color{margin-bottom:-5px
+        }
+
+
+        .truncatedText {
+            white-space: nowrap;
+            width: 250px;/* OR as much space that allows */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dropdown-menu {
+            max-height: 120px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+
+
+//////////// TESTZONE
+.multiselect {
+  width: 200px;
+}
+
+.selectBox {
+  position: relative;
+}
+
+.selectBox select {
+  width: 100%;
+  font-weight: bold;
+}
+
+.overSelect {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+#checkboxes {
+  display: none;
+  border: 1px #dadada solid;
+}
+
+#checkboxes label {
+  display: block;
+}
+
+#checkboxes label:hover {
+  background-color: #1e90ff;
+}

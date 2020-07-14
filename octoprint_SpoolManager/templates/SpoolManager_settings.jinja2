@@ -1,0 +1,143 @@
+
+<form id="settings_spoolmanager" class="form-horizontal" >
+
+
+    <div class="tabbable"> <!-- Only required for left/right tabs -->
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
+<!--            <li><a href="#tab-spool-DefaultValues" data-toggle="tab">Default values</a></li>-->
+<!--            <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>-->
+            <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
+            <li><a href="#tab-spool-Debugging" data-toggle="tab">Debugging</a></li>
+        </ul>
+        <div class="tab-content">
+            <!-- GENERAL - TAB -->
+            <div class="tab-pane active" id="tab-spool-General">
+
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.warnIfSpoolNotSelected" > Warn, if no spool is selected.
+                        </label>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.warnIfFilamentNotEnough" > Warn, if filament is not enough for print job
+                        </label>
+                        <span class="help-inline">Hint: It is ony working, if the spool contains values for these fields: <br>
+                            <code>diameter</code>, <code>density</code>, <code>total weight</code>!</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Currency symbol</label>
+                    <div class="controls">
+                        <input type="text" class="input-mini text-center" data-bind="value: pluginSettings.currencySymbol">
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEFAULT VALUES - TAB
+
+            <div class="tab-pane" id="tab-spool-DefaultValues">
+                <div class="control-group">
+                    <label class="control-label">Displayname</label>
+                    <div class="controls">
+                        <input type="text"  class="input-large text-right" >
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Vendor</label>
+                    <div class="controls">
+                        <textarea rows="5" cols="30" style="min-width: 96%" >Janbex</textarea>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Material</label>
+                    <div class="controls">
+                        <textarea rows="5" cols="30" style="min-width: 96%" >ABS/nPLA/nPETG/n</textarea>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Density</label>
+                    <div class="controls">
+                        <input type="text"  class="input-small text-right" >
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Diameter</label>
+                    <div class="controls">
+                        <input type="text"  class="input-small text-right" >
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Temperature</label>
+                    <div class="controls">
+                        <input type="text"  class="input-small text-right" >
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Weight</label>
+                    <div class="controls">
+                        <input type="text"  class="input-small text-right" >
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Currency</label>
+                    <div class="controls">
+                        <input type="text"  class="input-small text-right" >
+                    </div>
+                </div>
+            </div>
+-->
+            <!-- EXPORT / IMPORT - TAB -->
+            <div class="tab-pane" id="tab-spool-Export-Import">
+                <h3>Export</h3>
+
+            </div>
+            <!-- STORAGE - TAB -->
+            <div class="tab-pane" id="tab-spool-Storage">
+                <div class="control-group">
+                    <label class="control-label">Database file location</label>
+                    <div class="controls">
+                        <div class="input-append">
+                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: databaseFileLocation"/>
+                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: deleteDatabaseAction"><i class="icon-trash"></i></a>
+                            <a href="#" class="btn btn-primary" title="Download Database" data-bind="attr: {href: downloadDatabaseUrl}" target="_blank"><i class="icon-download"></i></a>
+                        </div>
+                    </div>
+                </div>
+<!--                <div class="control-group">-->
+<!--                    <label class="control-label">Snapshot file location</label>-->
+<!--                    <div class="controls">-->
+<!--                        <input type="text" disabled class="input-xlarge text-right" data-bind="value: snapshotFileLocation"/>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--
+                <div class="control-group">
+                    <label class="control-label">Database Backupname</label>
+                    <div class="controls">
+                        e.g.<code>printJobHistory-backup-20191207-0924.db</code>
+                    </div>
+                </div>
+-->
+            </div>
+
+            <!-- DEBUGGING - TAB -->
+            <div class="tab-pane" id="tab-spool-Debugging">
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.sqlLoggingEnabled" > SQL Logging enabled
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</form>
+
+

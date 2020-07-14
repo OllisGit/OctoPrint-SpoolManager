@@ -1,0 +1,91 @@
+{% include "SpoolManager_tab_dialogs.jinja2" %}
+{% import 'SpoolManager_tab_macros.jinja2' as forms %}
+<div id="tab_spoolOverview">
+
+
+    <!-- Filter / Sorting -->
+    <div class="row-fluid">
+        <div class="span3">
+
+            Total: <b><span data-bind="text: spoolItemTableHelper.totalItemCount">Anzahl</span></b>
+            per Page:
+            <select class="input-mini text-right"
+                    data-bind="options: spoolItemTableHelper.pageSizeOptions,
+                               value: spoolItemTableHelper.selectedPageSize">
+            </select>
+            <a href="#" data-bind="click: spoolItemTableHelper.reloadItems" title="Force refresh" ><span class="icon-refresh"></span> Refresh</a>
+            <div class="pull-left">
+                <button title="Add new Spool" class="btn" data-bind="click: addNewSpool"><i class="fa fa-plus"></i> Add Spool</button>
+            </div>
+        </div>
+
+        <div class="span9">
+            <!-- TODO Export CSV -->
+            <div class="pull-right">
+                <small>
+                    Sort by:
+                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('displayName'); }">Displayname <span data-bind="text: spoolItemTableHelper.sortOrderLabel('displayName')"></span></a> |
+                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('lastUse'); }">Last use <span data-bind="text: spoolItemTableHelper.sortOrderLabel('lastUse')"></span></a> |
+                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('firstUse'); }">First use <span data-bind="text: spoolItemTableHelper.sortOrderLabel('firstUse')"></span></a>
+                </small>
+            </div>
+<!--    FILTER IS NOT NEEDED in Version 1        -->
+<!--            <div class="pull-right" style="clear: both;">-->
+<!--                <small>-->
+<!--                    Show prints:-->
+<!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('all'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('all') ? 'visible' : 'hidden'}"></i> all</a> |-->
+<!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('onlySuccess'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('onlySuccess') ? 'visible' : 'hidden'}"></i> only successful</a> |-->
+<!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('onlyFailed'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('onlyFailed') ? 'visible' : 'hidden'}"></i> only failed</a>-->
+<!--                </small>-->
+<!--            </div>-->
+        </div>
+    </div>
+
+
+
+
+    <!-- Table start -->
+    {{ forms.tablePagination() }}
+    <table class="table table-striped table-hover table-condensed table-hover" style="clear: both;">
+        <thead>
+            <tr>
+                <th style="width: 24%">Name</th>
+                <th style="width: 15%">Material</th>
+                <th style="width: 13%;">Last / First use</th>
+                <th style="text-align: center; width: 16%;">Weight</th>
+                <th style="text-align: center; width: 16%;">Used</th>
+                <th style="width: 16%;">Note</th>
+<!-- TODO remove action column                <th style="width: 9%"></th>
+-->
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: spoolItemTableHelper.paginatedItems" >
+          <tr data-bind="click: function() { $root.showSpoolDialogAction($data); }">
+            <td ><span data-bind="text: displayName, attr: { title: displayName }"></span><br><span data-bind="text: vendor, attr: { title: vendor }"></span></td>
+            <td><div class="pick-a-color-markup"><span class="color-preview" data-bind="style: {'background-color': color}"></span><span data-bind="text: material"></span></div></td>
+            <td><span data-bind="text: formatOnlyDate($data, 'lastUse')"></span><br><span data-bind="text: formatOnlyDate($data, 'firstUse')"></span></td>
+            <td style="text-align: right;"><span data-bind="text: remainingWeight"></span>g<br><span data-bind="text: totalWeight"></span>g</td>
+            <td style="text-align: right;"><span data-bind="text: usedPercentage"></span>%<br><span data-bind="text: usedLength"></span>mm</td>
+            <td><span data-bind="html: noteHtml, attr: { title: noteText }"></span></td>
+<!-- TODO remove action-button not needed
+            <td>
+                <div class="btn-group action-buttons" >
+                    <div class="btn btn-mini" data-bind="click: function() { $root.showSpoolDialogAction($data); }" title="{{ _('Additional data') }}"><i class="icon-pencil"></i></div>
+                    <div class="btn btn-mini" data-bind="click: $root.removePrintJobAction" title="Remove Printjob from History"><i class="icon-trash"></i></div>
+                </div>
+            </td>
+-->
+          </tr>
+        </tbody>
+    </table>
+    {{ forms.tablePagination() }}
+
+
+
+
+</div>
+
+
+
+
+

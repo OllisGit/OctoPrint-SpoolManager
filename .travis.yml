@@ -1,0 +1,31 @@
+##
+## Simple script to build a zip file of the whole repository
+##
+
+script:
+# debug  - echo 'Hello World'
+  - export PLUGIN_VERSION=$(cat setup.py | grep 'plugin_version = "*"' | cut -d '"' -f2)
+  - zip -r master *
+# debug  - ls -al
+
+## see "Fix travis automatic build and deploy"
+## https://github.com/oliexdev/openScale/pull/121
+## https://github.com/oliexdev/openScale/pull/121/files
+before_deploy:
+  - git tag -f travis-build
+  - git remote add gh https://${TRAVIS_REPO_SLUG%/*}:${GITHUB_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
+  - git push -f gh travis-build
+  - git remote remove gh
+
+deploy:
+  name: "V${PLUGIN_VERSION}-draft"
+  #prerelease: true
+  draft: true
+  provider: releases
+  api_key: "${GITHUB_TOKEN}"
+  file: "master.zip"
+  overwrite: true
+  skip_cleanup: true
+  target_commitish: $TRAVIS_COMMIT
+  on:
+    tags: false
