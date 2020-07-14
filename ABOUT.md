@@ -1,6 +1,9 @@
 Used libs
 
-* bootstrap-datepicker: 
+https://community.octoprint.org/t/text-video-streaming-didnt-work-with-blueprint/12612
+
+
+* bootstrap-datepicker:
 
     https://github.com/uxsolutions/bootstrap-datepicker
     https://bootstrap-datepicker.readthedocs.io/en/latest/
@@ -9,8 +12,8 @@ Used libs
 * select2
 
     https://select2.org/tagging
-    
-    
+
+
 Looks nice, but not usabel:
     http://www.marcorpsa.com/ee/t1161.html
-    
+
