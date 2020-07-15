@@ -24,6 +24,7 @@ should include the following features:
 - [X] "Used length" and "Remaining weight"
 - [X] Additional notes
 - [ ] Labels
+- [ ] Provide "APIs" for [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
 
 ### UI features
 - [X] Better error-feedback (more then just the "happy-path")
