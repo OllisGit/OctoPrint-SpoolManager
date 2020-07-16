@@ -67,6 +67,9 @@ labels:
   - name: "status: markedForAutoClose"
     description: "Issue will be closed automatically"
     color: ed6d75
+- name: "DUMMY: DUMMY"
+    description: "JUST FOR TESTING"
+    color: 000000
 
 
 # Collaborators: give specific users access to this repository.
