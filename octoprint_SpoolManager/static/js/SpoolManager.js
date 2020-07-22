@@ -144,7 +144,7 @@ $(function() {
 
             var remainingFilament = spoolItem.remainingWeight;
             if (remainingFilament && displayName.trim().length != 0){
-                remainingFilament = " (" + remainingFilament + "%)" ;
+                remainingFilament = " (" + remainingFilament + "g)" ;
             } else {
                 remainingFilament = "";
             }
