@@ -169,9 +169,9 @@ function SpoolManagerEditSpoolDialog(){
         this.color(updateData.color == null ? DEFAULT_COLOR : updateData.color);
         this.temperature(updateData.temperature);
         this.totalWeight(updateData.totalWeight);
-//        this.remainingWeight(updateData.remainingWeight);
+        this.remainingWeight(updateData.remainingWeight);
         this.code(updateData.code);
-//        this.usedPercentage(updateData.usedPercentage); // TODO needed?
+        this.usedPercentage(updateData.usedPercentage);
         this.usedLength(updateData.usedLength);
         this.usedWeight(updateData.usedWeight);
 
@@ -349,7 +349,7 @@ function SpoolManagerEditSpoolDialog(){
             self.updateUsedPercentage();
         });
 
-        // update used percentage
+        // update RemainingWeight
         self.updateRemainingWeight = function(){
             var total = self.spoolItemForEditing.totalWeight();
             var used = self.spoolItemForEditing.usedWeight();

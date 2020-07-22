@@ -31,12 +31,12 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        .dropdown-menu {
-            max-height: 120px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
+// TODO Maybe not needed any more
+//        .dropdown-menu {
+//            max-height: 120px;
+//            overflow-y: auto;
+//            overflow-x: hidden;
+//        }
 
 
 

@@ -99,8 +99,25 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		databaseId = self._settings.get_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID])
 		if (databaseId != None):
 			spoolModel = self._databaseManager.loadSpool(databaseId)
+			if (spoolModel == None):
+				self._logger.warning(
+					"Last selected Spool from plugin-settings not found in database. Maybe deleted in the meantime.")
 
 		return spoolModel
+
+
+	def _createSampleSpoolModel(self):
+		#DisplayName, Vendor, Material, Color[# code], Diameter [mm], Density [g/cm³], Temperature [°C], TotalWeight [g], UsedWeight [g], UsedLength [mm], FirstUse [dd.mm.yyyy hh:mm], LastUse [dd.mm.yyyy hh:mm], PurchasedFrom, PurchasedOn [dd.mm.yyyy hh:mm], Cost, CostUnit, Labels, NoteText
+
+		s1 = SpoolModel()
+		s1.displayName = "Number #1"
+		s1.vendor = "The Spool Company"
+		s1.material = "PETG"
+		s1.color = "#FF0000"
+		s1.diameter = 1.75
+		s1.density = 1.27
+		return s1
+
 
 	################################################### APIs
 
@@ -110,6 +127,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		checkForSelectedSpool = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_WARN_IF_SPOOL_NOT_SELECTED])
 		checkForFilamentLength = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH])
+		reminderSelectingSpool = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_REMINDER_SELECTING_SPOOL])
 
 		if (checkForFilamentLength == False and checkForSelectedSpool == False):
 			return flask.jsonify({
@@ -123,18 +141,24 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				"result": "noSpoolSelected",
 			})
 
-		if (checkForFilamentLength == True):
-			# check if loaded
-			if (spoolModel == None):
+		if (checkForFilamentLength == True and spoolModel != None):
+			# # check if loaded
+			# if (spoolModel == None):
+			# 	return flask.jsonify({
+			# 		"result": "noSpoolForUsageCheck",
+			# 	})
+			# else:
+			result = self.checkRemainingFilament();
+			if (result == False):
 				return flask.jsonify({
-					"result": "noSpoolForUsageCheck",
+					"result": "filamentNotEnough",
 				})
-			else:
-				result = self.checkRemainingFilament();
-				if (result == False):
-					return flask.jsonify({
-						"result": "filamentNotEnough",
-					})
+
+		if (reminderSelectingSpool == True and spoolModel != None):
+			return flask.jsonify({
+				"result": "reminderSpoolSelection",
+				"spoolName": spoolModel.displayName
+			})
 
 		return flask.jsonify({
 			"result": "startPrint"
@@ -143,6 +167,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	#####################################################################################################   SELECT SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/selectSpool", methods=["PUT"])
 	def select_spool(self):
+		self._logger.info("API Store selected spool")
 		jsonData = request.json
 
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
@@ -150,13 +175,18 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			spoolModel = self._databaseManager.loadSpool(databaseId)
 			# check if loaded
 			if (spoolModel != None):
+				self._logger.info("Store selected spool '"+spoolModel.displayName+"' in settings.")
+
 				# - store spool in Settings
 				self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], databaseId)
 				self._settings.save()
 
 				self.checkRemainingFilament()
+			else:
+				self._logger.warning("Selected Spool with id '"+str(databaseId)+"' not in database anymore. Maybe deleted in the meantime.")
 		else:
 			# No selection
+			self._logger.info("Clear stored selected spool in settings.")
 			self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], None)
 			self._settings.save()
 			pass
@@ -169,7 +199,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	##################################################################################################   LOAD ALL SPOOLS
 	@octoprint.plugin.BlueprintPlugin.route("/loadSpoolsByQuery", methods=["GET"])
 	def load_allSpools(self):
-
+		self._logger.debug("API Load all spool")
 		# sp1 = SpoolModel()
 		# sp1.displayName = "Spool No.1"
 		# sp1.vendor = "Janbex"
@@ -237,13 +267,16 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	#######################################################################################################   SAVE SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/saveSpool", methods=["PUT"])
 	def save_spool(self):
+		self._logger.info("API Save spool")
 		jsonData = request.json
 
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
 		if (databaseId != None):
+			self._logger.info("Update spool with database id '"+str(databaseId)+"'")
 			spoolModel = self._databaseManager.loadSpool(databaseId)
 			self._updateSpoolModelFromJSONData(spoolModel, jsonData)
 		else:
+			self._logger.info("Create new spool")
 			spoolModel = SpoolModel()
 			self._updateSpoolModelFromJSONData(spoolModel, jsonData)
 
@@ -255,6 +288,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	#####################################################################################################   DELETE SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/deleteSpool/<int:databaseId>", methods=["DELETE"])
 	def delete_printjob(self, databaseId):
+		self._logger.info("API Delete spool with database id '" + str(databaseId) + "'")
 		printJob = self._databaseManager.deleteSpool(databaseId)
 		# snapshotFilename = CameraManager.buildSnapshotFilename(printJob.printStartDateTime)
 		# self._cameraManager.deleteSnapshot(snapshotFilename)

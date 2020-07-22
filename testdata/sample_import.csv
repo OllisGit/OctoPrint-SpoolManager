@@ -1,0 +1,5 @@
+DisplayName, Vendor, Material, Color [#code], Diameter [mm], Density [g/cm³], Temperature [°C], TotalWeight [g], UsedWeight [g], UsedLength [mm], FirstUse [dd.mm.yyyy hh:mm], LastUse [dd.mm.yyyy hh:mm], PurchasedFrom, PurchasedOn [dd.mm.yyyy hh:mm], Cost, CostUnit, Labels, NoteText
+
+
+Name, Cost, Weight, Used, TempOffset -> Vendor, Material, Density, Diameter
+

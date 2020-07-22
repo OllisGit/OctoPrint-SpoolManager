@@ -282,7 +282,6 @@ class SpoolmanagerPlugin(
 			selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
 		else:
 			# spool not found
-			self._logger.warning("Last selected Spool from plugin-settings not found in database. Maybe deleted in the meantime.")
 			pass
 
 		self._sendDataToClient(dict(action="initalData",
@@ -367,6 +366,7 @@ class SpoolmanagerPlugin(
 
 		## Genral
 		settings[SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID] = None
+		settings[SettingsKeys.SETTINGS_KEY_REMINDER_SELECTING_SPOOL] = True
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_SPOOL_NOT_SELECTED] = True
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH] = True
 		settings[SettingsKeys.SETTINGS_KEY_CURRENCY_SYMBOL] = "€"

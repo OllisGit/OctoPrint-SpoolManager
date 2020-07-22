@@ -142,7 +142,14 @@ $(function() {
                 displayName = "   ";
             }
 
-            var label =  color + " - " + material + " - " + displayName;
+            var remainingFilament = spoolItem.remainingWeight;
+            if (remainingFilament && displayName.trim().length != 0){
+                remainingFilament = " (" + remainingFilament + "%)" ;
+            } else {
+                remainingFilament = "";
+            }
+
+            var label =  color + " - " + material + " - " + displayName + remainingFilament;
             return label
         }
 
@@ -239,12 +246,21 @@ $(function() {
                             }
                             return;
                         }
-                        if ("noSpoolForUsageCheck" == result){
-                            self.showPopUp("Error", "", "No Spool selected for usage check. Select a spool first");
-                            return
-                        }
+//                        Not needed because a length check is only done, if spool was selected
+//                        if ("noSpoolForUsageCheck" == result){
+//                            self.showPopUp("Error", "", "No Spool selected for usage check. Select a spool first");
+//                            return;
+//                        }
                         if ("filamentNotEnough" == result){
                             var check = confirm('Not enough filament. Do you want to start the print anyway?');
+                            if (check == true) {
+                                startPrint();
+                            }
+                            return;
+                        }
+                        if ("reminderSpoolSelection" == result){
+                            var question = "Please verify your selected Spool '"+responseData.spoolName+"'. Do you want to start the print anyway?";
+                            var check = confirm(question);
                             if (check == true) {
                                 startPrint();
                             }

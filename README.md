@@ -38,6 +38,7 @@ should include the following features:
 
 ## Planning Release #2
 
+- [ ] External Database
 - [ ] Table column visibity
 - [ ] Capture Spool-Image
 - [ ] Scan QR/Barcodes of a spool

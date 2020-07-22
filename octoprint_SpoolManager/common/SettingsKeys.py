@@ -5,6 +5,7 @@ class SettingsKeys():
 
 	SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID = "selectedSpoolDatabaseId"
 
+	SETTINGS_KEY_REMINDER_SELECTING_SPOOL = "reminderSelectingSpool"
 	SETTINGS_KEY_WARN_IF_SPOOL_NOT_SELECTED = "warnIfSpoolNotSelected"
 	SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH = "warnIfFilamentNotEnough"
 
