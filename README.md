@@ -23,7 +23,7 @@ should include the following features:
 - [X] Spool basic attributes, like name,  color, material, vendor ...
 - [X] "Used length" and "Remaining weight"
 - [X] Additional notes
-- [X] CSV Export of "Legacy FilamentManager-Database" and SpoolManager)function
+- [X] CSV Export of "Legacy FilamentManager-Database" and SpoolManager
 - [X] CSV Import function
 - [ ] Labels
 - [ ] Provide "APIs" for [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
