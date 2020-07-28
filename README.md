@@ -42,7 +42,7 @@ should include the following features:
 ## Planning Release #2
 
 - [ ] External Database
-- [ ] Table column visibity
+- [ ] Table column visibility
 - [ ] Capture Spool-Image
 - [ ] Scan QR/Barcodes of a spool
 
