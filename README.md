@@ -4,7 +4,7 @@
 [![Released](https://img.shields.io/badge/dynamic/json.svg?color=brightgreen&label=released&url=https://api.github.com/repos/OllisGit/OctoPrint-SpoolManager/releases&query=$[0].published_at)]()
 ![GitHub Releases (by Release)](https://img.shields.io/github/downloads/OllisGit/OctoPrint-SpoolManager/latest/total.svg)
 
-# Release candidate 1 is out!
+# Release candidates are out!
 
 The OctoPrint-Plugin manages all spool informations and stores it in a database.
 
@@ -23,8 +23,11 @@ should include the following features:
 - [X] Spool basic attributes, like name,  color, material, vendor ...
 - [X] "Used length" and "Remaining weight"
 - [X] Additional notes
+- [X] CSV Export of "Legacy FilamentManager-Database" and SpoolManager)function
+- [X] CSV Import function
 - [ ] Labels
 - [ ] Provide "APIs" for [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
+
 
 ### UI features
 - [X] Better error-feedback (more then just the "happy-path")
@@ -34,7 +37,7 @@ should include the following features:
 - [X] Template spool
 - [X] Sort spool table (Displayname, Last/First use)
 - [X] Force to select a spool before printing
-- [ ] Filter spool table
+- [X] Filter spool table
 
 ## Planning Release #2
 
@@ -42,8 +45,7 @@ should include the following features:
 - [ ] Table column visibity
 - [ ] Capture Spool-Image
 - [ ] Scan QR/Barcodes of a spool
-- [ ] CSV Export function
-- [ ] CSV Import function
+
 - [ ] Multi Tool support
 
 
@@ -53,6 +55,7 @@ should include the following features:
 ![plugin-tab](screenshots/plugin-tab.png "Plugin-Tab")
 -->
 ![listSpools-tab](screenshots/listSpools-tab.png "ListSpools-Tab")
+![selectSpools-sidebar](screenshots/selectSpool-sidebar.png "SelectSpool-Sidebar")
 ![editSpool-dialog](screenshots/editSpool-dialog.png "EditSpool-Dialog")
 ![scanSpool-dialog](screenshots/scanSpool-dialog.png "ScanSpool-Dialog")
 

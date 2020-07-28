@@ -194,11 +194,11 @@ function ComponentFactory(pluginId) {
 
         var elementSelector = "#" + elementId;
         var pickColor = $(elementSelector).pickAColor({
-            showSpectrum          : true,
+            showSpectrum          : false,
             showSavedColors       : false,
             saveColorsPerElement  : false,
             fadeMenuToggle        : true,
-            showAdvanced          : false,
+            showAdvanced          : true,
             showBasicColors       : true,
             showHexInput          : true,
             allowBlank            : false,
@@ -211,13 +211,13 @@ function ComponentFactory(pluginId) {
                   yellow    : 'ffff00',
                   orange    : 'ffa500',
                   purple    : '800080',
-//                  gray      : '808080',
-//                  darkgray  : 'A9A9A9',
-//                  lightgray : 'D3D3D3',
-//                  violet    : 'EE82EE',
-//                  pink      : 'FFC0CB',
-//                  brown     : 'A52A2A',
-//                  burlyWood : 'DEB887'
+                  gray      : '808080',
+                  darkgray  : 'A9A9A9',
+                  lightgray : 'D3D3D3',
+                  violet    : 'EE82EE',
+                  pink      : 'FFC0CB',
+                  brown     : 'A52A2A',
+                  burlyWood : 'DEB887'
                 }
         });
 

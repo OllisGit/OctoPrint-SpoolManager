@@ -44,6 +44,9 @@ class SpoolmanagerPlugin(
 		self._filamentOdometer = FilamentOdometer()
 		# TODO no idea what this thing is doing in detail self._filamentOdometer.set_g90_extruder(self._settings.getBoolean(["feature", "g90InfluencesExtruder"]))
 
+		self._filamentManagerPluginImplementation = None
+		self._filamentManagerPluginImplementationState = None
+
 		self._lastPrintState = None
 
 		self.metaDataFilamentLength = None
@@ -147,6 +150,49 @@ class SpoolmanagerPlugin(
 									type=type,
 									title= title,
 									message=message))
+
+
+
+	def _checkForMissingPluginInfos(self, sendToClient=False):
+
+		pluginInfo = self._getPluginInformation("filamentmanager")
+		self._filamentManagerPluginImplementationState  = pluginInfo[0]
+		self._filamentManagerPluginImplementation = pluginInfo[1]
+
+		self._logger.info("Plugin-State: "
+						  "filamentmanager=" + self._filamentManagerPluginImplementationState + " ")
+		pass
+
+	# get the plugin with status information
+	# [0] == status-string
+	# [1] == implementaiton of the plugin
+	def _getPluginInformation(self, pluginKey):
+
+		status = None
+		implementation = None
+
+		if pluginKey in self._plugin_manager.plugins:
+			plugin = self._plugin_manager.plugins[pluginKey]
+			if plugin != None:
+				if (plugin.enabled == True):
+					status = "enabled"
+					# for OP 1.4.x we need to check agains "icompatible"-attribute
+					if (hasattr(plugin, 'incompatible') ):
+						if (plugin.incompatible == False):
+							implementation = plugin.implementation
+						else:
+							status = "incompatible"
+					else:
+						# OP 1.3.x
+						implementation = plugin.implementation
+					pass
+				else:
+					status = "disabled"
+		else:
+			status = "missing"
+
+		return [status, implementation]
+
 
 	def _calculateWeight(self, length, diameter, density):
 		radius = diameter / 2.0;
@@ -269,7 +315,7 @@ class SpoolmanagerPlugin(
 		# start-workaround https://github.com/foosel/OctoPrint/issues/3400
 		import time
 		time.sleep(2)
-		selectedSpoolAsDict = {}
+		selectedSpoolAsDict = None
 
 		# Send plugin storage information
 		## Storage
@@ -286,7 +332,8 @@ class SpoolmanagerPlugin(
 
 		self._sendDataToClient(dict(action="initalData",
 									databaseFileLocation=databaseFileLocation,
-									selectedSpool=selectedSpoolAsDict
+									selectedSpool=selectedSpoolAsDict,
+									isFilamentManagerPluginAvailable=self._filamentManagerPluginImplementation != None
 									))
 
 		pass
@@ -304,6 +351,8 @@ class SpoolmanagerPlugin(
 	######################################################################################### Hooks and public functions
 
 	def on_after_startup(self):
+		# check if needed plugins were available
+		self._checkForMissingPluginInfos()
 		pass
 
 	# Listen to all  g-code which where already sent to the printer (thread: comm.sending_thread)
@@ -364,12 +413,17 @@ class SpoolmanagerPlugin(
 
 		settings = dict()
 
-		## Genral
+		# Not visible
 		settings[SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID] = None
+		settings[SettingsKeys.SETTINGS_KEY_HIDE_EMPTY_SPOOL_IN_SIDEBAR] = False
+		## Genral
 		settings[SettingsKeys.SETTINGS_KEY_REMINDER_SELECTING_SPOOL] = True
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_SPOOL_NOT_SELECTED] = True
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH] = True
 		settings[SettingsKeys.SETTINGS_KEY_CURRENCY_SYMBOL] = "€"
+
+		## Export / Import
+		settings[SettingsKeys.SETTINGS_KEY_IMPORT_CSV_MODE] = SettingsKeys.KEY_IMPORTCSV_MODE_APPEND
 
 		## Debugging
 		settings[SettingsKeys.SETTINGS_KEY_SQL_LOGGING_ENABLED] = False
@@ -400,7 +454,8 @@ class SpoolmanagerPlugin(
 				"js/TableItemHelper.js",
 				"js/SpoolManager.js",
 				"js/SpoolManager-APIClient.js",
-				"js/SpoolManager-EditSpoolDialog.js"
+				"js/SpoolManager-EditSpoolDialog.js",
+				"js/SpoolManager-ImportDialog.js"
 			],
 			css=[
 				"css/quill.snow.css",

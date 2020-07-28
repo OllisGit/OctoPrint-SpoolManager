@@ -6,13 +6,27 @@ import datetime
 import flask
 from flask import jsonify, request, make_response, Response, send_file
 import json
+import shutil
+import tempfile
+import threading
 
 from octoprint_SpoolManager.models.SpoolModel import SpoolModel
-from octoprint_SpoolManager.common import StringUtils
+from octoprint_SpoolManager.common import StringUtils, CSVExportImporter
 from octoprint_SpoolManager.api import Transformer
 from octoprint_SpoolManager.common.SettingsKeys import SettingsKeys
 
 class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
+
+	def _sendCSVUploadStatusToClient(self, importStatus, currenLineNumber, backupFilePath,  successMessages, errorCollection):
+
+		self._sendDataToClient(dict(action="csvImportStatus",
+									importStatus = importStatus,
+									currenLineNumber = currenLineNumber,
+									backupFilePath = backupFilePath,
+									successMessages=successMessages,
+									errorCollection = errorCollection
+									)
+							   )
 
 	def _updateSpoolModelFromJSONData(self, spoolModel, jsonData):
 
@@ -23,6 +37,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModel.material = self._getValueFromJSONOrNone("material", jsonData)
 		spoolModel.density = self._getValueFromJSONOrNone("density", jsonData)
 		spoolModel.diameter = self._getValueFromJSONOrNone("diameter", jsonData)
+		spoolModel.colorName = self._getValueFromJSONOrNone("colorName", jsonData)
 		spoolModel.color = self._getValueFromJSONOrNone("color", jsonData)
 		spoolModel.temperature = self._getValueFromJSONOrNone("temperature", jsonData)
 		spoolModel.totalWeight = self._getValueFromJSONOrNone("totalWeight", jsonData)
@@ -46,38 +61,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModel.noteHtml = self._getValueFromJSONOrNone("noteHtml", jsonData)
 		pass
 
-	# def _transformSpoolModelToDict(self, spoolModel):
-	# 	spoolAsDict = spoolModel.__data__
-	#
-	# 	spoolAsDict["firstUse"] = StringUtils.formatDateTime(spoolModel.firstUse)
-	# 	spoolAsDict["lastUse"] = StringUtils.formatDateTime(spoolModel.lastUse)
-	# 	spoolAsDict["purchasedOn"] = StringUtils.formatDateTime(spoolModel.purchasedOn)
-	#
-	#
-	#
-	# 	# Decimal and date time needs to be converted
-	#
-	# 	# spoolAsDict["temperature"] = StringUtils.formatSave("{:.02f}", spoolAsDict["temperature"], "")
-	# 	# spoolAsDict["weight"] = StringUtils.formatSave("{:.02f}", spoolAsDict["weight"], "")
-	# 	# spoolAsDict["remainingWeight"] = StringUtils.formatSave("{:.02f}", spoolAsDict["remainingWeight"], "")
-	# 	# spoolAsDict["usedLength"] = StringUtils.formatSave("{:.02f}", spoolAsDict["usedLength"], "")
-	# 	# spoolAsDict["usedLength"] = StringUtils.formatSave("{:.02f}", spoolAsDict["usedLength"], "")
-	#
-	# 	# spoolAsDict["firstUse"] = spoolModel.firstUse.strftime('%d.%m.%Y %H:%M')
-	# 	# spoolAsDict["lastUse"] = spoolModel.lastUse.strftime('%d.%m.%Y %H:%M')
-	#
-	# 	# spoolAsDict["firstUse"] = self._formatDateOrNone( spoolModel.firstUse )
-	# 	# spoolAsDict["lastUse"] = self._formatDateOrNone( spoolModel.lastUse )
-	#
-	#
-	# 	return spoolAsDict
-	#
-	# def _transformAllSpoolModelsToDict(self, allSpoolModels):
-	# 	result = []
-	# 	for job in allSpoolModels:
-	# 		spoolAsDict = self._transformSpoolModelToDict(job)
-	# 		result.append(spoolAsDict)
-	# 	return result
 
 	def _getValueFromJSONOrNone(self, key, json):
 		if key in json:
@@ -111,15 +94,100 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		s1 = SpoolModel()
 		s1.displayName = "Number #1"
+		s1.colorName = "raw-red"
+		s1.color = "#FF0000"
 		s1.vendor = "The Spool Company"
 		s1.material = "PETG"
-		s1.color = "#FF0000"
 		s1.diameter = 1.75
 		s1.density = 1.27
+		s1.temperature = 182
+		s1.totalWeight = 1000.0
+		s1.usedWeight = 123.4
+		s1.usedLength = 234.5
+		s1.lastUse = datetime.datetime.now()
+
+		s1.firstUse = datetime.datetime.strptime("2020-03-02 10:33", '%Y-%m-%d %H:%M')
+		s1.purchasedOn = datetime.datetime.strptime("2020-02-01", '%Y-%m-%d')
+		s1.purchasedFrom = "Unknown Seller"
+		s1.cost = "12.30"
+		s1.costUnit = "€"
+		s1.noteText = "Very cheap spool!"
 		return s1
 
 
+
+	def _createSpoolModelFromLegacy(self, allSpoolLegacyList):
+		allSpoolModels = list()
+		for spoolDict in allSpoolLegacyList:
+			spoolModel = SpoolModel()
+
+			spoolIdInt = spoolDict["id"]
+			nameUnicode = spoolDict["name"]
+			usedFloat = spoolDict["used"]
+			weightFloat = spoolDict["weight"]
+			tempOffsetInt = spoolDict["temp_offset"]
+			costFloat = spoolDict["cost"]
+			profileDict = spoolDict["profile"]
+			profileIdInt = profileDict["id"]
+			diameterFloat = profileDict["diameter"]
+			materialUnicode = profileDict["material"]
+			vendorUnicode = profileDict["vendor"]
+			densityFloat = profileDict["density"]
+
+			spoolModel.displayName = nameUnicode
+			spoolModel.vendor = vendorUnicode
+
+			spoolModel.material = materialUnicode
+			spoolModel.density = densityFloat
+			spoolModel.diameter = diameterFloat
+			spoolModel.cost = costFloat
+			spoolModel.costUnit = "ToDo"
+			spoolModel.usedLength = usedFloat
+			spoolModel.totalWeight = weightFloat
+
+			allSpoolModels.append(spoolModel)
+
+		return allSpoolModels
+
+	def _selectSpool(self, databaseId):
+
+		spoolModel = None
+		if (databaseId != None):
+			spoolModel = self._databaseManager.loadSpool(databaseId)
+			# check if loaded
+			if (spoolModel != None):
+				self._logger.info("Store selected spool '"+spoolModel.displayName+"' in settings.")
+
+				# - store spool in Settings
+				self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], databaseId)
+				self._settings.save()
+
+				self.checkRemainingFilament()
+			else:
+				self._logger.warning("Selected Spool with id '"+str(databaseId)+"' not in database anymore. Maybe deleted in the meantime.")
+
+		if spoolModel == None:
+			# No selection
+			self._logger.info("Clear stored selected spool in settings.")
+			self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], None)
+			self._settings.save()
+			pass
+
+		return spoolModel
+
+
 	################################################### APIs
+
+	@octoprint.plugin.BlueprintPlugin.route("/sampleCSV", methods=["GET"])
+	def get_sampleCSV(self):
+
+		allSpoolModels = list()
+
+		spoolModel = self._createSampleSpoolModel()
+		allSpoolModels.append(spoolModel)
+		return Response(CSVExportImporter.transform2CSV(allSpoolModels),
+						mimetype='text/csv',
+						headers={'Content-Disposition': 'attachment; filename=SpoolManager-SAMPLE.csv'})
 
 	##############################################################################################   ALLOWED TO PRINT
 	@octoprint.plugin.BlueprintPlugin.route("/allowedToPrint", methods=["GET"])
@@ -171,29 +239,159 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		jsonData = request.json
 
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
-		if (databaseId != None):
-			spoolModel = self._databaseManager.loadSpool(databaseId)
-			# check if loaded
-			if (spoolModel != None):
-				self._logger.info("Store selected spool '"+spoolModel.displayName+"' in settings.")
 
-				# - store spool in Settings
-				self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], databaseId)
-				self._settings.save()
+		spoolModel = self._selectSpool(databaseId)
 
-				self.checkRemainingFilament()
-			else:
-				self._logger.warning("Selected Spool with id '"+str(databaseId)+"' not in database anymore. Maybe deleted in the meantime.")
-		else:
-			# No selection
-			self._logger.info("Clear stored selected spool in settings.")
-			self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], None)
-			self._settings.save()
+		spoolModelAsDict = None
+		if (spoolModel != None):
+			spoolModelAsDict = Transformer.transformSpoolModelToDict(spoolModel)
+
+		return flask.jsonify({
+								"selectedSpool": spoolModelAsDict
+							})
+
+	######################################################################################   UPLOAD CSV FILE (in Thread)
+
+	@octoprint.plugin.BlueprintPlugin.route("/importCSV", methods=["POST"])
+	def importSpoolData(self):
+
+		input_name = "file"
+		input_upload_path = input_name + "." + self._settings.global_get(["server", "uploads", "pathSuffix"])
+
+		if input_upload_path in flask.request.values:
+
+			importMode = flask.request.form["importCSVMode"]
+			# file was uploaded
+			sourceLocation = flask.request.values[input_upload_path]
+
+			# because we process in seperate thread we need to create our own temp file, the uploaded temp file will be deleted after this request-call
+			archive = tempfile.NamedTemporaryFile(delete=False)
+			archive.close()
+			shutil.copy(sourceLocation, archive.name)
+			sourceLocation = archive.name
+
+
+			thread = threading.Thread(target=self._processCSVUploadAsync,
+									  args=(sourceLocation,
+											importMode,
+											self._databaseManager,
+											self.get_plugin_data_folder(),
+											self._sendCSVUploadStatusToClient,
+											self._logger))
+			thread.daemon = True
+			thread.start()
+
+			# targetLocation = self._cameraManager.buildSnapshotFilenameLocation(snapshotFilename, False)
+			# os.rename(sourceLocation, targetLocation)
 			pass
+		else:
+			return flask.make_response("Invalid request, neither a file nor a path of a file to restore provided", 400)
 
-		# databaseId = self._databaseManager.saveModel(spoolModel)
 
-		return flask.jsonify()
+		return flask.jsonify(started=True)
+
+
+	def _processCSVUploadAsync(self, path, importCSVMode, databaseManager, backupFolder, sendCSVUploadStatusToClient, logger):
+		errorCollection = list()
+
+		# - parsing
+		# - backup
+		# - append or replace
+
+		def updateParsingStatus(lineNumber):
+			# importStatus, currenLineNumber, backupFilePath,  successMessages, errorCollection
+			sendCSVUploadStatusToClient("running", lineNumber, "", "", errorCollection)
+
+
+		resultOfSpools = CSVExportImporter.parseCSV(path, updateParsingStatus, errorCollection, logger)
+
+		if (len(errorCollection) != 0):
+			successMessage = "Some error(s) occurs during parsing! No spools imported!"
+			# importStatus, currenLineNumber, backupFilePath,  successMessages, errorCollection
+			sendCSVUploadStatusToClient("finished", "", "", successMessage, errorCollection)
+			return
+
+		importModeText = "append"
+		backupDatabaseFilePath = None
+		if (len(resultOfSpools) > 0):
+			# we could import some jobs
+
+			# - backup
+			backupDatabaseFilePath = databaseManager.backupDatabaseFile(backupFolder)
+
+			# - import mode append/replace
+			if (SettingsKeys.KEY_IMPORTCSV_MODE_REPLACE == importCSVMode):
+				# delete old database and init a clean database
+				databaseManager.reCreateDatabase()
+				# reset selected spool
+				self._selectSpool(None)
+
+				importModeText = "fully replaced"
+
+			# - insert all printjobs in database
+			currentSpoolNumber = 0
+			for spool in resultOfSpools:
+				currentSpoolNumber = currentSpoolNumber + 1
+				updateParsingStatus(currentSpoolNumber)
+
+				remainingWeight = Transformer.calculateRemainingWeight(spool.usedWeight, spool.totalWeight)
+				if (remainingWeight != None):
+					spool.remainingWeight = remainingWeight
+					# spool.save()
+
+				databaseManager.saveModel(spool)
+			pass
+		else:
+			errorCollection.append("Nothing to import!")
+
+		successMessage = ""
+		if (len(errorCollection) == 0):
+			successMessage = "All data is successful " + importModeText + " with '" + str(len(resultOfSpools)) + "' spools."
+		else:
+			successMessage = "Some error(s) occurs! Maybe you need to manually rollback the database!"
+		logger.info(successMessage)
+		sendCSVUploadStatusToClient("finished", "", backupDatabaseFilePath,  successMessage, errorCollection)
+		pass
+
+
+
+
+	###########################################################################################   EXPORT DATABASE as CSV
+	@octoprint.plugin.BlueprintPlugin.route("/exportSpools/<string:exportType>", methods=["GET"])
+	def exportSpoolsData(self, exportType):
+
+		if exportType == "CSV":
+			allSpoolModels = self._databaseManager.loadAllSpoolsByQuery(None)
+
+			now = datetime.datetime.now()
+			currentDate = now.strftime("%Y%m%d-%H%M")
+			fileName = "SpoolManager-" + currentDate + ".csv"
+
+			return Response(CSVExportImporter.transform2CSV(allSpoolModels),
+							mimetype='text/csv',
+							headers={'Content-Disposition': 'attachment; filename=' + fileName})
+
+		else:
+			if (exportType == "legacyFilamentManager"):
+				print("do something")
+				allSpoolLegacyList = self._filamentManagerPluginImplementation.filamentManager.get_all_spools()
+				if (allSpoolLegacyList != None):
+
+					allSpoolModelList = self._createSpoolModelFromLegacy(allSpoolLegacyList)
+
+					now = datetime.datetime.now()
+					currentDate = now.strftime("%Y%m%d-%H%M")
+					fileName = "FilamentManager-" + currentDate + ".csv"
+
+					return Response(CSVExportImporter.transform2CSV(allSpoolModelList),
+									mimetype='text/csv',
+									headers={'Content-Disposition': 'attachment; filename='+fileName})
+
+				pass
+
+			print("BOOOMM not supported type")
+		pass
+
 
 
 	##################################################################################################   LOAD ALL SPOOLS
@@ -255,12 +453,20 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		# 	"colors": ["", "#123", "#456"],
 		# 	"labels": ["", "good", "bad"]
 		# }
+		selectedSpoolAsDict = None
+		selectedSpool = self.loadSelectedSpool()
+		if (selectedSpool):
+			selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
+		else:
+			# spool not found
+			pass
 
 		return flask.jsonify({
 								"templateSpool": tempateSpoolAsDict,
 								"catalogs": catalogs,
 								"totalItemCount": totalItemCount,
-								"allSpools": allSpoolsAsDict
+								"allSpools": allSpoolsAsDict,
+								"selectedSpool": selectedSpoolAsDict
 							})
 
 
@@ -294,3 +500,4 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		# self._cameraManager.deleteSnapshot(snapshotFilename)
 		# self._databaseManager.deletePrintJob(databaseId)
 		return flask.jsonify()
+

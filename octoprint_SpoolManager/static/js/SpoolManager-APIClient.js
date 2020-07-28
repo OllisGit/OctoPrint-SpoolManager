@@ -34,10 +34,13 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
         return urlContext;
     }
 
-//    this.getExportUrl = function(exportType){
-//        return _addApiKeyIfNecessary("./plugin/" + this.pluginId + "/exportPrintJobHistory/" + exportType);
-//    }
+    this.getExportUrl = function(exportType){
+        return _addApiKeyIfNecessary("./plugin/" + this.pluginId + "/exportSpools/" + exportType);
+    }
 
+    this.getSampleCSVUrl = function(){
+        return _addApiKeyIfNecessary("./plugin/" + this.pluginId + "/sampleCSV");
+    }
 
     //////////////////////////////////////////////////////////////////////////////// LOAD FILTERED/SORTED PrintJob-Items
     this.callLoadSpoolsByQuery = function (tableQuery, responseHandler){
@@ -84,12 +87,11 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////// SELECT Spool-Item
-    this.callSelectSpool = function (spoolItem, responseHandler){
-        if (spoolItem == null){
-            spoolItem = {};
+    this.callSelectSpool = function (databaseId, responseHandler){
+        if (databaseId == null){
+            databaseId = -1;
         }
-        jsonPayload = ko.toJSON(spoolItem)
-
+        var jsonPayload = '{"databaseId":'+databaseId+'}';
         $.ajax({
             //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
             url: this.baseUrl + "plugin/" + this.pluginId + "/selectSpool",
@@ -98,7 +100,7 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
             data: jsonPayload,
             type: "PUT"
         }).done(function( data ){
-            responseHandler();
+            responseHandler( data );
         });
     }
 

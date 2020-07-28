@@ -77,6 +77,8 @@ $(function() {
 //        self.spoolItemForEditing(new SpoolItem(null));
 //        self.spoolItemForEditing = self.spoolDialog.createSpoolItemForEditing();
 
+
+
         ////////////////////////////////////////////////////////////////////////////////////////////////HELPER FUNCTION
         // Typs: error
         self.showPopUp = function(popupType, popupTitle, message){
@@ -90,7 +92,9 @@ $(function() {
         };
 
         ///////////////////////////////////////////////////// START: SETTINGS
-        self.databaseFileLocation = ko.observable("hallo");
+        self.isFilamentManagerPluginAvailable = ko.observable(false);
+
+        self.databaseFileLocation = ko.observable("hello");
         self.downloadDatabaseUrl = ko.observable();
 
         self.deleteDatabaseAction = function() {
@@ -101,6 +105,54 @@ $(function() {
                 });
             }
         };
+
+        // - Import CSV
+        self.csvFileUploadName = ko.observable();
+        self.csvImportInProgress = ko.observable(false);
+
+        self.csvImportDialog = new SpoolManagerImportDialog();
+        self.csvImportUploadButton = $("#settings-spool-importcsv-upload");
+        self.csvImportUploadData = undefined;
+        self.csvImportUploadButton.fileupload({
+            dataType: "json",
+            maxNumberOfFiles: 1,
+            autoUpload: false,
+            headers: OctoPrint.getRequestHeaders(),
+            add: function(e, data) {
+                if (data.files.length === 0) {
+                    // no files? ignore
+                    return false;
+                }
+                self.csvFileUploadName(data.files[0].name);
+                self.csvImportUploadData = data;
+            },
+            done: function(e, data) {
+                self.csvImportInProgress(false);
+                self.csvFileUploadName(undefined);
+                self.csvImportUploadData = undefined;
+            },
+            error: function(response, data, errorMessage){
+                self.csvImportInProgress(false);
+                statusCode = response.status;       // e.g. 400
+                statusText = response.statusText;   // e.g. BAD REQUEST
+                responseText = response.responseText; // e.g. Invalid request
+            }
+        });
+
+        self.performCSVImportFromUpload = function() {
+            if (self.csvImportUploadData === undefined) return;
+
+            self.csvImportInProgress(true);
+            self.csvImportDialog.showDialog(function(shouldTableReload){
+                    //
+                    if (shouldTableReload == true){
+                        self.spoolItemTableHelper.reloadItems();
+                    }
+                }
+            );
+            self.csvImportUploadData.submit();
+        };
+
         ///////////////////////////////////////////////////// END: SETTINGS
 
 
@@ -108,11 +160,30 @@ $(function() {
 
         self.allSpoolsForSidebar = ko.observableArray([]);
         self.selectedSpoolForSidebar = ko.observable();
+        self.selectedSpoolText = ko.observable();
+
+
+        self.selectedSpoolForSidebar.subscribe(function(newSelectedSpool){
+
+            var selectSpoolText = _buildSpoolLabel(newSelectedSpool);
+            self.selectedSpoolText(selectSpoolText)
+
+        });
+
+
+        self.deselectSpoolsForSidebar = function(){
+            self.selectedSpoolForSidebar(null);
+            self.selectSpoolForSidebar(null);
+        }
 
         self.loadSpoolsForSidebar = function(){
+            var currentFilterName = "all";
+            if (self.pluginSettings!= null && self.pluginSettings.hideEmptySpoolsInSidebar() == true){
+                currentFilterName = "hideEmptySpools";
+            }
 
-            tableQuery = {
-                filterName: "all",
+            var tableQuery = {
+                filterName: currentFilterName,
                 from: 0,
                 to: 30,
                 sortColumn: "lastUse",
@@ -121,57 +192,66 @@ $(function() {
 
             // api-call
             self.apiClient.callLoadSpoolsByQuery(tableQuery, function(responseData){
-                allSpoolItems = responseData["allSpools"];
+                var allSpoolData = responseData["allSpools"]; // rawdtata
 
+                var allSpoolItems = ko.utils.arrayMap(allSpoolData, function (spoolData) {
+                    var result = self.spoolDialog.createSpoolItemForTable(spoolData);
+                    return result;
+                }); // transform to SpoolItems with KO.obseravables
                 self.allSpoolsForSidebar(allSpoolItems);
+
+                var spoolItem = null;
+                var spoolData = responseData["selectedSpool"];
+                if (spoolData != null){
+                    spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                }
+                self.selectedSpoolForSidebar(spoolItem)
             });
         }
 
-        self.buildSpoolNameForSidebar = function(spoolItem){
-            var color = tinycolor(spoolItem.color).toName();
-            if (color == false){
-                color = "   ";
+        // helper for create a Label for a Spool (Color-Box, Material, ...)
+        _buildSpoolLabel = function(spoolItem){
+            var spoolLabel = "No Spool selected!";
+            if (spoolItem != null){
+                spoolLabel = '<span class="color-preview" style="background-color: '+spoolItem.color()+';" title="'+spoolItem.colorName()+'"></span>';
+                var remainingInfo = _buildRemainingText(spoolItem);
+                spoolLabel += '<span style="vertical-align:super">'+spoolItem.material()+'-'+spoolItem.displayName()+' '+remainingInfo+'</span>'
             }
-            var material = spoolItem.material;
-            if (!material || material.trim().length === 0){
-                material = "   ";
-            }
-
-            var displayName = spoolItem.displayName;
-            if (!displayName || displayName.trim().length === 0){
-                displayName = "   ";
-            }
-
-            var remainingFilament = spoolItem.remainingWeight;
-            if (remainingFilament && displayName.trim().length != 0){
-                remainingFilament = " (" + remainingFilament + "%)" ;
-            } else {
-                remainingFilament = "";
-            }
-
-            var label =  color + " - " + material + " - " + displayName + remainingFilament;
-            return label
+            return spoolLabel;
         }
 
-        self.spoolChangeByInitialCall = false;
-        self.selectedSpoolForSidebar.subscribe(function(newSelectedSpool){
+        _buildRemainingText = function(spoolItem){
+            var remainingInfo = "";
+            if (  spoolItem.remainingWeight() != null && spoolItem.remainingWeight().length != 0
+                && spoolItem.remainingPercentage() != null && spoolItem.remainingPercentage().length != 0){
+                remainingInfo = "("+spoolItem.remainingWeight()+"g / "+spoolItem.remainingPercentage()+"%)";
+            }
+            return remainingInfo
+        }
 
-            if (self.spoolChangeByInitialCall == false){
-                // api-call
-                self.apiClient.callSelectSpool(newSelectedSpool, function(responseData){
+        self.remainingText = function(spoolItem){
+            var remainingInfo = _buildRemainingText(spoolItem);
+            return remainingInfo;
+        }
 
+        self.selectSpoolForSidebar = function(spoolItem){
+            // api-call
+            var databaseId = -1
+            if (spoolItem != null){
+                databaseId = spoolItem.databaseId();
+            }
+            self.apiClient.callSelectSpool(databaseId, function(responseData){
                     // check if we need to send a warning
 //                    self.showPopUp("warning", "Keine Ahnng", "out off stuff");
-    //                totalItemCount = responseData["totalItemCount"];
-    //                allSpoolItems = responseData["allSpools"];
-    //                catalogs = responseData["catalogs"];
-    //                self.spoolDialog.updateCatalogs(catalogs);
-    //                templateSpool = responseData["templateSpool"];
-                });
-            }
-            self.spoolChangeByInitialCall = false
-        });
 
+                var spoolItem = null;
+                var spoolData = responseData["selectedSpool"];
+                if (spoolData != null){
+                    spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                }
+                self.selectedSpoolForSidebar(spoolItem)
+            });
+        }
 
         //////////////////////////////////////////////////////////////////////////////////////////////////// TABLE / TAB
 
@@ -212,21 +292,10 @@ $(function() {
         closeDialogHandler = function(shouldTableReload){
             if (shouldTableReload == true){
                 self.spoolItemTableHelper.reloadItems();
-
                 // TODO auto reload of sidebar spools without loosing selection
+                self.loadSpoolsForSidebar();
             }
-//
-//            if (self.printJobToShowAfterStartup != null){
-//                // PrintJob was presented to user and user confirmed
-//                self.printJobToShowAfterStartup = null;
-//                payload = {
-//                    "showPrintJobDialogAfterPrint_jobId": null
-//                };
-//                OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
-//            }
         }
-
-
 
 
         ///////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT PRINT-BUTTON
@@ -280,9 +349,20 @@ $(function() {
                 // no additional reset function needed in V2
              });
 
+            // Load all Spools
             self.loadSpoolsForSidebar();
-
+            // Edit Dialog Binding
             self.spoolDialog.initBinding(self.apiClient, self.pluginSettings);
+            // Import Dialog
+            self.csvImportDialog.init(self.apiClient);
+
+            self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
+                var payload = {
+                        "hideEmptySpoolsInSidebar": newCheckedVaue
+                    };
+                OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
+                self.loadSpoolsForSidebar();
+            });
         }
 
         self.onAfterBinding = function() {
@@ -302,18 +382,14 @@ $(function() {
             if ("initalData" == data.action){
                 self.databaseFileLocation(data.databaseFileLocation);
 
+                self.isFilamentManagerPluginAvailable(data.isFilamentManagerPluginAvailable);
+
                 var selectedSpoolData = data.selectedSpool;
                 if (selectedSpoolData != null){
-                    // loop thru the options to pick the right spoolItem-instance
-                    selectedDatabaseId = selectedSpoolData.databaseId;
-                    selectedSpoolItem = null;
-                    ko.utils.arrayForEach(self.allSpoolsForSidebar(), function(spoolItem) {
-                        if (spoolItem.databaseId == selectedDatabaseId){
-                            selectedSpoolItem = spoolItem;
-                        }
-                    });
-                    self.spoolChangeByInitialCall = true;
+                    var selectedSpoolItem = self.spoolDialog.createSpoolItemForTable(selectedSpoolData);
                     self.selectedSpoolForSidebar(selectedSpoolItem);
+                } else {
+                    self.selectedSpoolForSidebar(null);
                 }
                 return;
             }
@@ -326,6 +402,20 @@ $(function() {
                 return;
             }
 
+            if ("csvImportStatus" == data.action){
+                self.csvImportDialog.updateText(data);
+                return;
+            }
+            if ("errorPopUp" == data.action){
+                new PNotify({
+                    title: 'ERROR:' + data.title,
+                    text: data.message,
+                    type: "error",
+                    hide: false
+                    });
+
+                return;
+            }
 
         }
 
@@ -355,7 +445,7 @@ $(function() {
         elements: [
             document.getElementById("settings_spoolmanager"),
             document.getElementById("tab_spoolOverview"),
-            document.getElementById("dialog_spool_select"),
+            document.getElementById("modal-dialogs-spoolManager"),
             document.getElementById("sidebar_spool_select")
         ]
     });

@@ -15,6 +15,7 @@ class SpoolModel(BaseModel):
 	material = CharField(null=True)
 	density = FloatField(null=True)
 	diameter = FloatField(null=True)
+	colorName = CharField(null=True)
 	color = CharField(null=True)
 	# Grad
 	temperature = IntegerField(null=True)
@@ -22,6 +23,9 @@ class SpoolModel(BaseModel):
 	totalWeight = FloatField(null=True)
 	# in g
 	usedWeight = FloatField(null=True)
+	# in g
+	remainingWeight = FloatField(null=True)
+
 	# in mm
 	usedLength = IntegerField(null=True)
 	# Bar or QR Code

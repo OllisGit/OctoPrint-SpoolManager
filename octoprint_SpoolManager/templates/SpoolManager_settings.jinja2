@@ -5,9 +5,8 @@
     <div class="tabbable"> <!-- Only required for left/right tabs -->
         <ul class="nav nav-tabs">
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
-<!--            <li><a href="#tab-spool-DefaultValues" data-toggle="tab">Default values</a></li>-->
-<!--            <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>-->
-            <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
+            <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
+<!--            <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>-->
             <li><a href="#tab-spool-Debugging" data-toggle="tab">Debugging</a></li>
         </ul>
         <div class="tab-content">
@@ -45,91 +44,127 @@
                 </div>
             </div>
 
-            <!-- DEFAULT VALUES - TAB
-
-            <div class="tab-pane" id="tab-spool-DefaultValues">
-                <div class="control-group">
-                    <label class="control-label">Displayname</label>
-                    <div class="controls">
-                        <input type="text"  class="input-large text-right" >
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Vendor</label>
-                    <div class="controls">
-                        <textarea rows="5" cols="30" style="min-width: 96%" >Janbex</textarea>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Material</label>
-                    <div class="controls">
-                        <textarea rows="5" cols="30" style="min-width: 96%" >ABS/nPLA/nPETG/n</textarea>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Density</label>
-                    <div class="controls">
-                        <input type="text"  class="input-small text-right" >
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Diameter</label>
-                    <div class="controls">
-                        <input type="text"  class="input-small text-right" >
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Temperature</label>
-                    <div class="controls">
-                        <input type="text"  class="input-small text-right" >
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Weight</label>
-                    <div class="controls">
-                        <input type="text"  class="input-small text-right" >
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Currency</label>
-                    <div class="controls">
-                        <input type="text"  class="input-small text-right" >
-                    </div>
-                </div>
-            </div>
--->
             <!-- EXPORT / IMPORT - TAB -->
             <div class="tab-pane" id="tab-spool-Export-Import">
                 <h3>Export</h3>
-
-            </div>
-            <!-- STORAGE - TAB -->
-            <div class="tab-pane" id="tab-spool-Storage">
                 <div class="control-group">
-                    <label class="control-label">Database file location</label>
                     <div class="controls">
-                        <div class="input-append">
-                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: databaseFileLocation"/>
-                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: deleteDatabaseAction"><i class="icon-trash"></i></a>
-                            <a href="#" class="btn btn-primary" title="Download Database" data-bind="attr: {href: downloadDatabaseUrl}" target="_blank"><i class="icon-download"></i></a>
+                        <span><b>SpoolManager Database</b>: Export all data as <a target="_newTab" href="#" data-bind="attr: {href: $root.apiClient.getExportUrl('CSV')}">CSV-File</a></span>
+                    </div>
+                </div>
+                <div class="control-group" data-bind="visible: isFilamentManagerPluginAvailable">
+                    <div class="controls">
+                        <span><b>Legacy: Filament Manager Database</b>: Export all data as <a target="_newTab" href="#" data-bind="attr: {href: $root.apiClient.getExportUrl('legacyFilamentManager'), css: {disabled: !$root.apiClient.getExportUrl('legacyFilamentManager')}}">CSV-File</a></span>
+                    </div>
+                </div>
+
+
+                <h3>Import</h3>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row">
+                            Import a CSV-File to the SpoolManager database.
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="span6">
+                                <label class="radio">
+                                    <input type="radio" name="importCSVMode" value="replace" data-bind="checked: pluginSettings.importCSVMode"> Replace current database
+                                </label>
+                                <label class="radio">
+                                        <input type="radio" name="importCSVMode" value="append" data-bind="checked: pluginSettings.importCSVMode"> Append to database
+                                </label>
+                            </div>
+
+                            <div class="span6">
+                                <div class="input-prepend">
+                                    <span class="btn fileinput-button">
+                                        <span>Browse...</span>
+                                        <input id="settings-spool-importcsv-upload"
+                                               type="file"
+                                               name="file"
+                                               data-url="/plugin/SpoolManager/importCSV"
+                                               accept=".csv">
+                                    </span>
+                                    <span class="add-on" data-bind="text: csvFileUploadName"></span>
+                                </div>
+                                <button class="btn btn-primary"
+                                        data-bind="disable: (csvImportInProgress() || csvFileUploadName() == undefined), click: performCSVImportFromUpload">
+                                    <i class="fa fa-spinner fa-spin"
+                                       data-bind="visible: csvImportInProgress"></i> Upload & import
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-<!--                <div class="control-group">-->
-<!--                    <label class="control-label">Snapshot file location</label>-->
-<!--                    <div class="controls">-->
-<!--                        <input type="text" disabled class="input-xlarge text-right" data-bind="value: snapshotFileLocation"/>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--
+
                 <div class="control-group">
-                    <label class="control-label">Database Backupname</label>
                     <div class="controls">
-                        e.g.<code>printJobHistory-backup-20191207-0924.db</code>
+                        <div>
+                            The CSV data will be added or totaly replaced the current database.
+                        </div>
+                        <div>
+                            HINT: Before importing a backup file of the database will be automatically created. See Storage-Tab for more details.<!-- <a href="#tab-pjh-Storage" data-toggle="tab">storage folder</a>. -->
+                        </div>
+                        <br>
+                        <div>
+                            Format:
+                            <ul>
+                                <li>CSV-Delimiter is a comma</li>
+                                <li>You need a header row and value rows</li>
+                                <li>The order of the columns doesn't matter</li>
+                                <li>Use allowed header names for importing values (see below). Other column names will be skipped</li>
+                            </ul>
+                            Mandatory column names:
+                            <ul>
+                                <li><code>Spool Name</code></li>
+                            </ul>
+                            <br>
+                            Other column names:
+                            <ul>
+                                <li><code>Color Name</code></li>
+                                <li><code>Color Code [hex]</code></li>
+                                <li><code>Vendor</code></li>
+                                <li><code>Material</code></li>
+                                <li><code>...</code></li>
+                            </ul>
+                        </div>
+                        <div>
+                            Download a <a target="_newTab" href="#" data-bind="attr: {href: $root.apiClient.getSampleCSVUrl()}">sample csv</a> for a full list of all columns
+                        </div>
                     </div>
                 </div>
--->
+
+
             </div>
+            <!-- STORAGE - TAB -->
+<!--            <div class="tab-pane" id="tab-spool-Storage">-->
+<!--                <div class="control-group">-->
+<!--                    <label class="control-label">Database file location</label>-->
+<!--                    <div class="controls">-->
+<!--                        <div class="input-append">-->
+<!--                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: databaseFileLocation"/>-->
+<!--                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: deleteDatabaseAction"><i class="icon-trash"></i></a>-->
+<!--                            <a href="#" class="btn btn-primary" title="Download Database" data-bind="attr: {href: downloadDatabaseUrl}" target="_blank"><i class="icon-download"></i></a>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--&lt;!&ndash;                <div class="control-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="control-label">Snapshot file location</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div class="controls">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <input type="text" disabled class="input-xlarge text-right" data-bind="value: snapshotFileLocation"/>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+<!--&lt;!&ndash;-->
+<!--                <div class="control-group">-->
+<!--                    <label class="control-label">Database Backupname</label>-->
+<!--                    <div class="controls">-->
+<!--                        e.g.<code>printJobHistory-backup-20191207-0924.db</code>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--&ndash;&gt;-->
+<!--            </div>-->
 
             <!-- DEBUGGING - TAB -->
             <div class="tab-pane" id="tab-spool-Debugging">
@@ -138,6 +173,7 @@
                         <label class="checkbox">
                             <input type="checkbox" data-bind="checked: pluginSettings.sqlLoggingEnabled" > SQL Logging enabled
                         </label>
+                        <span class="help-inline">Hint: You need to restart your server after you changed the checkbox value.</span>
                     </div>
                 </div>
             </div>

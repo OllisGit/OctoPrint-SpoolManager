@@ -88,12 +88,14 @@ function SpoolManagerEditSpoolDialog(){
         this.density = ko.observable();
         this.diameter = ko.observable();
         this.temperature = ko.observable();
+        this.colorName = ko.observable();
         this.color = ko.observable();
         this.totalWeight = ko.observable();
         this.remainingWeight = ko.observable();
+        this.remainingPercentage = ko.observable();
         this.usedLength = ko.observable();
         this.usedWeight = ko.observable();
-        this.usedPercentage = ko.observable();  // TODO needed?
+        this.usedPercentage = ko.observable();
         this.code = ko.observable();
 //        this.labels = ko.observable();
 //            this.allLabels = ko.observable();
@@ -166,10 +168,20 @@ function SpoolManagerEditSpoolDialog(){
         this.material(updateData.material);
         this.density(updateData.density);
         this.diameter(updateData.diameter);
+        this.colorName(updateData.colorName);
         this.color(updateData.color == null ? DEFAULT_COLOR : updateData.color);
+
+        if (this.colorName()==null || this.colorName().length == 0){
+            var colorName = tinycolor(this.color()).toName();
+            if (colorName != false){
+                this.colorName(colorName);
+            }
+        }
+
         this.temperature(updateData.temperature);
         this.totalWeight(updateData.totalWeight);
         this.remainingWeight(updateData.remainingWeight);
+        this.remainingPercentage(updateData.remainingPercentage);
         this.code(updateData.code);
         this.usedPercentage(updateData.usedPercentage);
         this.usedLength(updateData.usedLength);
@@ -183,7 +195,6 @@ function SpoolManagerEditSpoolDialog(){
 
         this.cost(updateData.cost);
         this.costUnit(updateData.costUnit);
-
 
         // update label selections
         if (updateData.labels != null){
@@ -327,32 +338,26 @@ function SpoolManagerEditSpoolDialog(){
             theme: 'snow'
         });
 
+        Quill.prototype.getHtml = function() {
+            return this.container.querySelector('.ql-editor').innerHTML;
+        };
+
         // initial coloring
         self._createSpoolItemForEditing();
         self._reColorFilamentIcon(self.spoolItemForEditing.color());
         self.spoolItemForEditing.color.subscribe(function(newColor){
             self._reColorFilamentIcon(newColor);
+            var colorName = tinycolor(newColor).toName();
+            if (colorName != false){
+                self.spoolItemForEditing.colorName(colorName);
+            }
         });
 
         // update used percentage
-        self.updateUsedPercentage = function(){
-            var total = self.spoolItemForEditing.totalWeight();
-            var remainingWeight = self.spoolItemForEditing.remainingWeight();
-            if (total != null && remainingWeight != null){
-                if (isNaN(total)==false && isNaN(remainingWeight)==false){
-                    result = remainingWeight/(total/100);
-                    self.spoolItemForEditing.usedPercentage(result);
-                }
-            }
-        }
-        self.spoolItemForEditing.remainingWeight.subscribe(function(newValue){
-            self.updateUsedPercentage();
-        });
-
-        // update RemainingWeight
-        self.updateRemainingWeight = function(){
+        self.updateRemainingValues = function(){
             var total = self.spoolItemForEditing.totalWeight();
             var used = self.spoolItemForEditing.usedWeight();
+            // - remaining weight
             if (total != null && used != null){
                 if (isNaN(total)==false && isNaN(used)==false && 0 != total.length && 0 != used.length){
                     remainingWeight = total - used;
@@ -363,13 +368,39 @@ function SpoolManagerEditSpoolDialog(){
             } else {
                 self.spoolItemForEditing.remainingWeight("");
             }
+            // - remaininig percentage
+            var remainingWeight = self.spoolItemForEditing.remainingWeight();
+            if (total != null && remainingWeight != null){
+                if (isNaN(total)==false && isNaN(remainingWeight)==false){
+                    result = Number(remainingWeight/(total/100)).toFixed(1);
+                    self.spoolItemForEditing.remainingPercentage(result);
+                } else {
+                    self.spoolItemForEditing.remainingPercentage("");
+                }
+            }
+        }
+
+        // update updateUsedPercentage
+        self.updateUsedPercentage = function(){
+            var total = self.spoolItemForEditing.totalWeight();
+            var used = self.spoolItemForEditing.usedWeight();
+            if (total != null && used != null){
+                if (isNaN(total)==false && isNaN(used)==false){
+                    result = Number(used/(total/100)).toFixed(1);
+                    self.spoolItemForEditing.usedPercentage(result);
+                } else {
+                    self.spoolItemForEditing.usedPercentage("");
+                }
+            }
         }
 
         self.spoolItemForEditing.totalWeight.subscribe(function(newValue){
-            self.updateRemainingWeight();
+            self.updateUsedPercentage();
+            self.updateRemainingValues();
         });
         self.spoolItemForEditing.usedWeight.subscribe(function(newValue){
-            self.updateRemainingWeight();
+            self.updateUsedPercentage();
+            self.updateRemainingValues();
         });
     }
 

@@ -1,13 +1,17 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+import datetime
 import json
 import os
 import logging
+import shutil
+import sqlite3
 
 from octoprint_SpoolManager.WrappedLoggingHandler import WrappedLoggingHandler
 from peewee import *
 
+from octoprint_SpoolManager.api import Transformer
 from octoprint_SpoolManager.models import SpoolModel
 from octoprint_SpoolManager.models.BaseModel import BaseModel
 from octoprint_SpoolManager.models.PluginMetaDataModel import PluginMetaDataModel
@@ -15,7 +19,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 
 FORCE_CREATE_TABLES = False
 
-CURRENT_DATABASE_SCHEME_VERSION = 1
+CURRENT_DATABASE_SCHEME_VERSION = 2
 
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
@@ -69,17 +73,98 @@ class DatabaseManager(object):
 			currentDatabaseSchemeVersion = int(schemeVersionFromDatabaseModel.value)
 			if (currentDatabaseSchemeVersion < CURRENT_DATABASE_SCHEME_VERSION):
 				# evautate upgrade steps (from 1-2 , 1...6)
-				print("We need to upgrade the database scheme from: '" + str(currentDatabaseSchemeVersion) + "' to: '" + str(CURRENT_DATABASE_SCHEME_VERSION) + "'")
-				pass
+				self._logger.info("We need to upgrade the database scheme from: '" + str(currentDatabaseSchemeVersion) + "' to: '" + str(CURRENT_DATABASE_SCHEME_VERSION) + "'")
+
+				try:
+					self.backupDatabaseFile(self._databasePath)
+					self._upgradeDatabase(currentDatabaseSchemeVersion, CURRENT_DATABASE_SCHEME_VERSION)
+				except Exception as e:
+					self._logger.error("Error during database upgrade!!!!")
+					self._logger.exception(e)
+					return
+				self._logger.info("Database-scheme successfully upgraded.")
 		pass
 
-		# databaseSchemeVersion = PluginMetaDataEntity.getDatabaseSchemeVersion(cursor)
-		# if databaseSchemeVersion == None or FORCE_CREATE_TABLES == True:
-		# 	self._createCurrentTables(cursor, FORCE_CREATE_TABLES)
-		# else:
-		# 	# check from which version we need to upgrade
-		# 	#	sql
-		# 	pass
+	def _upgradeDatabase(self,currentDatabaseSchemeVersion, targetDatabaseSchemeVersion):
+
+		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5]
+
+		for migrationMethodIndex in range(currentDatabaseSchemeVersion -1, targetDatabaseSchemeVersion -1):
+			self._logger.info("Database migration from '" + str(migrationMethodIndex + 1) + "' to '" + str(migrationMethodIndex + 2) + "'")
+			migrationFunctions[migrationMethodIndex]()
+			pass
+		pass
+
+	def _upgradeFrom4To5(self):
+		self._logger.info(" Starting 4 -> 5")
+
+	def _upgradeFrom3To4(self):
+		self._logger.info(" Starting 3 -> 4")
+
+	def _upgradeFrom2To3(self):
+		self._logger.info(" Starting 2 -> 3")
+		self._logger.info(" Successfully 2 -> 3")
+		pass
+
+
+	def _upgradeFrom1To2(self):
+		self._logger.info(" Starting 1 -> 2")
+		# What is changed:
+		# - SpoolModel: Add Column colorName
+		# - SpoolModel: Add Column remainingWeight (needed fro filtering, sorting)
+		connection = sqlite3.connect(self._databaseFileLocation)
+		cursor = connection.cursor()
+
+		sql = """
+		PRAGMA foreign_keys=off;
+		BEGIN TRANSACTION;
+
+			ALTER TABLE 'spo_spoolmodel' ADD 'colorName' VARCHAR(255);
+			ALTER TABLE 'spo_spoolmodel' ADD 'remainingWeight' REAL;
+
+			UPDATE 'spo_pluginmetadatamodel' SET value=2 WHERE key='databaseSchemeVersion';
+		COMMIT;
+		PRAGMA foreign_keys=on;
+		"""
+		cursor.executescript(sql)
+
+		connection.close()
+		self._logger.info("Database 'altered' successfully. Try to calculate remaining weight.")
+		#  Calculate the rmaining weight for all current spools
+		with self._database.atomic() as transaction:  # Opens new transaction.
+			try:
+
+				allSpoolModels = self.loadAllSpoolsByQuery(None)
+				for spoolModel in allSpoolModels:
+					totalWeight = spoolModel.totalWeight
+					usedWeight = spoolModel.usedWeight
+					remainingWeight = Transformer.calculateRemainingWeight(usedWeight, totalWeight)
+					if (remainingWeight != None):
+						spoolModel.remainingWeight = remainingWeight
+						spoolModel.save()
+
+				# do expicit commit
+				transaction.commit()
+			except Exception as e:
+				# Because this block of code is wrapped with "atomic", a
+				# new transaction will begin automatically after the call
+				# to rollback().
+				transaction.rollback()
+				self._logger.exception("Could not upgrade database scheme from 1 To 2:" + str(e))
+
+				self.sendErrorMessageToClient("error", "DatabaseManager", "Could not upgrade database scheme V1 to V2. See OctoPrint.log for details!")
+			pass
+
+
+
+		self._logger.info(" Successfully 1 -> 2")
+		pass
+
+
+
+
+
+
 	def _createDatabaseTables(self):
 		self._logger.info("Creating new database tables for spoolmanager-plugin")
 		self._database.connect(reuse_if_open=True)
@@ -90,15 +175,11 @@ class DatabaseManager(object):
 		self._database.close()
 
 	################################################################################################### public functions
-	# datapasePath '/Users/o0632/Library/Application Support/OctoPrint/data/PrintJobHistory'
-
-	# def getDatabaseFileLocation(self):
-	# 	return self._databaseFileLocation
-
 
 	def initDatabase(self, databasePath, sendMessageToClient):
 		self._logger.info("Init DatabaseManager")
 		self.sendMessageToClient = sendMessageToClient
+		self._databasePath = databasePath
 		self._databaseFileLocation = os.path.join(databasePath, "spoolmanager.db")
 
 		self._logger.info("Creating database in: " + str(self._databaseFileLocation))
@@ -131,6 +212,24 @@ class DatabaseManager(object):
 			logger.setLevel(logging.ERROR)
 			self._sqlLogger.setLevel(logging.ERROR)
 
+
+	def backupDatabaseFile(self, backupFolder):
+		now = datetime.datetime.now()
+		currentDate = now.strftime("%Y%m%d-%H%M")
+		backupDatabaseFileName = "spoolmanager-backup-"+currentDate+".db"
+		backupDatabaseFilePath = os.path.join(backupFolder, backupDatabaseFileName)
+		if not os.path.exists(backupDatabaseFilePath):
+			shutil.copy(self._databaseFileLocation, backupDatabaseFilePath)
+			self._logger.info("Backup of spoolmanager database created '"+backupDatabaseFilePath+"'")
+		else:
+			self._logger.warn("Backup of spoolmanager database ('" + backupDatabaseFilePath + "') is already present. No backup created.")
+		return backupDatabaseFilePath
+
+	def reCreateDatabase(self):
+		self._logger.info("ReCreating Database")
+		self._createDatabase(True)
+
+	################################################################################################ Database Model Methods
 	def loadSpool(self, databaseId):
 		try:
 			return SpoolModel.get_by_id(databaseId)
@@ -175,11 +274,11 @@ class DatabaseManager(object):
 		limit = int(tableQuery["to"])
 		sortColumn = tableQuery["sortColumn"]
 		sortOrder = tableQuery["sortOrder"]
-		# not needed at the moment filterName = tableQuery["filterName"]
+		filterName = tableQuery["filterName"]
 
 		myQuery = SpoolModel.select().offset(offset).limit(limit)
-		# if (filterName == "onlySuccess"):
-		# 	myQuery = myQuery.where(PrintJobModel.printStatusResult == "success")
+		if (filterName == "hideEmptySpools"):
+			myQuery = myQuery.where( (SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None))
 		# elif (filterName == "onlyFailed"):
 		# 	myQuery = myQuery.where(PrintJobModel.printStatusResult != "success")
 
@@ -198,6 +297,11 @@ class DatabaseManager(object):
 				myQuery = myQuery.order_by(SpoolModel.firstUse.desc())
 			else:
 				myQuery = myQuery.order_by(SpoolModel.firstUse)
+		if ("remaining" == sortColumn):
+			if ("desc" == sortOrder):
+				myQuery = myQuery.order_by(SpoolModel.remainingWeight.desc())
+			else:
+				myQuery = myQuery.order_by(SpoolModel.remainingWeight)
 		return myQuery
 
 

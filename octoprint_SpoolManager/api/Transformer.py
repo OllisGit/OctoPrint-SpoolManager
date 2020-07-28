@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 from octoprint_SpoolManager.common import StringUtils
 
-def _calculateRemainingWeight(usedWeight, totalWeight):
+def calculateRemainingWeight(usedWeight, totalWeight):
 	if (usedWeight == None or totalWeight == None):
 		return None
 
@@ -15,13 +15,24 @@ def _calculateRemainingWeight(usedWeight, totalWeight):
 
 	return None
 
-def _calculateUsedPercentage(remainingWeight, totalWeight):
+def _calculateRemainingPercentage(remainingWeight, totalWeight):
 	if (remainingWeight == None or totalWeight == None):
 		return None
 
 	if ( (type(remainingWeight) == int or type(remainingWeight) == float) and
 			(type(totalWeight) == int or type(totalWeight) == float) ):
 		result = remainingWeight / (totalWeight / 100.0);
+		return result
+
+	return None
+
+def _calculateUsedPercentage(usedWeight, totalWeight):
+	if (usedWeight == None or totalWeight == None):
+		return None
+
+	if ( (type(usedWeight) == int or type(usedWeight) == float) and
+			(type(totalWeight) == int or type(totalWeight) == float) ):
+		result = usedWeight / (totalWeight / 100.0);
 		return result
 
 	return None
@@ -40,10 +51,12 @@ def transformSpoolModelToDict(spoolModel):
 
 	totalWeight = spoolModel.totalWeight
 	usedWeight = spoolModel.usedWeight
-	remainingWeight = _calculateRemainingWeight(usedWeight, totalWeight)
-	usedPercentage = _calculateUsedPercentage(remainingWeight, totalWeight)
+	remainingWeight = calculateRemainingWeight(usedWeight, totalWeight)
+	remainingPercentage = _calculateUsedPercentage(remainingWeight, totalWeight)
+	usedPercentage = _calculateUsedPercentage(usedWeight, totalWeight)
 
 	spoolAsDict["remainingWeight"] = StringUtils.formatFloat(remainingWeight)
+	spoolAsDict["remainingPercentage"] = StringUtils.formatFloat(remainingPercentage)
 	spoolAsDict["usedPercentage"] = StringUtils.formatFloat(usedPercentage)
 
 
@@ -52,20 +65,12 @@ def transformSpoolModelToDict(spoolModel):
 	spoolAsDict["usedWeight"] = StringUtils.formatFloat(spoolModel.usedWeight)
 
 
-
-
-
 	# spoolAsDict["temperature"] = StringUtils.formatSave("{:.02f}", spoolAsDict["temperature"], "")
 	# spoolAsDict["weight"] = StringUtils.formatSave("{:.02f}", spoolAsDict["weight"], "")
 	# spoolAsDict["remainingWeight"] = StringUtils.formatSave("{:.02f}", spoolAsDict["remainingWeight"], "")
 	# spoolAsDict["usedLength"] = StringUtils.formatSave("{:.02f}", spoolAsDict["usedLength"], "")
 	# spoolAsDict["usedLength"] = StringUtils.formatSave("{:.02f}", spoolAsDict["usedLength"], "")
 
-	# spoolAsDict["firstUse"] = spoolModel.firstUse.strftime('%d.%m.%Y %H:%M')
-	# spoolAsDict["lastUse"] = spoolModel.lastUse.strftime('%d.%m.%Y %H:%M')
-
-	# spoolAsDict["firstUse"] = self._formatDateOrNone( spoolModel.firstUse )
-	# spoolAsDict["lastUse"] = self._formatDateOrNone( spoolModel.lastUse )
 
 	return spoolAsDict
 

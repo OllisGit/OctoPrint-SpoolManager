@@ -1,6 +1,39 @@
 {% import 'SpoolManager_tab_macros.jinja2' as forms %}
 <span id="modal-dialogs-spoolManager" style="display:none" >
 
+    <!-- CSV Import Status-Dialog -->
+    <div id="dialog_spoolManager_csvImportStatus" class="modal hide fade">
+        <div class="modal-header">
+            <h3 class="modal-title">CSV Import-Status <i class="fa fa-spinner fa-spin" data-bind="visible: csvImportDialog.importInProgress"></i></h3>
+        </div>
+        <div class="modal-body">
+            <div>Status: <b data-bind="text: csvImportDialog.importStatus"></b></div>
+            <div data-bind="visible:csvImportDialog.currentLineNumber">Parsing/Importing line: <b data-bind="text: csvImportDialog.currentLineNumber"></b></div>
+            <br/>
+            <div data-bind="visible:csvImportDialog.successMessages"><b data-bind="html: csvImportDialog.successMessages"></b></div>
+            <br/>
+            <div data-bind="visible:csvImportDialog.errorMessages"><b style="color:red" data-bind="html: csvImportDialog.errorMessages"></b></div>
+            <br/>
+            <div data-bind="visible:csvImportDialog.backupFilePath">Backup Database: <b data-bind="html: csvImportDialog.backupFilePath"></b></div>
+        </div>
+        <div class="modal-footer">
+            <div class="control-group">
+                <div class="controls">
+                    <button class="btn "  data-bind="disable: csvImportDialog.importInProgress, click: csvImportDialog.closeDialog" style="text-align:right">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+<!--    Spool EDIT Dialog-->
     <div id="dialog_spool_select" class="modal fade large" >
         <div class="modal-header">
             <h4 class="modal-title" ></h4>
@@ -137,7 +170,7 @@
                             <div class="control-group">
                                 <label class="control-label">Color</label>
                                 <div class="row controls">
-                                    <input id="filament-color-picker" type="text" name="border-color" class="pick-a-color form-control input-mini">
+                                    <input data-bind="textInput: spoolDialog.spoolItemForEditing.colorName"  type="text" class="input-small"  /><input id="filament-color-picker" type="text" name="border-color" class="pick-a-color form-control input-mini">
                                 </div>
                             </div>
                             <div class="control-group">
@@ -199,6 +232,10 @@
                                         <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.usedWeight" />
                                         <span class="add-on">g</span>
                                     </div>
+                                    <span class="input-append">
+                                        <input type="text" class="input-mini text-right" disabled data-bind="value: spoolDialog.spoolItemForEditing.usedPercentage" />
+                                        <span class="add-on">%</span>
+                                    </span>
                                 </div>
                             </div>
                             <div class="control-group">
@@ -209,7 +246,7 @@
                                         <span class="add-on">g</span>
                                     </span>
                                     <span class="input-append">
-                                        <input type="text" class="input-mini text-right" disabled data-bind="value: spoolDialog.spoolItemForEditing.usedPercentage" />
+                                        <input type="text" class="input-mini text-right" disabled data-bind="value: spoolDialog.spoolItemForEditing.remainingPercentage" />
                                         <span class="add-on">%</span>
                                     </span>
 

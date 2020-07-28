@@ -1,6 +1,43 @@
 <div id="sidebar_spool_select" class="control-group">
 <!--   TODO support for multiple spools for multiple tools -->
 
+<div id="selectedSpool">
+    <nobr>
+        <span data-bind="html: selectedSpoolText">
+            <span class="color-preview" style="background-color: rgb(255, 255, 0);"></span>
+            <span style="vertical-align:super">PLA-FirstSpool (125g/96%)</span>
+        </span>
+        <span style="vertical-align:super" data-bind="visible: selectedSpoolForSidebar">
+            &nbsp
+            <a href="#" data-bind="click: deselectSpoolsForSidebar" title="Deselect Spool"><span class="icon-remove"></span></a>
+        </span>
+    </nobr>
+    <br>
+    <nobr>
+<!--  Not needed autorelaod implemented      <a href="#" data-bind="click: loadSpoolsForSidebar" title="Reload spools entries"><span class="icon-refresh"></span></a>-->
+        <span class="btn-group">
+            <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">Spools<span class="caret"></span></button>
+
+            <ul class="dropdown-menu" style="position:initial" data-bind="foreach: allSpoolsForSidebar">
+                <li>
+                    <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data)">
+                        <span style="vertical-align:super">
+                            <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
+                            <span data-bind="text: $data.material"></span> - <span  data-bind="text: $data.displayName">FirstSpool (125g/96%)</span>
+                            <span data-bind="text: $root.remainingText($data)"></span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
+
+        </span>
+        <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideEmptySpoolsInSidebar" > Hide empty spools</span>
+    </nobr>
+
+</div>
+
+
+<!--
 
   <select id="selectSpoolSidebar"
           data-bind="options: allSpoolsForSidebar,
@@ -8,9 +45,9 @@
                      optionsText: buildSpoolNameForSidebar,
                      value: selectedSpoolForSidebar
                     ">
-<!--                     event: { change: onSelectSpoolItemForSidebar } ">-->
   </select>
-  <a href="#" data-bind="click: loadSpoolsForSidebar" title="Reload spools entries"><span class="icon-refresh"></span></a>
+ -->
+
   <div>
     <small>Order: last used. Limit: 30</small>
   </div>

@@ -32,12 +32,14 @@
             text-overflow: ellipsis;
         }
 // TODO Maybe not needed any more
-//        .dropdown-menu {
-//            max-height: 120px;
-//            overflow-y: auto;
-//            overflow-x: hidden;
-//        }
-
+        .dropdown-menu {
+            max-height: 120px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+.mydrop {
+position:block !important;
+}
 
 
 //////////// TESTZONE

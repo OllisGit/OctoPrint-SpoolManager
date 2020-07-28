@@ -26,18 +26,18 @@
                     Sort by:
                     <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('displayName'); }">Displayname <span data-bind="text: spoolItemTableHelper.sortOrderLabel('displayName')"></span></a> |
                     <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('lastUse'); }">Last use <span data-bind="text: spoolItemTableHelper.sortOrderLabel('lastUse')"></span></a> |
-                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('firstUse'); }">First use <span data-bind="text: spoolItemTableHelper.sortOrderLabel('firstUse')"></span></a>
+                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('firstUse'); }">First use <span data-bind="text: spoolItemTableHelper.sortOrderLabel('firstUse')"></span></a> |
+                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeSortOrder('remaining'); }">Remaining <span data-bind="text: spoolItemTableHelper.sortOrderLabel('remaining')"></span></a>
                 </small>
             </div>
-<!--    FILTER IS NOT NEEDED in Version 1        -->
-<!--            <div class="pull-right" style="clear: both;">-->
-<!--                <small>-->
-<!--                    Show prints:-->
-<!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('all'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('all') ? 'visible' : 'hidden'}"></i> all</a> |-->
-<!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('onlySuccess'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('onlySuccess') ? 'visible' : 'hidden'}"></i> only successful</a> |-->
+            <div class="pull-right" style="clear: both;">
+                <small>
+                    Show spools:
+                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('all'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('all') ? 'visible' : 'hidden'}"></i> all</a> |
+                    <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideEmptySpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideEmptySpools') ? 'visible' : 'hidden'}"></i> hide empty</a> |
 <!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('onlyFailed'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('onlyFailed') ? 'visible' : 'hidden'}"></i> only failed</a>-->
-<!--                </small>-->
-<!--            </div>-->
+                </small>
+            </div>
         </div>
     </div>
 
@@ -61,8 +61,11 @@
         </thead>
         <tbody data-bind="foreach: spoolItemTableHelper.paginatedItems" >
           <tr data-bind="click: function() { $root.showSpoolDialogAction($data); }">
-            <td ><span data-bind="text: displayName, attr: { title: displayName }"></span><br><span data-bind="text: vendor, attr: { title: vendor }"></span></td>
-            <td><div class="pick-a-color-markup"><span class="color-preview" data-bind="style: {'background-color': color}"></span><span data-bind="text: material"></span></div></td>
+            <td ><span data-bind="text: displayName, attr: { title: displayName }"></span><br><i><span data-bind="text: vendor, attr: { title: vendor }"></span></i></td>
+            <td><div class="pick-a-color-markup">
+                    <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }" ></span>
+                    <span style="vertical-align:super" data-bind="text: material"></span>
+                </div></td>
             <td><span data-bind="text: formatOnlyDate($data, 'lastUse')"></span><br><span data-bind="text: formatOnlyDate($data, 'firstUse')"></span></td>
             <td style="text-align: right;"><span data-bind="text: remainingWeight"></span>g<br><span data-bind="text: totalWeight"></span>g</td>
             <td style="text-align: right;"><span data-bind="text: usedPercentage"></span>%<br><span data-bind="text: usedLength"></span>mm</td>
