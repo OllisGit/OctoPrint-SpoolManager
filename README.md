@@ -4,7 +4,7 @@
 [![Released](https://img.shields.io/badge/dynamic/json.svg?color=brightgreen&label=released&url=https://api.github.com/repos/OllisGit/OctoPrint-SpoolManager/releases&query=$[0].published_at)]()
 ![GitHub Releases (by Release)](https://img.shields.io/github/downloads/OllisGit/OctoPrint-SpoolManager/latest/total.svg)
 
-# Release candidates are out!
+
 
 The OctoPrint-Plugin manages all spool informations and stores it in a database.
 
@@ -15,9 +15,9 @@ If you like it, I would be thankful about a cup of coffee :)
 
 [![More coffee, more code](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6SW5R6ZUKLB5E&source=url)
 
-## Planning Release #1
+## Release #1
 
-should include the following features:
+Included features
 
 ### Basic attributes to be captured:
 - [X] Spool basic attributes, like name,  color, material, vendor ...
@@ -28,26 +28,26 @@ should include the following features:
 - [ ] Labels
 - [ ] Provide "APIs" for [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
 
-
 ### UI features
 - [X] Better error-feedback (more then just the "happy-path")
 - [X] List all spools
 - [X] Edit single spool
 - [X] Copy single spool
 - [X] Template spool
-- [X] Sort spool table (Displayname, Last/First use)
+- [X] Sort spool table (Displayname, Last/First use, Remaining)
 - [X] Force to select a spool before printing
+- [X] Warn if not enough filament is present
 - [X] Filter spool table
 
-## Planning Release #2
+## Planning
 
+- [ ] Multi Tool support
 - [ ] External Database
 - [ ] Table column visibility
 - [ ] Capture Spool-Image
 - [ ] Scan QR/Barcodes of a spool
 
-- [ ] Multi Tool support
-
+more planing details could be found [here](https://github.com/OllisGit/OctoPrint-SpoolManager/projects/1)
 
 ## Screenshots
 <!---
@@ -57,13 +57,14 @@ should include the following features:
 ![listSpools-tab](screenshots/listSpools-tab.png "ListSpools-Tab")
 ![selectSpools-sidebar](screenshots/selectSpool-sidebar.png "SelectSpool-Sidebar")
 ![editSpool-dialog](screenshots/editSpool-dialog.png "EditSpool-Dialog")
+
 ![scanSpool-dialog](screenshots/scanSpool-dialog.png "ScanSpool-Dialog")
 
 
 ## Setup
 
-Plugin is in "working-mode" and not released in official OctoPrint Plugin-Repository.
-You need to install it manually using this URL:
+Install via the bundled [Plugin Manager](http://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
+or manually using this URL:
 
     https://github.com/OllisGit/OctoPrint-SpoolManager/releases/latest/download/master.zip
 

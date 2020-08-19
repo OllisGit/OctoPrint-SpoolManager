@@ -9,6 +9,7 @@ import json
 import shutil
 import tempfile
 import threading
+from math import pi as PI
 
 from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 from octoprint_SpoolManager.common import StringUtils, CSVExportImporter
@@ -123,8 +124,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 			spoolIdInt = spoolDict["id"]
 			nameUnicode = spoolDict["name"]
-			usedFloat = spoolDict["used"]
-			weightFloat = spoolDict["weight"]
+			usedWeightFloat = spoolDict["used"]
+			totalWeightFloat = spoolDict["weight"]
 			tempOffsetInt = spoolDict["temp_offset"]
 			costFloat = spoolDict["cost"]
 			profileDict = spoolDict["profile"]
@@ -141,16 +142,29 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			spoolModel.density = densityFloat
 			spoolModel.diameter = diameterFloat
 			spoolModel.cost = costFloat
-			spoolModel.costUnit = "ToDo"
-			spoolModel.usedLength = usedFloat
-			spoolModel.totalWeight = weightFloat
+			spoolModel.costUnit = self._filamentManagerPluginImplementation._settings.get(["currencySymbol"])
+			spoolModel.totalWeight = totalWeightFloat
+			spoolModel.usedWeight = usedWeightFloat
+
+			spoolModel.usedLength = self._calculateUsedLength(spoolModel.usedWeight, spoolModel.density, spoolModel.diameter)
 
 			allSpoolModels.append(spoolModel)
 
 		return allSpoolModels
 
-	def _selectSpool(self, databaseId):
 
+	def _calculateUsedLength(self, usedWeight, density, diameter):
+		if (diameter == None or density == None or usedWeight == None):
+			self._logger.info("Could not calculate used length because some values (usedWeigth, density, diameter) were missing")
+			return None
+		radius = diameter / 2.0
+		volume = (usedWeight) / density
+		length = (volume * 1000) / PI * radius * radius
+		lengthRounded = int(round(length))
+		return lengthRounded;
+
+
+	def _selectSpool(self, databaseId):
 		spoolModel = None
 		if (databaseId != None):
 			spoolModel = self._databaseManager.loadSpool(databaseId)
@@ -216,7 +230,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# 		"result": "noSpoolForUsageCheck",
 			# 	})
 			# else:
-			result = self.checkRemainingFilament();
+			result = self.checkRemainingFilament()
 			if (result == False):
 				return flask.jsonify({
 					"result": "filamentNotEnough",
@@ -353,7 +367,24 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		sendCSVUploadStatusToClient("finished", "", backupDatabaseFilePath,  successMessage, errorCollection)
 		pass
 
+	#######################################################################################   DOWNLOAD DATABASE-FILE
+	@octoprint.plugin.BlueprintPlugin.route("/downloadDatabase", methods=["GET"])
+	def download_database(self):
+		return send_file(self._databaseManager.getDatabaseFileLocation(),
+						 mimetype='application/octet-stream',
+						 attachment_filename='spoolmanager.db',
+						 as_attachment=True)
 
+
+	#######################################################################################   DELETE DATABASE
+	@octoprint.plugin.BlueprintPlugin.route("/deleteDatabase", methods=["DELETE"])
+	def delete_database(self):
+
+		self._databaseManager.reCreateDatabase()
+
+		return flask.jsonify({
+			"result": "success"
+		})
 
 
 	###########################################################################################   EXPORT DATABASE as CSV
@@ -373,7 +404,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		else:
 			if (exportType == "legacyFilamentManager"):
-				print("do something")
 				allSpoolLegacyList = self._filamentManagerPluginImplementation.filamentManager.get_all_spools()
 				if (allSpoolLegacyList != None):
 
@@ -437,6 +467,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		materials = list(self._databaseManager.loadCatalogMaterials(tableQuery))
 		labels = list(self._databaseManager.loadCatalogLabels(tableQuery))
 
+		materials = self._addAdditionalMaterials(materials)
+
 		tempateSpoolAsDict = None
 		allTemplateSpools = self._databaseManager.loadSpoolTemplateSpool()
 		for spool in allTemplateSpools:
@@ -469,6 +501,31 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 								"selectedSpool": selectedSpoolAsDict
 							})
 
+	def _addAdditionalMaterials(self, databaseMaterials):
+
+		allMeterials = [
+			"PLA",
+			"ABS",
+			"PETG",
+			"NYLON",
+			"TPU",
+			"PC",
+			"Wood",
+			"Carbon Fiber",
+			"PC_ABS",
+			"HIPS",
+			"PVA",
+			"ASA",
+			"PP",
+			"POM",
+			"PMMA",
+			"FPE"
+		]
+		for currentMaterial in allMeterials:
+			if ( (currentMaterial.upper() in databaseMaterials) == False and (currentMaterial.lower() in databaseMaterials) == False):
+				databaseMaterials.append(currentMaterial)
+		return databaseMaterials
+
 
 	#######################################################################################################   SAVE SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/saveSpool", methods=["PUT"])
@@ -493,11 +550,12 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 	#####################################################################################################   DELETE SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/deleteSpool/<int:databaseId>", methods=["DELETE"])
-	def delete_printjob(self, databaseId):
+	def delete_spool(self, databaseId):
 		self._logger.info("API Delete spool with database id '" + str(databaseId) + "'")
 		printJob = self._databaseManager.deleteSpool(databaseId)
 		# snapshotFilename = CameraManager.buildSnapshotFilename(printJob.printStartDateTime)
 		# self._cameraManager.deleteSnapshot(snapshotFilename)
 		# self._databaseManager.deletePrintJob(databaseId)
 		return flask.jsonify()
+
 

@@ -21,7 +21,7 @@ def _calculateRemainingPercentage(remainingWeight, totalWeight):
 
 	if ( (type(remainingWeight) == int or type(remainingWeight) == float) and
 			(type(totalWeight) == int or type(totalWeight) == float) ):
-		result = remainingWeight / (totalWeight / 100.0);
+		result = remainingWeight / (totalWeight / 100.0)
 		return result
 
 	return None
@@ -32,7 +32,7 @@ def _calculateUsedPercentage(usedWeight, totalWeight):
 
 	if ( (type(usedWeight) == int or type(usedWeight) == float) and
 			(type(totalWeight) == int or type(totalWeight) == float) ):
-		result = usedWeight / (totalWeight / 100.0);
+		result = usedWeight / (totalWeight / 100.0)
 		return result
 
 	return None

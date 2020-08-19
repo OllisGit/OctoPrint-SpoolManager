@@ -1,6 +1,6 @@
 from logging import StreamHandler
 
-
+# Used for SQL-Logging
 class WrappedLoggingHandler(StreamHandler):
 
 	def __init__(self, wrappedLogger):

@@ -42,6 +42,18 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
         return _addApiKeyIfNecessary("./plugin/" + this.pluginId + "/sampleCSV");
     }
 
+    //////////////////////////////////////////////////////////////////////////////// LOAD AdditionalSettingsValues
+    this.callAdditionalSettings = function (responseHandler){
+        var urlToCall = this.baseUrl + "api/plugin/"+this.pluginId+"?action=additionalSettingsValues";
+        $.ajax({
+            url: urlToCall,
+            type: "GET"
+        }).done(function( data ){
+            responseHandler(data)
+        });
+    }
+
+
     //////////////////////////////////////////////////////////////////////////////// LOAD FILTERED/SORTED PrintJob-Items
     this.callLoadSpoolsByQuery = function (tableQuery, responseHandler){
         query = _buildRequestQuery(tableQuery);

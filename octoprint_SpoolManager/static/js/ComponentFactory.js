@@ -162,24 +162,25 @@ function ComponentFactory(pluginId) {
     ///////////////////////////////////////////////////////////////////////////////////////////////// SELECT WITH FILTER
     this.createSelectWithFilter = function(elementId, dropDownParent){
 
-        // Widget Model
-        var componentViewModel = {
-            allOptions: ko.observableArray(),
-            selectedOption: ko.observable()
-        }
-
         var elementSelector = "#" + elementId;
         // Build Widget
-        var select = $(elementSelector).select2({
+        var select2 = $(elementSelector).select2({
           dropdownParent: dropDownParent,
           placeholder: "Choose...",
           tags: true
         });
 
+        // Widget Model
+        var componentViewModel = {
+            allOptions: ko.observableArray(),
+            selectedOption: ko.observable(),
+            select2Element: select2
+        }
+
         // sync: observable -> jquery
         componentViewModel.selectedOption.subscribe(function(newSelection){
-            select.val(newSelection);
-            select.trigger('change');
+            select2.val(newSelection);
+            select2.trigger('change');
         });
         return componentViewModel;
     }

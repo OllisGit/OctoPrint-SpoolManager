@@ -146,11 +146,12 @@ class SpoolmanagerPlugin(
 
 
 	def _sendMessageToClient(self, type, title, message):
+		self._logger.warning("ToClient: " + type + "#" + title + "#" + message)
+
 		self._sendDataToClient(dict(action="showPopUp",
 									type=type,
 									title= title,
 									message=message))
-
 
 
 	def _checkForMissingPluginInfos(self, sendToClient=False):
@@ -291,8 +292,11 @@ class SpoolmanagerPlugin(
 			self._logger.warning("Odomenter could not detect any extrusion")
 			return
 		currentExtrusionLenght = currentExtrusionForAllTools[0] # TODO Support of multi-tool
-		spoolUsegLength = 0.0 if StringUtils.isEmpty(spoolModel.usedLength) == True else spoolModel.usedLength
-		newUsedLength = spoolUsegLength + currentExtrusionLenght
+		self._logger.info("Extruded filament length: " + str(currentExtrusionLenght))
+		spoolUsedLength = 0.0 if StringUtils.isEmpty(spoolModel.usedLength) == True else spoolModel.usedLength
+		self._logger.info("Current Spool filament length: " + str(spoolUsedLength))
+		newUsedLength = spoolUsedLength + currentExtrusionLenght
+		self._logger.info("New Spool filament length: " + str(newUsedLength))
 		spoolModel.usedLength = newUsedLength
 		# - Used weight
 		diameter = spoolModel.diameter
@@ -314,7 +318,7 @@ class SpoolmanagerPlugin(
 	def _on_clientOpened(self, payload):
 		# start-workaround https://github.com/foosel/OctoPrint/issues/3400
 		import time
-		time.sleep(2)
+		time.sleep(3)
 		selectedSpoolAsDict = None
 
 		# Send plugin storage information
@@ -338,14 +342,18 @@ class SpoolmanagerPlugin(
 
 		pass
 
-	def _on_file_selected(self, payload):
-		metadata = self._file_manager.get_metadata(payload["origin"], payload["path"])
-		if ("analysis" in metadata):
-			allFilemants = metadata["analysis"]["filament"]
-			# TODO support multiple tools
-			if (allFilemants):
-				self.metaDataFilamentLength = allFilemants["tool0"]["length"]
-				self.checkRemainingFilament()
+	def _on_file_selectionChanged(self, payload):
+		if ("origin" in payload and "path" in payload):
+			metadata = self._file_manager.get_metadata(payload["origin"], payload["path"])
+			if ("analysis" in metadata):
+				allFilemants = metadata["analysis"]["filament"]
+				# TODO support multiple tools
+				if (allFilemants):
+					self.metaDataFilamentLength = allFilemants["tool0"]["length"]
+					self.checkRemainingFilament()
+					return
+
+		self.metaDataFilamentLength = 0.0
 
 	pass
 	######################################################################################### Hooks and public functions
@@ -366,27 +374,33 @@ class SpoolmanagerPlugin(
 		pass
 
 	def on_event(self, event, payload):
+
 		# if event == Events.PRINTER_STATE_CHANGED:
-		if Events.CLIENT_OPENED == event:
+		if (Events.CLIENT_OPENED == event):
 			self._on_clientOpened(payload)
 			return
-		elif Events.PRINT_STARTED == event:
+
+		elif (Events.PRINT_STARTED == event):
 			self.alreadyCanceled = False
 			self._on_printJobStarted()
-		elif Events.PRINT_DONE == event:
+
+		elif (Events.PRINT_DONE == event):
 			self._on_printJobFinished("success", payload)
-		elif Events.PRINT_FAILED == event:
+
+		elif (Events.PRINT_FAILED == event):
 			if self.alreadyCanceled == False:
 				self._on_printJobFinished("failed", payload)
-		elif Events.PRINT_CANCELLED == event:
+
+		elif (Events.PRINT_CANCELLED == event):
 			self.alreadyCanceled = True
 			self._on_printJobFinished("canceled", payload)
-		if Events.FILE_SELECTED == event:
-			self._on_file_selected(payload)
+
+		if (Events.FILE_SELECTED == event or
+			Events.FILE_DESELECTED == event or
+			Events.UPDATED_FILES == event):
+			self._on_file_selectionChanged(payload)
 			return
-		# if Events.FILE_DESELECTED == event:
-		# 	self._calculatedFilamentLength = None
-		# 	return
+
 		pass
 
 
@@ -407,6 +421,12 @@ class SpoolmanagerPlugin(
 				self._settings.set([], self.get_settings_defaults())
 				self._settings.save()
 				return flask.jsonify(self.get_settings_defaults())
+
+			# because of some race conditions, we can't push the initalDate during client-open event. So we provide the settings on request
+			if "additionalSettingsValues" == action:
+				return flask.jsonify({
+					"isFilamentManagerPluginAvailable":self._filamentManagerPluginImplementation != None
+				})
 
 	##~~ SettingsPlugin mixin
 	def get_settings_defaults(self):
@@ -445,7 +465,6 @@ class SpoolmanagerPlugin(
 			js=[
 				"js/quill.min.js",
 				"js/select2.min.js",
-				"js/datepicker.min.js",
 				"js/jquery.datetimepicker.full.min.js",
 				"js/tinycolor.js",
 				"js/pick-a-color.js",
@@ -460,7 +479,6 @@ class SpoolmanagerPlugin(
 			css=[
 				"css/quill.snow.css",
 				"css/select2.min.css",
-				"css/datepicker.css",
 				"css/jquery.datetimepicker.min.css",
 				"css/pick-a-color-1.1.8.min.css",
 				"css/SpoolManager.css"

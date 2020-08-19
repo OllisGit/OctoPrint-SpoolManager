@@ -60,6 +60,24 @@ function SpoolManagerEditSpoolDialog(){
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////// ITEM MODEL
     var DEFAULT_COLOR = "#ff0000";
+    var densityMap = {
+        PLA:	1.24,
+        ABS:	1.04,
+        PETG:	1.27,
+        NYLON:	1.52,
+        TPU:	1.21,
+        PC:	    1.3,
+        Wood:	1.28,
+        Carbon:	1.3,
+        PC_ABS:	1.19,
+        HIPS:	1.03,
+        PVA:	1.23,
+        ASA:	1.05,
+        PP:	    0.9,
+        POM:	1.4,
+        PMMA:	1.18,
+        FPE:	2.16
+    };
 
     var SpoolItem = function(spoolData, editable) {
         // Init Item
@@ -79,6 +97,7 @@ function SpoolManagerEditSpoolDialog(){
         };
 
         // - list all attributes
+        this.isSpoolVisible = ko.observable(false);
         this.isEmpty = ko.observable();
         this.databaseId = ko.observable();
         this.isTemplate = ko.observable();
@@ -117,10 +136,25 @@ function SpoolManagerEditSpoolDialog(){
         this.vendor = vendorViewModel.selectedOption;
         this.allVendors = vendorViewModel.allOptions;
 
-
         var materialViewModel = self.componentFactory.createSelectWithFilter("spool-material-select", $('#spool-form'));
         this.material = materialViewModel.selectedOption;
         this.allMaterials = materialViewModel.allOptions;
+
+        // Autosuggest for "density"
+        this.material.subscribe(function(newMaterial){
+            if ($("#dialog_spool_select").is(":visible")){
+                if (self.spoolItemForEditing.isSpoolVisible() == true){
+                    var mat = self.spoolItemForEditing.material();
+                    if (mat){
+                        var density = densityMap[mat.toUpperCase()]
+                        if (density){
+                           self.spoolItemForEditing.density(density);
+                        }
+                    }
+                }
+            }
+        });
+
 
         if (editable == true){
 
@@ -184,6 +218,7 @@ function SpoolManagerEditSpoolDialog(){
         this.remainingPercentage(updateData.remainingPercentage);
         this.code(updateData.code);
         this.usedPercentage(updateData.usedPercentage);
+
         this.usedLength(updateData.usedLength);
         this.usedWeight(updateData.usedWeight);
 
@@ -360,7 +395,8 @@ function SpoolManagerEditSpoolDialog(){
             // - remaining weight
             if (total != null && used != null){
                 if (isNaN(total)==false && isNaN(used)==false && 0 != total.length && 0 != used.length){
-                    remainingWeight = total - used;
+                    var remainingWeight = (total - used).toFixed(1);
+                    console.info("calculated remainWeight:" + remainingWeight );
                     self.spoolItemForEditing.remainingWeight(remainingWeight);
                 } else {
                     self.spoolItemForEditing.remainingWeight("");
@@ -446,15 +482,26 @@ function SpoolManagerEditSpoolDialog(){
             self.isExistingSpool(false);
             templateSpoolItemCopy = ko.mapping.toJS(self.templateSpool);
             self.spoolItemForEditing.update(templateSpoolItemCopy);
+            // reset values for a new spool
             self.spoolItemForEditing.isTemplate(false);
             self.spoolItemForEditing.databaseId(null);
             self.spoolItemForEditing.costUnit(self.pluginSettings.currencySymbol());
+            self.spoolItemForEditing.displayName(null);
+            self.spoolItemForEditing.usedWeight(0.0);
+            self.spoolItemForEditing.usedLength(0.0);
+            self.spoolItemForEditing.lastUse(null);
+            self.spoolItemForEditing.firstUse(null);
+//            self.spoolItemForEditing.displayName(null);
+//            self.spoolItemForEditing.displayName(null);
+//            self.spoolItemForEditing.displayName(null);
+
         }else{
             self.isExistingSpool(true);
             // Make a copy of provided spoolItem
             spoolItemCopy = ko.mapping.toJS(spoolItem);
             self.spoolItemForEditing.update(spoolItemCopy);
         }
+        self.spoolItemForEditing.isSpoolVisible(true);
         self.spoolDialog.modal({
             //minHeight: function() { return Math.max($.fn.modal.defaults.maxHeight() - 80, 250); }
             keyboard: false,
@@ -475,6 +522,7 @@ function SpoolManagerEditSpoolDialog(){
         self.spoolItemForEditing.update(spoolItemCopy);
         self.spoolItemForEditing.isTemplate(false);
         self.spoolItemForEditing.databaseId(null);
+        self.spoolItemForEditing.isSpoolVisible(true);
     }
 
 
@@ -486,8 +534,6 @@ function SpoolManagerEditSpoolDialog(){
             alert("Displayname not entered!");
             return;
         }
-
-
         var noteText = self.noteEditor.getText();
         var noteDeltaFormat = self.noteEditor.getContents();
         var noteHtml = self.noteEditor.getHtml();
@@ -503,6 +549,7 @@ function SpoolManagerEditSpoolDialog(){
 //        self.printJobItemForEdit.noteHtml(noteHtml);
 //
         self.apiClient.callSaveSpool(self.spoolItemForEditing, function(allPrintJobsResponse){
+            self.spoolItemForEditing.isSpoolVisible(false);
             self.spoolDialog.modal('hide');
             self.closeDialogHandler(true);
         });
@@ -512,6 +559,7 @@ function SpoolManagerEditSpoolDialog(){
         var result = confirm("Do you really want to delete this spool?");
         if (result == true){
             self.apiClient.callDeleteSpool(self.spoolItemForEditing.databaseId(), function(responseData) {
+                self.spoolItemForEditing.isSpoolVisible(false);
                 self.spoolDialog.modal('hide');
                 self.closeDialogHandler(true);
             });

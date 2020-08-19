@@ -1,8 +1,11 @@
 <div id="sidebar_spool_select" class="control-group">
 <!--   TODO support for multiple spools for multiple tools -->
 
-<div id="selectedSpool">
+  <div id="selectedSpool">
     <nobr>
+        <span style="vertical-align:super" data-bind="visible: selectedSpoolForSidebar">
+            <a href="#" data-bind="click: editSpoolFromSidebar" title="Edit Spool"><span class="icon-edit"></span></a>
+        </span>
         <span data-bind="html: selectedSpoolText">
             <span class="color-preview" style="background-color: rgb(255, 255, 0);"></span>
             <span style="vertical-align:super">PLA-FirstSpool (125g/96%)</span>
@@ -34,36 +37,11 @@
         <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideEmptySpoolsInSidebar" > Hide empty spools</span>
     </nobr>
 
-</div>
-
-
-<!--
-
-  <select id="selectSpoolSidebar"
-          data-bind="options: allSpoolsForSidebar,
-                     optionsCaption: 'Select Spool...',
-                     optionsText: buildSpoolNameForSidebar,
-                     value: selectedSpoolForSidebar
-                    ">
-  </select>
- -->
+  </div>
 
   <div>
-    <small>Order: last used. Limit: 30</small>
+    <small>Order: last used.</small>
   </div>
 
-<!--doesn't work button group
-<div class="input-append">
-  <input class="span2" id="appendedDropdownButton" type="text">
-  <div class="btn-group">
-    <button class="btn dropdown-toggle" data-toggle="dropdown">
-      Action
-      <span class="caret"></span>
-    </button>
-    <ul class="dropdown-menu">
-        <li>Hallo</li>
-    </ul>
-  </div>
-</div>
--->
+
 </div>

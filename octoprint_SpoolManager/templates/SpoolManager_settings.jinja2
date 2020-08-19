@@ -6,7 +6,7 @@
         <ul class="nav nav-tabs">
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
             <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
-<!--            <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>-->
+            <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
             <li><a href="#tab-spool-Debugging" data-toggle="tab">Debugging</a></li>
         </ul>
         <div class="tab-content">
@@ -32,7 +32,7 @@
                         <label class="checkbox">
                             <input type="checkbox" data-bind="checked: pluginSettings.warnIfFilamentNotEnough" > Warn, if filament is not enough for print job
                         </label>
-                        <span class="help-inline">Hint: It is ony working, if the spool contains values for these fields: <br>
+                        <span class="help-inline">Hint: It is only working, if the spool contains values for these fields: <br>
                             <code>diameter</code>, <code>density</code>, <code>total weight</code>!</span>
                     </div>
                 </div>
@@ -139,32 +139,32 @@
 
             </div>
             <!-- STORAGE - TAB -->
-<!--            <div class="tab-pane" id="tab-spool-Storage">-->
+            <div class="tab-pane" id="tab-spool-Storage">
+                <div class="control-group">
+                    <label class="control-label">Database file location</label>
+                    <div class="controls">
+                        <div class="input-append">
+                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: databaseFileLocation"/>
+                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: deleteDatabaseAction"><i class="icon-trash"></i></a>
+                            <a href="#" class="btn btn-primary" title="Download Database" data-bind="attr: {href: downloadDatabaseUrl}" target="_blank"><i class="icon-download"></i></a>
+                        </div>
+                    </div>
+                </div>
 <!--                <div class="control-group">-->
-<!--                    <label class="control-label">Database file location</label>-->
+<!--                    <label class="control-label">Snapshot file location</label>-->
 <!--                    <div class="controls">-->
-<!--                        <div class="input-append">-->
-<!--                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: databaseFileLocation"/>-->
-<!--                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: deleteDatabaseAction"><i class="icon-trash"></i></a>-->
-<!--                            <a href="#" class="btn btn-primary" title="Download Database" data-bind="attr: {href: downloadDatabaseUrl}" target="_blank"><i class="icon-download"></i></a>-->
-<!--                        </div>-->
+<!--                        <input type="text" disabled class="input-xlarge text-right" data-bind="value: snapshotFileLocation"/>-->
 <!--                    </div>-->
 <!--                </div>-->
-<!--&lt;!&ndash;                <div class="control-group">&ndash;&gt;-->
-<!--&lt;!&ndash;                    <label class="control-label">Snapshot file location</label>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <div class="controls">&ndash;&gt;-->
-<!--&lt;!&ndash;                        <input type="text" disabled class="input-xlarge text-right" data-bind="value: snapshotFileLocation"/>&ndash;&gt;-->
-<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
-<!--&lt;!&ndash;                </div>&ndash;&gt;-->
-<!--&lt;!&ndash;-->
-<!--                <div class="control-group">-->
-<!--                    <label class="control-label">Database Backupname</label>-->
-<!--                    <div class="controls">-->
-<!--                        e.g.<code>printJobHistory-backup-20191207-0924.db</code>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--&ndash;&gt;-->
-<!--            </div>-->
+
+                <div class="control-group">
+                    <label class="control-label">Database Backupname</label>
+                    <div class="controls">
+                        e.g.<code>spoolmanager-backup-20200812-0924.db</code>
+                    </div>
+                </div>
+
+            </div>
 
             <!-- DEBUGGING - TAB -->
             <div class="tab-pane" id="tab-spool-Debugging">

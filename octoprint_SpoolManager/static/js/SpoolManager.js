@@ -185,7 +185,7 @@ $(function() {
             var tableQuery = {
                 filterName: currentFilterName,
                 from: 0,
-                to: 30,
+                to: 3000,
                 sortColumn: "lastUse",
                 sortOrder: "desc"
             }
@@ -251,6 +251,15 @@ $(function() {
                 }
                 self.selectedSpoolForSidebar(spoolItem)
             });
+        }
+
+        self.editSpoolFromSidebar = function(){
+            if (self.selectedSpoolForSidebar() == null){
+                alert("Something is wrong. No Spool is selected to edit from sidebar!")
+            }
+
+            var spoolItem = self.selectedSpoolForSidebar();
+            self.showSpoolDialogAction(spoolItem);
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////////// TABLE / TAB
@@ -369,10 +378,16 @@ $(function() {
             self.spoolDialog.afterBinding();
             self.downloadDatabaseUrl(self.apiClient.getDownloadDatabaseUrl());
 
-//            self.spoolDialog.showDialog(null, closeDialogHandler);
+// testing            self.spoolDialog.showDialog(null, closeDialogHandler);
         }
 
-
+        self.onSettingsShown = function(){
+            if (self.isFilamentManagerPluginAvailable() == false){
+                self.apiClient.callAdditionalSettings(function(responseData) {
+                    self.isFilamentManagerPluginAvailable(responseData.isFilamentManagerPluginAvailable);
+                });
+            }
+        }
         // receive data from server
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin != PLUGIN_ID) {

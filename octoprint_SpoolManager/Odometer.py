@@ -1,4 +1,5 @@
 # coding=utf-8
+# borrowed from FilamentManager
 # master commit hash: bd1a9c0 on 1 Dec 2017
 from __future__ import absolute_import
 

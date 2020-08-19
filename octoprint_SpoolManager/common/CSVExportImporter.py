@@ -213,7 +213,7 @@ def transform2CSV(allJobsDict):
 
 	csvLine =  "," .join(headerList) + "\n"
 	# writer.writerow(headerList)
-	print(csvLine)
+	# print(csvLine)
 	yield csvLine
 
 	# Write CSV-Content
@@ -225,7 +225,7 @@ def transform2CSV(allJobsDict):
 			csvColumnValue = '"' + csvColumn.getCSV(job)  + '"'
 			csvRow.append(csvColumnValue)
 		csvLine = ",".join(csvRow) + "\n"
-		print(csvLine)
+		# print(csvLine)
 		yield csvLine
 		# writer.writerow(csvRow)
 	# result = si.getvalue()

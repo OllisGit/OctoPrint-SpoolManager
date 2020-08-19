@@ -206,8 +206,8 @@ def to_native_str(s_or_u):
 		return to_unicode(s_or_u)
 
 
-f = "0";
-print(formatFloat(f))
+# f = "0";
+# print(formatFloat(f))
 # value = "  1   "
 #
 # result = isEmpty(value)

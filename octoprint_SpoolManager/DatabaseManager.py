@@ -24,8 +24,6 @@ CURRENT_DATABASE_SCHEME_VERSION = 2
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
 
-
-
 class DatabaseManager(object):
 
 	def __init__(self, parentLogger, sqlLoggingEnabled):
@@ -53,9 +51,6 @@ class DatabaseManager(object):
 			self._createOrUpgradeSchemeIfNecessary()
 		self._logger.info("Done DatabaseManager")
 
-
-	def getDatabaseFileLocation(self):
-		return self._databaseFileLocation
 
 	def _createOrUpgradeSchemeIfNecessary(self):
 		schemeVersionFromDatabaseModel = None
@@ -85,6 +80,7 @@ class DatabaseManager(object):
 				self._logger.info("Database-scheme successfully upgraded.")
 		pass
 
+
 	def _upgradeDatabase(self,currentDatabaseSchemeVersion, targetDatabaseSchemeVersion):
 
 		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5]
@@ -95,17 +91,19 @@ class DatabaseManager(object):
 			pass
 		pass
 
+
 	def _upgradeFrom4To5(self):
 		self._logger.info(" Starting 4 -> 5")
 
+
 	def _upgradeFrom3To4(self):
 		self._logger.info(" Starting 3 -> 4")
+
 
 	def _upgradeFrom2To3(self):
 		self._logger.info(" Starting 2 -> 3")
 		self._logger.info(" Successfully 2 -> 3")
 		pass
-
 
 	def _upgradeFrom1To2(self):
 		self._logger.info(" Starting 1 -> 2")
@@ -130,7 +128,7 @@ class DatabaseManager(object):
 
 		connection.close()
 		self._logger.info("Database 'altered' successfully. Try to calculate remaining weight.")
-		#  Calculate the rmaining weight for all current spools
+		#  Calculate the remaining weight for all current spools
 		with self._database.atomic() as transaction:  # Opens new transaction.
 			try:
 
@@ -155,14 +153,8 @@ class DatabaseManager(object):
 				self.sendErrorMessageToClient("error", "DatabaseManager", "Could not upgrade database scheme V1 to V2. See OctoPrint.log for details!")
 			pass
 
-
-
 		self._logger.info(" Successfully 1 -> 2")
 		pass
-
-
-
-
 
 
 	def _createDatabaseTables(self):
@@ -175,6 +167,10 @@ class DatabaseManager(object):
 		self._database.close()
 
 	################################################################################################### public functions
+
+	def getDatabaseFileLocation(self):
+		return self._databaseFileLocation
+
 
 	def initDatabase(self, databasePath, sendMessageToClient):
 		self._logger.info("Init DatabaseManager")
@@ -200,6 +196,7 @@ class DatabaseManager(object):
 		self._createDatabase(FORCE_CREATE_TABLES)
 
 		pass
+
 
 	def showSQLLogging(self, enabled):
 		import logging
@@ -237,8 +234,10 @@ class DatabaseManager(object):
 			return None
 		pass
 
+
 	def loadSpoolTemplateSpool(self):
 		return SpoolModel.select().where(SpoolModel.isTemplate == True)
+
 
 	def saveModel(self, model):
 
@@ -316,6 +315,7 @@ class DatabaseManager(object):
 
 		return myQuery.count()
 
+
 	def loadCatalogVendors(self, tableQuery):
 		result = set()
 		result.add("")
@@ -326,6 +326,7 @@ class DatabaseManager(object):
 				result.add(value)
 		return result;
 
+
 	def loadCatalogMaterials(self, tableQuery):
 		result = set()
 		result.add("")
@@ -335,6 +336,7 @@ class DatabaseManager(object):
 			if (value != None):
 				result.add(value)
 		return result;
+
 
 	def loadCatalogLabels(self, tableQuery):
 		result = set()
@@ -347,6 +349,7 @@ class DatabaseManager(object):
 				for singleLabel in spoolLabels:
 					result.add(singleLabel)
 		return result;
+
 
 	def deleteSpool(self, databaseId):
 		with self._database.atomic() as transaction:  # Opens new transaction.

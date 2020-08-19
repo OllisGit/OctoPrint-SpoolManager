@@ -70,14 +70,6 @@
             <td style="text-align: right;"><span data-bind="text: remainingWeight"></span>g<br><span data-bind="text: totalWeight"></span>g</td>
             <td style="text-align: right;"><span data-bind="text: usedPercentage"></span>%<br><span data-bind="text: usedLength"></span>mm</td>
             <td><span data-bind="html: noteHtml, attr: { title: noteText }"></span></td>
-<!-- TODO remove action-button not needed
-            <td>
-                <div class="btn-group action-buttons" >
-                    <div class="btn btn-mini" data-bind="click: function() { $root.showSpoolDialogAction($data); }" title="{{ _('Additional data') }}"><i class="icon-pencil"></i></div>
-                    <div class="btn btn-mini" data-bind="click: $root.removePrintJobAction" title="Remove Printjob from History"><i class="icon-trash"></i></div>
-                </div>
-            </td>
--->
           </tr>
         </tbody>
     </table>
