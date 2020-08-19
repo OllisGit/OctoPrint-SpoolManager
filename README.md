@@ -15,9 +15,7 @@ If you like it, I would be thankful about a cup of coffee :)
 
 [![More coffee, more code](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6SW5R6ZUKLB5E&source=url)
 
-## Release #1
-
-Included features
+## Included features
 
 ### Basic attributes to be captured:
 - [X] Spool basic attributes, like name,  color, material, vendor ...
