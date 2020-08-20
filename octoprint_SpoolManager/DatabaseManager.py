@@ -58,7 +58,7 @@ class DatabaseManager(object):
 			schemeVersionFromDatabaseModel = PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION)
 			pass
 		except Exception as e:
-			errorMessage = e.message
+			errorMessage = str(e)
 			if errorMessage.startswith("no such table"):
 				self._createDatabaseTables()
 			else:
