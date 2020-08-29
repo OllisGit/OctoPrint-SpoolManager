@@ -493,7 +493,7 @@ class SpoolmanagerPlugin(
 		# for details.
 		return dict(
 			SpoolManager=dict(
-				displayName="SpoolManager Plugin",
+				displayName="SpoolManager",
 				displayVersion=self._plugin_version,
 
 				# version check: github repository
