@@ -64,6 +64,7 @@ $(function() {
         self.loginState = parameters[0];
         self.settingsViewModel = parameters[1];
         self.printerStateViewModel = parameters[2];
+        self.filesViewModel = parameters[3];
 
         self.pluginSettings = null;
 
@@ -92,6 +93,22 @@ $(function() {
         };
 
         ///////////////////////////////////////////////////// START: SETTINGS
+
+        self.showLocalBusyIndicator = ko.observable(false);
+        self.showExternalBusyIndicator = ko.observable(false);
+        $("#spoolmanger-settings-tab").find('a[data-toggle="tab"]').on('shown', function (e) {
+              var activatedTab = e.target.hash; // activated tab
+              var prevTab = e.relatedTarget.hash; // previous tab
+              console.info("PrevTab:" + prevTab + " ActiveTab:"+activatedTab);
+
+              if ("#tab-spool-Storage" == activatedTab){
+//                self.showLocalBusyIndicator(true);
+//                self.showExternalBusyIndicator(true);
+              }
+        });
+
+
+
         self.isFilamentManagerPluginAvailable = ko.observable(false);
 
         self.databaseFileLocation = ko.observable("hello");
@@ -268,6 +285,46 @@ $(function() {
             self.spoolDialog.showDialog(null, closeDialogHandler);
         }
 
+
+        var TableAttributeVisibility = function (){
+            this.displayName = ko.observable(true);
+            this.material = ko.observable(true);
+            this.lastFirstUse = ko.observable(true);
+            this.weight = ko.observable(true);
+            this.used = ko.observable(true);
+            this.note = ko.observable(true);
+        }
+        self.tableAttributeVisibility = new TableAttributeVisibility();
+
+        self.initTableVisibilities = function(){
+            // load all settings from browser storage
+            if (!Modernizr.localstorage) {
+                // damn!!!
+                return false;
+            }
+
+            assignVisibility = function(attributeName){
+                var storageKey = "spoolmanager.table.visible." + attributeName;
+                if (localStorage[storageKey] == null){
+                    localStorage[storageKey] = true
+                } else {
+                    self.tableAttributeVisibility[attributeName]( "true" == localStorage[storageKey]);
+                }
+                self.tableAttributeVisibility[attributeName].subscribe(function(newValue){
+                    localStorage[storageKey] = newValue;
+                });
+            }
+
+            assignVisibility("displayName");
+            assignVisibility("material");
+            assignVisibility("lastFirstUse");
+            assignVisibility("weight");
+            assignVisibility("used");
+            assignVisibility("note");
+        }
+
+
+
         ///////////////////////////////////////////////////////////////////////////////////////////////// TABLE BEHAVIOR
         self.spoolItemTableHelper = new TableItemHelper(function(tableQuery, observableTableModel, observableTotalItemCount){
             // api-call
@@ -308,19 +365,18 @@ $(function() {
 
 
         ///////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT PRINT-BUTTON
-        const startPrint = self.printerStateViewModel.print;
-        self.printerStateViewModel.print = function confirmSpoolSelectionBeforeStartPrint() {
-
+        const origStartPrintFunction = self.printerStateViewModel.print;
+        const newStartPrintFunction = function confirmSpoolSelectionBeforeStartPrint() {
                 // api-call
                 self.apiClient.allowedToPrint(function(responseData){
                     var result = responseData.result;
                     if ("startPrint" == result){
-                        startPrint();
+                        origStartPrintFunction();
                     } else {
                         if ("noSpoolSelected" == result){
                             var check = confirm('Do you want to start the print without a selected spool?');
                             if (check == true) {
-                                startPrint();
+                                origStartPrintFunction();
                             }
                             return;
                         }
@@ -332,7 +388,7 @@ $(function() {
                         if ("filamentNotEnough" == result){
                             var check = confirm('Not enough filament. Do you want to start the print anyway?');
                             if (check == true) {
-                                startPrint();
+                                origStartPrintFunction();
                             }
                             return;
                         }
@@ -340,19 +396,64 @@ $(function() {
                             var question = "Please verify your selected Spool '"+responseData.spoolName+"'. Do you want to start the print anyway?";
                             var check = confirm(question);
                             if (check == true) {
-                                startPrint();
+                                origStartPrintFunction();
                             }
                         }
                     }
                 });
         };
 
+        self.filesViewModel.loadFile = function confirmSpoolSelectionOnLoadAndPrint(data, printAfterLoad) {
+            // orig. SourceCode
+            if (!self.filesViewModel.loginState.hasPermission(self.filesViewModel.access.permissions.FILES_SELECT)) return;
+
+            if (!data) {
+                return;
+            }
+
+            if (printAfterLoad && self.filesViewModel.listHelper.isSelected(data) && self.filesViewModel.enablePrint(data)) {
+                // file was already selected, just start the print job
+                // SPOOLMANAGER-CHANGE changed OctoPrint.job.start();
+                startPrintFunction();
+            } else {
+                // select file, start print job (if requested and within dimensions)
+                var withinPrintDimensions = self.filesViewModel.evaluatePrintDimensions(data, true);
+                var print = printAfterLoad && withinPrintDimensions;
+
+                if (print && self.filesViewModel.settingsViewModel.feature_printStartConfirmation()) {
+                    showConfirmationDialog({
+                        message: gettext("This will start a new print job. Please check that the print bed is clear."),
+                        question: gettext("Do you want to start the print job now?"),
+                        cancel: gettext("No"),
+                        proceed: gettext("Yes"),
+                        onproceed: function() {
+                            OctoPrint.files.select(data.origin, data.path, false).done(function () {
+                                                                                    if (print){
+                                                                                     newStartPrintFunction();
+                                                                                    }
+                                                                                });
+                        },
+                        nofade: true
+                    });
+                } else {
+                    OctoPrint.files.select(data.origin, data.path, false).done(function () {
+                                                                                    if (print){
+                                                                                     newStartPrintFunction();
+                                                                                    }
+                                                                                });
+                }
+            }
+        };
+
+
+        self.printerStateViewModel.print = newStartPrintFunction;
 
         //////////////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT HOOKS
         self.onBeforeBinding = function() {
             // assign current pluginSettings
             self.pluginSettings = self.settingsViewModel.settings.plugins[PLUGIN_ID];
-
+            // Table visibility
+            self. initTableVisibilities();
             // resetSettings-Stuff
              new ResetSettingsUtilV2(self.pluginSettings).assignResetSettingsFeature(PLUGIN_ID, function(data){
                 // no additional reset function needed in V2
@@ -417,6 +518,12 @@ $(function() {
                 return;
             }
 
+            if ("reloadTable and sidebarSpools" == data.action){
+                self.spoolItemTableHelper.reloadItems();
+                self.loadSpoolsForSidebar();
+                return;
+            }
+
             if ("csvImportStatus" == data.action){
                 self.csvImportDialog.updateText(data);
                 return;
@@ -454,7 +561,8 @@ $(function() {
         dependencies: [
             "loginStateViewModel",
             "settingsViewModel",
-            "printerStateViewModel"
+            "printerStateViewModel",
+            "filesViewModel"
         ],
         // Elements to bind to, e.g. #settings_plugin_SpoolManager, #tab_plugin_SpoolManager, ...
         elements: [

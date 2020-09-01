@@ -295,6 +295,67 @@
                 "#" + myColorVars.typedColor);
             }
           }
+
+
+///////////////////////////////////////////////
+          if (settings.showAdvanced) {
+            var newColor = $thisEl.val();
+            var hsl = tinycolor(newColor).toHsl();
+            var $advancedContainer = $thisEl.parent().find(".advanced-list");
+            var spectrumWidth = parseInt($advancedContainer.find(".color-box").first().width(),10);
+
+            //Set Hue
+            var $hueSpectrum = $advancedContainer.find(".spectrum-hue");
+            var $hueBand = $hueSpectrum.find(".highlight-band");
+            var $hueValue = $advancedContainer.find(".hue-value");
+            var hbWidth = $hueBand.outerWidth();
+            var halfHBWidth = hbWidth / 2;
+            //inverse of hsl equation in getHighlightedHue
+            var position = hsl.h/360*spectrumWidth;
+            $hueBand.css("left", position - halfHBWidth);
+
+            //Set Saturation
+            var $satSpectrum = $advancedContainer.find(".spectrum-saturation");
+            var $satBand = $satSpectrum.find(".highlight-band");
+            var $saturationValue = $advancedContainer.find(".saturation-value");
+            var sbWidth = $satBand.outerWidth();
+            var halfSBWidth = sbWidth / 2;
+            //inverse of hsl equation in getHighlightedSaturation
+            var position = hsl.s*spectrumWidth;
+            $satBand.css("left", position - halfSBWidth);
+
+            //Set Lightness
+            var $lightSpectrum = $advancedContainer.find(".spectrum-lightness");
+            var $lightBand = $lightSpectrum.find(".highlight-band");
+            var $lightnessValue = $advancedContainer.find(".lightness-value");
+            var lbWidth = $lightBand.outerWidth();
+            var halfLBWidth = lbWidth / 2;
+            //I made this up.  It looks like hsl.l += multiplier, which is
+            //calculated in getColorMultiplier.  This is just tweaking lightness
+            //but I want to just set it.  So taking an educated guess.
+            var position = (1.0-hsl.l)*spectrumWidth;
+            $lightBand.css("left", position - halfLBWidth);
+
+            //Make sure all variables are updated correctly
+            methods.updateSaturationStyles($satSpectrum,hsl.h,hsl.l);
+            methods.updateHueStyles($hueSpectrum,hsl.s,hsl.l);
+            methods.updateLightnessStyles($lightSpectrum,hsl.h,hsl.s);
+            var $advancedPreview = $advancedContainer.find(".color-preview");
+            $advancedPreview.css("background-color","#" + newColor);
+
+            //Update lookup values (code looks up current values instead of
+            //calculating each time based on band position)
+            $hueValue.text(Math.floor( hsl.h ));
+            $lightnessValue.text(Math.floor(hsl.l * 100) + "%");
+            $saturationValue.text(Math.floor(hsl.s * 100) + "%");
+            $hueSpectrum.attr('data-value', hsl.h);
+            $satSpectrum.attr('data-value', hsl.s);
+            $lightSpectrum.attr('data-value', hsl.l);
+          }
+
+
+
+
         },
 
         // must be called with apply and an arguments array like [{thisEvent}]
@@ -872,7 +933,6 @@
           var hue = Math.floor((position/spectrumWidth) * 360),
               color = "hsl(" + hue + "," + saturationString + "," + lightnessString + ")";
           color = "#" + tinycolor(color).toHex();
-
           $advancedPreview.css("background-color",color);
           $hueValue.text(hue);
           methods.updateLightnessStyles($lightnessSpectrum,hue,currentSaturation);
@@ -981,11 +1041,14 @@
           }
         }
         if (settings.showAdvanced) {
-          advancedStatus = {
-            h: 0,
-            s: 1,
-            l: 0.5
-          };
+
+
+
+//          advancedStatus = {
+//            h: 0,
+//            s: 1,
+//            l: 0.5
+//          };
 
           myElements.advancedSpectrums = myElements.thisWrapper.find(".advanced-list").find(".color-box");
           myElements.advancedHighlightBands = myElements.thisWrapper.find(".advanced-list").find(".highlight-band");
@@ -1080,23 +1143,38 @@
 
         if (settings.showAdvanced) {
 
+          function getAdvancedStatus() {
+            var hslObj = {
+                h: $(myElements.hueSpectrum).attr('data-value'),
+                s: $(myElements.saturationSpectrum).attr('data-value'),
+                l: $(myElements.lightnessSpectrum).attr('data-value')
+            }
+            return hslObj;
+          }
+
           // for dragging advanced sliders
-
-
           $(myElements.hueHighlightBand).on(dragEvent, function(event) {
-            advancedStatus.h = methods.getHighlightedHue.apply(this, [advancedStatus]);
+//            advancedStatus.h = methods.getHighlightedHue.apply(this, [advancedStatus]);
+            var newH = methods.getHighlightedHue.apply(this, [getAdvancedStatus()]);
+            $(myElements.hueSpectrum).attr('data-value', newH);
           });
 
           $(myElements.lightnessHighlightBand).on(dragEvent, function() {
-            methods.calculateHighlightedColor.apply(this, [{"type": "advanced", "hsl": advancedStatus}]);
+//            methods.calculateHighlightedColor.apply(this, [{"type": "advanced", "hsl": advancedStatus}]);
+              methods.calculateHighlightedColor.apply(this, [{"type": "advanced", "hsl": getAdvancedStatus()}]);
           }).on(endEvent, function () {
-            advancedStatus.l = methods.calculateHighlightedColor.apply(this, [{"type": "advanced", "hsl": advancedStatus}]);
+//            advancedStatus.l = methods.calculateHighlightedColor.apply(this, [{"type": "advanced", "hsl": advancedStatus}]);
+                var newL = methods.calculateHighlightedColor.apply(this, [{"type": "advanced", "hsl": getAdvancedStatus()}]);
+                $(myElements.lightnessSpectrum).attr('data-value', newL);
           });
 
           $(myElements.saturationHighlightBand).on(dragEvent, function() {
-            methods.getHighlightedSaturation.apply(this, [advancedStatus]);
+//            methods.getHighlightedSaturation.apply(this, [advancedStatus]);
+                methods.getHighlightedSaturation.apply(this, [getAdvancedStatus()]);
           }).on(endDragEvent, function () {
-            advancedStatus.s = methods.getHighlightedSaturation.apply(this, [advancedStatus]);
+//            advancedStatus.s = methods.getHighlightedSaturation.apply(this, [advancedStatus]);
+            var newS = methods.getHighlightedSaturation.apply(this, [getAdvancedStatus()]);
+            $(myElements.saturationSpectrum).attr('data-value', newS);
           });
 
           $(myElements.advancedHighlightBand).on(endDragEvent, function () {
@@ -1104,13 +1182,14 @@
           });
 
           // for clicking/tapping advanced sliders
-
           $(myElements.lightnessSpectrum).click( function (event) {
             event.stopPropagation(); // stop this click from closing the dropdown
             var $highlightBand = $(this).find(".highlight-band"),
                 dimensions = methods.getMoveableArea($highlightBand);
             methods.moveHighlightBand($highlightBand, dimensions, event);
-            advancedStatus.l = methods.calculateHighlightedColor.apply($highlightBand, [{"type": "advanced", "hsl": advancedStatus}]);
+//            advancedStatus.l = methods.calculateHighlightedColor.apply($highlightBand, [{"type": "advanced", "hsl": advancedStatus}]);
+            var newL = methods.calculateHighlightedColor.apply($highlightBand, [{"type": "advanced", "hsl": getAdvancedStatus()}]);
+            $(myElements.lightnessSpectrum).attr('data-value', newL);
           });
 
           $(myElements.hueSpectrum).click( function (event) {
@@ -1118,7 +1197,9 @@
             var $highlightBand = $(this).find(".highlight-band"),
                 dimensions = methods.getMoveableArea($highlightBand);
             methods.moveHighlightBand($highlightBand, dimensions, event);
-            advancedStatus.h = methods.getHighlightedHue.apply($highlightBand, [advancedStatus]);
+//            advancedStatus.h = methods.getHighlightedHue.apply($highlightBand, [advancedStatus]);
+            var newH = methods.getHighlightedHue.apply($highlightBand, [getAdvancedStatus()]);
+            $(myElements.hueSpectrum).attr('data-value', newH);
           });
 
           $(myElements.saturationSpectrum).click( function (event) {
@@ -1126,7 +1207,9 @@
             var $highlightBand = $(this).find(".highlight-band"),
                 dimensions = methods.getMoveableArea($highlightBand);
             methods.moveHighlightBand($highlightBand, dimensions, event);
-            advancedStatus.s = methods.getHighlightedSaturation.apply($highlightBand, [advancedStatus]);
+//            advancedStatus.s = methods.getHighlightedSaturation.apply($highlightBand, [advancedStatus]);
+            var newS = methods.getHighlightedSaturation.apply($highlightBand, [getAdvancedStatus()]);
+            $(myElements.saturationSpectrum).attr('data-value', newS);
           });
 
           $(myElements.advancedSpectrums).click( function () {
@@ -1134,8 +1217,8 @@
           });
 
           //for clicking advanced color preview
-
           $(myElements.advancedPreview).click( function () {
+
             var selectedColor = tinycolor($(this).css("background-color")).toHex();
             $(myElements.thisEl).val(selectedColor);
             $(myElements.thisEl).trigger("change");

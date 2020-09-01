@@ -37,7 +37,7 @@ class SpoolModel(BaseModel):
 	purchasedFrom = CharField(null=True)
 	purchasedOn = DateField(null=True)
 	cost = FloatField(null=True)
-	costUnit = CharField(null=True)
+	costUnit = CharField(null=True)	# deprecated needs to be removed, value should be used from pluginSettings
 
 	labels = TextField(null=True)
 

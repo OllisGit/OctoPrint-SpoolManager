@@ -3,7 +3,7 @@
 
 
     <div class="tabbable"> <!-- Only required for left/right tabs -->
-        <ul class="nav nav-tabs">
+        <ul class="nav nav-tabs" id="spoolmanger-settings-tab">
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
             <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
             <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
@@ -141,6 +141,28 @@
             <!-- STORAGE - TAB -->
             <div class="tab-pane" id="tab-spool-Storage">
                 <div class="control-group">
+
+<!-- Instance name is not needed for SpoolManager
+                    <h4>Instance Name</h4>
+                    <div class="control-group" >
+                        <label class="control-label" >OctoPrint Name</label>
+                        <div class="controls">
+                            <input type="text" class="input-large" >
+                            <span class="help-block">The instance name is used to identified the print jobs in an external database. <br/>
+                            <div class="alert">If you change this name, you can't read the print jobs from the dabase anymore. You need to manually replace the name in the external database. TODO implement renaming function.</div>
+                            </span>
+                        </div>
+                    </div>
+-->
+                    <!-- LOCAL DATABASE -->
+                    <h4>Local SQLite3 Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
+                    <label class="radio">
+                        <input type="radio" name="externalDatabaseGroup" value="false" data-bind="checked: pluginSettings.databaseSettings.useExternal"> Use local SqLite3 database
+                    </label>
+
+                    <div class="controls">
+                    </div>
+
                     <label class="control-label">Database file location</label>
                     <div class="controls">
                         <div class="input-append">
@@ -150,12 +172,6 @@
                         </div>
                     </div>
                 </div>
-<!--                <div class="control-group">-->
-<!--                    <label class="control-label">Snapshot file location</label>-->
-<!--                    <div class="controls">-->
-<!--                        <input type="text" disabled class="input-xlarge text-right" data-bind="value: snapshotFileLocation"/>-->
-<!--                    </div>-->
-<!--                </div>-->
 
                 <div class="control-group">
                     <label class="control-label">Database Backupname</label>
@@ -163,7 +179,78 @@
                         e.g.<code>spoolmanager-backup-20200812-0924.db</code>
                     </div>
                 </div>
+<!--
+                <div class="control-group no-bottom-gap">
+                    <label class="control-label">Item count</label>
+                    <div class="controls">
+                        <input type="text" disabled class="input-small text-right" value="123">
+                    </div>
+                </div>
 
+                <div class="control-group">
+                    <label class="control-label">Scheme version</label>
+                    <div class="controls">
+                        <input type="text" disabled class="input-small text-right" value="5">
+                    </div>
+                </div>
+-->
+                <!-- EXTERNAL DATABASE
+                <h4>External Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
+                <label class="radio">
+                    <input type="radio" name="externalDatabaseGroup" value="true" data-bind="checked: pluginSettings.databaseSettings.useExternal"> Use external database
+                </label>
+
+                <div class="controls">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Host</label>
+                    <div class="controls">
+                        <input type="text" data-bind="value: pluginSettings.databaseSettings.host"/>
+                        <button class="btn btn-info pull-right" style="margin-right: 80px;">Test connection</button>
+                    </div>
+
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Port</label>
+                    <div class="controls">
+                        <input type="text" data-bind="value: pluginSettings.databaseSettings.port"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Database Name</label>
+                    <div class="controls">
+                        <input type="text" data-bind="value: pluginSettings.databaseSettings.databaseName"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">User</label>
+                    <div class="controls">
+                        <input type="text" data-bind="value: pluginSettings.databaseSettings.user"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Password</label>
+                    <div class="controls">
+                        <input type="password" data-bind="value: pluginSettings.databaseSettings.password"/>
+                    </div>
+                </div>
+
+                <div class="control-group no-bottom-gap">
+                    <label class="control-label">Item count</label>
+                    <div class="controls">
+                        <input type="text" disabled class="input-small text-right" value="123">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Scheme version</label>
+                    <div class="controls">
+                        <input type="text" disabled class="input-small text-right" value="5">
+                    </div>
+                </div>
+                -->
             </div>
 
             <!-- DEBUGGING - TAB -->

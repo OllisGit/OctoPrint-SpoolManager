@@ -45,7 +45,8 @@ function ComponentFactory(pluginId) {
         }
 
         var componentViewModel = {
-            currentDateTime: ko.observable()
+            currentDateTime: ko.observable(),
+            isEnabled: ko.observable(true)
         }
 
         var elementSelector = "#" + elementId ;
@@ -59,7 +60,9 @@ function ComponentFactory(pluginId) {
         });
 
         $($(elementSelector).parent().find('span[class=add-on]')[0]).on('click', function () {
-            $(elementSelector).datetimepicker('show');
+            if (componentViewModel.isEnabled() == true){
+                $(elementSelector).datetimepicker('show');
+            }
         });
 
 

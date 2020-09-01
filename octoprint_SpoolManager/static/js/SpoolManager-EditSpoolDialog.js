@@ -157,7 +157,6 @@ function SpoolManagerEditSpoolDialog(){
 
 
         if (editable == true){
-
             var colorViewModel = self.componentFactory.createColorPicker("filament-color-picker");
             this.color = colorViewModel.selectedColor;
             this.color(DEFAULT_COLOR);  // needed
@@ -168,7 +167,6 @@ function SpoolManagerEditSpoolDialog(){
             this.firstUse = firstUseViewModel.currentDateTime;
             this.lastUse = lastUseViewModel.currentDateTime;
             this.purchasedOn = purchasedOnViewModel.currentDateTime;
-
         }
 
         self.labelsViewModel = self.componentFactory.createLabels("spool-labels-select", $('#spool-form'));
@@ -534,6 +532,9 @@ function SpoolManagerEditSpoolDialog(){
             alert("Displayname not entered!");
             return;
         }
+        // workaround
+        self.spoolItemForEditing.costUnit(self.pluginSettings.currencySymbol())
+
         var noteText = self.noteEditor.getText();
         var noteDeltaFormat = self.noteEditor.getContents();
         var noteHtml = self.noteEditor.getHtml();

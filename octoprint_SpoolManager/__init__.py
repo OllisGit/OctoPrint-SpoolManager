@@ -311,7 +311,7 @@ class SpoolmanagerPlugin(
 
 		self._databaseManager.saveModel(spoolModel)
 		self._sendDataToClient(dict(
-									action="reloadTable"
+									action="reloadTable and sidebarSpools"
 									))
 		pass
 
@@ -448,13 +448,24 @@ class SpoolmanagerPlugin(
 		## Debugging
 		settings[SettingsKeys.SETTINGS_KEY_SQL_LOGGING_ENABLED] = False
 
+		## Database
+		settings["databaseSettings"] = {
+			"useExternal": "true",
+			"type": "postgres",
+			"host": "localhost",
+			"port": 5432,
+			"databaseName": "PrintJobDatabase",
+			"user": "Olli",
+			"password": "illO"
+		}
+
 		return settings
 
 	##~~ TemplatePlugin mixin
 	def get_template_configs(self):
 		return [
 			dict(type="tab", name="Spools"),
-			dict(type="settings", custom_bindings=True)
+			dict(type="settings", custom_bindings=True, name="Spool Manager")
 		]
 
 	##~~ AssetPlugin mixin
@@ -498,7 +509,7 @@ class SpoolmanagerPlugin(
 
 				# version check: github repository
 				type="github_release",
-				user="you",
+				user="OllisGit",
 				repo="OctoPrint-SpoolManager",
 				current=self._plugin_version,
 

@@ -201,13 +201,21 @@
                                 </div>
                             </div>
                             <div class="control-group">
-                                <label class="control-label">Temperature</label>
-                                <div class="controls">
+                                <label class="control-label">Temperature<sup>4</sup> Tool</label>
+                                <div class="row controls">
                                     <div class="input-append">
-                                        <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
+                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
                                         <span class="add-on">°C</span>
                                     </div>
+
+                                    <span>&nbsp;Bed</span>
+                                    <div class="input-append">
+                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
+
                                 </div>
+
                             </div>
                             <div class="control-group no-bottom-gap">
                                 <label class="control-label">Total weight <sup>2</sup></label>
@@ -271,6 +279,7 @@
                                     <div><sup>1</sup><small>Mandatory field</small></div>
                                     <div><sup>2</sup><small>Needed for filament usage prediction</small></div>
                                     <div><sup>3</sup><small>See <a href="https://bitfab.io/blog/3d-printing-materials-densities/" target="newTab">https://bitfab.io/blog/3d-printing-materials-densities/ (without warranty)</a></small></div>
+                                    <div><sup>4</sup><small>Not send to the printer</small></div>
                                  </label>
                             </div>
 
@@ -309,7 +318,7 @@
                                         <div class="controls">
                                             <div class="input-append">
                                                 <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.cost"/>
-                                                <span class="add-on" data-bind="text: spoolDialog.spoolItemForEditing.costUnit" >€</span>
+                                                <span class="add-on" data-bind="text: pluginSettings.currencySymbol" >€</span>
                                             </div>
                                         </div>
                                     </div>

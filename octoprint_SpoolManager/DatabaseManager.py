@@ -24,7 +24,23 @@ CURRENT_DATABASE_SCHEME_VERSION = 2
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
 
+
+
 class DatabaseManager(object):
+
+	class DatabaseSettings:
+		useExternal = False
+		# Internal stuff
+		fileLocation = ""
+		backupFileLocation = ""
+		# External stuff
+		dialect = "postgresql" # sqlite, mysql, postgresql
+		host = ""
+		port = 0
+		user = 0
+		password = 0
+
+
 
 	def __init__(self, parentLogger, sqlLoggingEnabled):
 		self.sqlLoggingEnabled = sqlLoggingEnabled
@@ -168,6 +184,25 @@ class DatabaseManager(object):
 
 	################################################################################################### public functions
 
+
+	def buildDatabaseSettings(self, pluginSettings):
+
+		databaseSettings = self.DatabaseSettings()
+
+		# "databaseSettings"] = {
+		# "useExternal": "true",
+		# "type": "postgres",
+		# "host": "localhost",
+		# "port": 5432,
+		# "databaseName": "PrintJobDatabase",
+		# "user": "Olli",
+		# "password": "illO"
+
+
+
+		return databaseSettings
+		pass
+
 	def getDatabaseFileLocation(self):
 		return self._databaseFileLocation
 
@@ -301,6 +336,12 @@ class DatabaseManager(object):
 				myQuery = myQuery.order_by(SpoolModel.remainingWeight.desc())
 			else:
 				myQuery = myQuery.order_by(SpoolModel.remainingWeight)
+		if ("material" == sortColumn):
+			if ("desc" == sortOrder):
+				myQuery = myQuery.order_by(SpoolModel.material.desc())
+			else:
+				myQuery = myQuery.order_by(SpoolModel.material)
+
 		return myQuery
 
 
