@@ -24,7 +24,6 @@ If you like it, I would be thankful about a cup of coffee :)
 - [X] CSV Export of "Legacy FilamentManager-Database" and SpoolManager
 - [X] CSV Import function
 - [ ] Labels
-- [ ] Provide "APIs" for [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
 
 ### UI features
 - [X] Better error-feedback (more then just the "happy-path")
@@ -36,16 +35,15 @@ If you like it, I would be thankful about a cup of coffee :)
 - [X] Force to select a spool before printing
 - [X] Warn if not enough filament is present
 - [X] Filter spool table
+- [X] Table column visibility
 
-## Planning
-
+## Planning / next features
+- [ ] External Database (IN PROGRESS)
+- [ ] PrintJobHistory integration [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
 - [ ] Multi Tool support
-- [ ] External Database
-- [ ] Table column visibility
 - [ ] Capture Spool-Image
 - [ ] Scan QR/Barcodes of a spool
-
-more planing details could be found [here](https://github.com/OllisGit/OctoPrint-SpoolManager/projects/1)
+- [ ] ...more planing details could be found [here](https://github.com/OllisGit/OctoPrint-SpoolManager/projects/1)
 
 ## Screenshots
 <!---
