@@ -9,24 +9,31 @@ from octoprint_SpoolManager.models.BaseModel import BaseModel
 
 class SpoolModel(BaseModel):
 
+	version = IntegerField(null=True) # since V3
 	isTemplate = BooleanField(null=True)
 	displayName = CharField(null=True)
 	vendor = CharField(null=True)
 	material = CharField(null=True)
 	density = FloatField(null=True)
 	diameter = FloatField(null=True)
+	diameterTolerance = FloatField(null=True) # since V3
 	colorName = CharField(null=True)
 	color = CharField(null=True)
-	# Grad
+	flowRateCompensation = IntegerField(null=True) #since V3
+	# Temperature
 	temperature = IntegerField(null=True)
+	bedTemperature = IntegerField(null=True) # since V3
+	encloserTemperature = IntegerField(null=True) # since V3
 	# in g
 	totalWeight = FloatField(null=True)
+	spoolWeight = FloatField(null=True) # since V3
 	# in g
 	usedWeight = FloatField(null=True)
 	# in g
 	remainingWeight = FloatField(null=True)
 
 	# in mm
+	totalLength = IntegerField(null=True) # since V3
 	usedLength = IntegerField(null=True)
 	# Bar or QR Code
 	code = CharField(null=True)

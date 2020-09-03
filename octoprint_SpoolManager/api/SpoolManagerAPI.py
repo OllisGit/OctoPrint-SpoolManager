@@ -31,6 +31,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 	def _updateSpoolModelFromJSONData(self, spoolModel, jsonData):
 
+		spoolModel.version = self._getValueFromJSONOrNone("version", jsonData)
 		spoolModel.databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
 		spoolModel.isTemplate = self._getValueFromJSONOrNone("isTemplate", jsonData)
 		spoolModel.displayName = self._getValueFromJSONOrNone("displayName", jsonData)
@@ -38,11 +39,17 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModel.material = self._getValueFromJSONOrNone("material", jsonData)
 		spoolModel.density = self._getValueFromJSONOrNone("density", jsonData)
 		spoolModel.diameter = self._getValueFromJSONOrNone("diameter", jsonData)
+		spoolModel.diameterTolerance = self._getValueFromJSONOrNone("diameterTolerance", jsonData)
 		spoolModel.colorName = self._getValueFromJSONOrNone("colorName", jsonData)
 		spoolModel.color = self._getValueFromJSONOrNone("color", jsonData)
+		spoolModel.flowRateCompensation = self._getValueFromJSONOrNone("flowRateCompensation", jsonData)
 		spoolModel.temperature = self._getValueFromJSONOrNone("temperature", jsonData)
+		spoolModel.bedTemperature = self._getValueFromJSONOrNone("bedTemperature", jsonData)
+		spoolModel.encloserTemperature = self._getValueFromJSONOrNone("encloserTemperature", jsonData)
 		spoolModel.totalWeight = self._getValueFromJSONOrNone("totalWeight", jsonData)
+		spoolModel.spoolWeight = self._getValueFromJSONOrNone("spoolWeight", jsonData)
 		spoolModel.remainingWeight = self._getValueFromJSONOrNone("remainingWeight", jsonData)
+		spoolModel.totalLength = self._getValueFromJSONOrNone("totalLength", jsonData)
 		spoolModel.usedLength = self._getValueFromJSONOrNone("usedLength", jsonData)
 		spoolModel.usedWeight = self._getValueFromJSONOrNone("usedWeight", jsonData)
 		spoolModel.code = self._getValueFromJSONOrNone("code", jsonData)
@@ -100,11 +107,17 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		s1.vendor = "The Spool Company"
 		s1.material = "PETG"
 		s1.diameter = 1.75
+		s1.diameterTolerance = 0.2
 		s1.density = 1.27
+		s1.flowRateCompensation = 110
 		s1.temperature = 182
+		s1.bedtemperature = 52
+		s1.encloserTemperature = 23
 		s1.totalWeight = 1000.0
+		s1.spoolWeight = 12.3
 		s1.usedWeight = 123.4
-		s1.usedLength = 234.5
+		s1.totalLength = 1321
+		s1.usedLength = 234
 		s1.lastUse = datetime.datetime.now()
 
 		s1.firstUse = datetime.datetime.strptime("2020-03-02 10:33", '%Y-%m-%d %H:%M')

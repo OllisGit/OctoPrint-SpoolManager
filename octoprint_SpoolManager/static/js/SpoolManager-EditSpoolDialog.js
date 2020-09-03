@@ -97,6 +97,7 @@ function SpoolManagerEditSpoolDialog(){
         };
 
         // - list all attributes
+        this.version = ko.observable();
         this.isSpoolVisible = ko.observable(false);
         this.isEmpty = ko.observable();
         this.databaseId = ko.observable();
@@ -106,13 +107,22 @@ function SpoolManagerEditSpoolDialog(){
 //        this.material = ko.observable();
         this.density = ko.observable();
         this.diameter = ko.observable();
+        this.diameterTolerance = ko.observable();
+        this.flowRateCompensation = ko.observable();
         this.temperature = ko.observable();
+        this.bedTemperature = ko.observable();
+        this.encloserTemperature = ko.observable();
         this.colorName = ko.observable();
         this.color = ko.observable();
         this.totalWeight = ko.observable();
+        this.spoolWeight = ko.observable();
         this.remainingWeight = ko.observable();
         this.remainingPercentage = ko.observable();
+        this.totalLength = ko.observable();
         this.usedLength = ko.observable();
+        this.usedLengthPercentage = ko.observable();
+        this.remainingLength = ko.observable();
+        this.remainingLengthPercentage = ko.observable();
         this.usedWeight = ko.observable();
         this.usedPercentage = ko.observable();
         this.code = ko.observable();
@@ -192,6 +202,7 @@ function SpoolManagerEditSpoolDialog(){
         }
 
         this.isEmpty(data == null);
+        this.version(updateData.version);
         this.databaseId(updateData.databaseId);
         this.isTemplate(updateData.isTemplate);
         this.displayName(updateData.displayName);
@@ -200,6 +211,7 @@ function SpoolManagerEditSpoolDialog(){
         this.material(updateData.material);
         this.density(updateData.density);
         this.diameter(updateData.diameter);
+        this.diameterTolerance(updateData.diameterTolerance);
         this.colorName(updateData.colorName);
         this.color(updateData.color == null ? DEFAULT_COLOR : updateData.color);
 
@@ -210,14 +222,22 @@ function SpoolManagerEditSpoolDialog(){
             }
         }
 
+        this.flowRateCompensation(updateData.flowRateCompensation);
         this.temperature(updateData.temperature);
+        this.bedTemperature(updateData.bedTemperature);
+        this.encloserTemperature(updateData.encloserTemperature);
         this.totalWeight(updateData.totalWeight);
+        this.spoolWeight(updateData.spoolWeight);
         this.remainingWeight(updateData.remainingWeight);
         this.remainingPercentage(updateData.remainingPercentage);
         this.code(updateData.code);
         this.usedPercentage(updateData.usedPercentage);
 
+        this.totalLength(updateData.totalLength);
         this.usedLength(updateData.usedLength);
+        this.usedLengthPercentage(updateData.usedLengthPercentage);
+        this.remainingLength(updateData.remainingLength);
+        this.remainingLengthPercentage(updateData.remainingLengthPercentage);
         this.usedWeight(updateData.usedWeight);
 
         this.firstUse(updateData.firstUse);
@@ -385,7 +405,7 @@ function SpoolManagerEditSpoolDialog(){
                 self.spoolItemForEditing.colorName(colorName);
             }
         });
-
+// ----------------- start: weight stuff
         // update used percentage
         self.updateRemainingValues = function(){
             var total = self.spoolItemForEditing.totalWeight();
@@ -436,6 +456,59 @@ function SpoolManagerEditSpoolDialog(){
             self.updateUsedPercentage();
             self.updateRemainingValues();
         });
+// ----------------- end: weight stuff
+// ----------------- start: length stuff
+                // update used percentage
+        self.updateRemainingLengthValues = function(){
+            var total = self.spoolItemForEditing.totalLength();
+            var used = self.spoolItemForEditing.usedLength();
+            // - remaining weight
+            if (total != null && used != null){
+                if (isNaN(total)==false && isNaN(used)==false && 0 != total.length && 0 != used.length){
+                    var remainingLength = (total - used).toFixed(0);
+                    console.info("calculated remainLength:" + remainingLength );
+                    self.spoolItemForEditing.remainingLength(remainingLength);
+                } else {
+                    self.spoolItemForEditing.remainingLength("");
+                }
+            } else {
+                self.spoolItemForEditing.remainingLength("");
+            }
+            // - remaininig percentage
+            var remainingLength = self.spoolItemForEditing.remainingLength();
+            if (total != null && remainingLength != null){
+                if (isNaN(total)==false && isNaN(remainingLength)==false){
+                    result = Number(remainingLength/(total/100)).toFixed(0);
+                    self.spoolItemForEditing.remainingLengthPercentage(result);
+                } else {
+                    self.spoolItemForEditing.remainingLengthPercentage("");
+                }
+            }
+        }
+
+        // update updateUsedLengthPercentage
+        self.updateUsedLengthPercentage = function(){
+            var total = self.spoolItemForEditing.totalLength();
+            var used = self.spoolItemForEditing.usedLength();
+            if (total != null && used != null){
+                if (isNaN(total)==false && isNaN(used)==false){
+                    result = Number(used/(total/100)).toFixed(1);
+                    self.spoolItemForEditing.usedLengthPercentage(result);
+                } else {
+                    self.spoolItemForEditing.usedLengthPercentage("");
+                }
+            }
+        }
+
+        self.spoolItemForEditing.totalLength.subscribe(function(newValue){
+            self.updateUsedLengthPercentage();
+            self.updateRemainingLengthValues();
+        });
+        self.spoolItemForEditing.usedLength.subscribe(function(newValue){
+            self.updateUsedLengthPercentage();
+            self.updateRemainingLengthValues();
+        });
+// ----------------- end: length stuff
     }
 
     this.afterBinding = function(){
@@ -485,8 +558,10 @@ function SpoolManagerEditSpoolDialog(){
             self.spoolItemForEditing.databaseId(null);
             self.spoolItemForEditing.costUnit(self.pluginSettings.currencySymbol());
             self.spoolItemForEditing.displayName(null);
+            self.spoolItemForEditing.totalWeight(0.0);
             self.spoolItemForEditing.usedWeight(0.0);
-            self.spoolItemForEditing.usedLength(0.0);
+            self.spoolItemForEditing.totalLength(0);
+            self.spoolItemForEditing.usedLength(0);
             self.spoolItemForEditing.lastUse(null);
             self.spoolItemForEditing.firstUse(null);
 //            self.spoolItemForEditing.displayName(null);

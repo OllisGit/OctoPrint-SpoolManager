@@ -17,9 +17,15 @@ COLUMN_VENDOR = "Vendor"
 COLUMN_MATERIAL = "Material"
 COLUMN_DENSITY = "Density [g/cm3]"
 COLUMN_DIAMETER = "Diameter [mm]"
-COLUMN_TEMPERTURE = "Temperature [C]"
+COLUMN_DIAMETER_TOLERANCE = "Diameter Tolerance[mm]"
+COLUMN_FLOWRATECOMPENSATION = "Flow rate compensation [%]"
+COLUMN_TEMPERATURE = "Temperature [C]"
+COLUMN_TEMPERATURE_BED = "Bed Temperature [C]"
+COLUMN_TEMPERATURE_ENCLOSER = "Encloser Temperature [C]"
 COLUMN_TOTAL_WEIGHT = "Total weight [g]"
+COLUMN_SPOOL_WEIGHT = "Spool weight [g]"
 COLUMN_USED_WEIGHT = "Used weight [g]"
+COLUMN_TOTAL_LENGTH = "Total length [mm]"
 COLUMN_USED_LENGTH = "Used length [mm]"
 COLUMN_FIST_USE_DATETIME = "First use [dd.mm.yyyy hh:mm]"
 COLUMN_LAST_USE_DATETIME = "Last use [dd.mm.yyyy hh:mm]"
@@ -135,12 +141,24 @@ class NumberCSVFormattorParser:
 			fieldValue = float(fieldValue)
 		if ("diameter" == fieldName):
 			fieldValue = float(fieldValue)
+		if ("diameterTolerance" == fieldName):
+			fieldValue = float(fieldValue)
+		if ("flowRateCompensation" == fieldName):
+			fieldValue = int(fieldValue)
 		if ("temperature" == fieldName):
+			fieldValue = int(fieldValue)
+		if ("bedTemperature" == fieldName):
+			fieldValue = int(fieldValue)
+		if ("encloserTemperature" == fieldName):
 			fieldValue = int(fieldValue)
 		if ("totalWeight" == fieldName):
 			fieldValue = float(fieldValue)
+		if ("spoolWeight" == fieldName):
+			fieldValue = float(fieldValue)
 		if ("usedWeight" == fieldName):
 			fieldValue = float(fieldValue)
+		if ("totalLength" == fieldName):
+			fieldValue = int(fieldValue)
 		if ("usedLength" == fieldName):
 			fieldValue = int(fieldValue)
 		if ("cost" == fieldName):
@@ -158,9 +176,15 @@ ALL_COLUMNS_SORTED = [
 	COLUMN_MATERIAL,
 	COLUMN_DENSITY,
 	COLUMN_DIAMETER,
-	COLUMN_TEMPERTURE,
+	COLUMN_DIAMETER_TOLERANCE,
+	COLUMN_FLOWRATECOMPENSATION,
+	COLUMN_TEMPERATURE,
+	COLUMN_TEMPERATURE_BED,
+	COLUMN_TEMPERATURE_ENCLOSER,
 	COLUMN_TOTAL_WEIGHT,
+	COLUMN_SPOOL_WEIGHT,
 	COLUMN_USED_WEIGHT,
+	COLUMN_TOTAL_LENGTH,
 	COLUMN_USED_LENGTH,
 	COLUMN_FIST_USE_DATETIME,
 	COLUMN_LAST_USE_DATETIME,
@@ -180,9 +204,15 @@ ALL_COLUMNS = {
 	COLUMN_MATERIAL: CSVColumn("material", COLUMN_MATERIAL, "", DefaultCSVFormattorParser()),
 	COLUMN_DENSITY: CSVColumn("density", COLUMN_DENSITY, "", NumberCSVFormattorParser()),
 	COLUMN_DIAMETER: CSVColumn("diameter", COLUMN_DIAMETER, "", NumberCSVFormattorParser()),
-	COLUMN_TEMPERTURE: CSVColumn("temperature", COLUMN_TEMPERTURE, "", NumberCSVFormattorParser()),
+	COLUMN_DIAMETER_TOLERANCE: CSVColumn("diameterTolerance", COLUMN_DIAMETER_TOLERANCE, "", NumberCSVFormattorParser()),
+	COLUMN_FLOWRATECOMPENSATION: CSVColumn("flowRateCompensation", COLUMN_FLOWRATECOMPENSATION, "", NumberCSVFormattorParser()),
+	COLUMN_TEMPERATURE: CSVColumn("temperature", COLUMN_TEMPERATURE, "", NumberCSVFormattorParser()),
+	COLUMN_TEMPERATURE_BED: CSVColumn("bedTemperature", COLUMN_TEMPERATURE_BED, "", NumberCSVFormattorParser()),
+	COLUMN_TEMPERATURE_ENCLOSER: CSVColumn("encloserTemperature", COLUMN_TEMPERATURE_ENCLOSER, "", NumberCSVFormattorParser()),
 	COLUMN_TOTAL_WEIGHT: CSVColumn("totalWeight", COLUMN_TOTAL_WEIGHT, "", NumberCSVFormattorParser()),
+	COLUMN_SPOOL_WEIGHT: CSVColumn("spoolWeight", COLUMN_SPOOL_WEIGHT, "", NumberCSVFormattorParser()),
 	COLUMN_USED_WEIGHT: CSVColumn("usedWeight", COLUMN_USED_WEIGHT, "", NumberCSVFormattorParser()),
+	COLUMN_TOTAL_LENGTH: CSVColumn("totalLength", COLUMN_TOTAL_LENGTH, "", NumberCSVFormattorParser()),
 	COLUMN_USED_LENGTH: CSVColumn("usedLength", COLUMN_USED_LENGTH, "", NumberCSVFormattorParser()),
 	COLUMN_FIST_USE_DATETIME: CSVColumn("firstUse", COLUMN_FIST_USE_DATETIME, "", DateTimeCSVFormattorParser()),
 	COLUMN_LAST_USE_DATETIME: CSVColumn("lastUse", COLUMN_LAST_USE_DATETIME, "", DateTimeCSVFormattorParser()),

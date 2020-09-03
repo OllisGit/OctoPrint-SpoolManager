@@ -20,7 +20,8 @@ def _calculateRemainingPercentage(remainingWeight, totalWeight):
 		return None
 
 	if ( (type(remainingWeight) == int or type(remainingWeight) == float) and
-			(type(totalWeight) == int or type(totalWeight) == float) ):
+			(type(totalWeight) == int or type(totalWeight) == float) and
+			(totalWeight > 0) ):
 		result = remainingWeight / (totalWeight / 100.0)
 		return result
 
@@ -31,7 +32,8 @@ def _calculateUsedPercentage(usedWeight, totalWeight):
 		return None
 
 	if ( (type(usedWeight) == int or type(usedWeight) == float) and
-			(type(totalWeight) == int or type(totalWeight) == float) ):
+			(type(totalWeight) == int or type(totalWeight) == float) and
+			(totalWeight > 0) ):
 		result = usedWeight / (totalWeight / 100.0)
 		return result
 
@@ -62,7 +64,20 @@ def transformSpoolModelToDict(spoolModel):
 
 	# Decimal and date time needs to be converted. ATTENTION orgiginal fields will be modified
 	spoolAsDict["totalWeight"] = StringUtils.formatFloat(spoolModel.totalWeight)
+	spoolAsDict["spoolWeight"] = StringUtils.formatFloat(spoolModel.spoolWeight)
 	spoolAsDict["usedWeight"] = StringUtils.formatFloat(spoolModel.usedWeight)
+
+	usedLength = spoolModel.usedLength
+	totalLength = spoolModel.totalLength
+	remainingLength = calculateRemainingWeight(usedLength, totalLength)
+	remainingLengthPercentage = _calculateUsedPercentage(remainingLength, totalLength)
+	usedLengthPercentage = _calculateUsedPercentage(usedLength, totalLength)
+
+	spoolAsDict["remainingLength"] = StringUtils.formatInt(remainingLength)
+	spoolAsDict["remainingLengthPercentage"] = StringUtils.formatInt(remainingLengthPercentage)
+	spoolAsDict["usedLengthPercentage"] = StringUtils.formatInt(usedLengthPercentage)
+
+
 
 
 	# spoolAsDict["temperature"] = StringUtils.formatSave("{:.02f}", spoolAsDict["temperature"], "")
