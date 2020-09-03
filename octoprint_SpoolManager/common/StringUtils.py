@@ -148,6 +148,15 @@ def formatFloat(floatValue):
 			pass # do nothing
 	return result
 
+def formatInt(intValue):
+	result = ""
+	if (intValue != None ):
+		try:
+			result = "{:.0f}".format(float(intValue))
+		except ValueError:
+			pass # do nothing
+	return result
+
 def transformToDateTimeOrNone(dateTimeString):
 	if dateTimeString != None and len(dateTimeString) != 0:
 		index = dateTimeString.find(" ")

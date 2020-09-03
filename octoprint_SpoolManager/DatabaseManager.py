@@ -19,7 +19,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 
 FORCE_CREATE_TABLES = False
 
-CURRENT_DATABASE_SCHEME_VERSION = 2
+CURRENT_DATABASE_SCHEME_VERSION = 3
 
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
@@ -118,6 +118,38 @@ class DatabaseManager(object):
 
 	def _upgradeFrom2To3(self):
 		self._logger.info(" Starting 2 -> 3")
+		# What is changed:
+		# - version = IntegerField(null=True)  # since V3
+		# - diameterTolerance = FloatField(null=True)  # since V3
+		# - flowRateCompensation = IntegerField(null=True)  # since V3
+		# - bedTemperature = IntegerField(null=True)  # since V3
+		# - encloserTemperature = IntegerField(null=True)  # since V3
+
+		connection = sqlite3.connect(self._databaseFileLocation)
+		cursor = connection.cursor()
+
+		sql = """
+		PRAGMA foreign_keys=off;
+		BEGIN TRANSACTION;
+
+			ALTER TABLE 'spo_spoolmodel' ADD 'version' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'diameterTolerance' REAL;
+			ALTER TABLE 'spo_spoolmodel' ADD 'spoolWeight' REAL;
+			ALTER TABLE 'spo_spoolmodel' ADD 'flowRateCompensation' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'bedTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'encloserTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'totalLength' INTEGER;
+
+			UPDATE 'spo_spoolmodel' SET version=1;
+
+			UPDATE 'spo_pluginmetadatamodel' SET value=3 WHERE key='databaseSchemeVersion';
+		COMMIT;
+		PRAGMA foreign_keys=on;
+		"""
+		cursor.executescript(sql)
+
+		connection.close()
+
 		self._logger.info(" Successfully 2 -> 3")
 		pass
 
