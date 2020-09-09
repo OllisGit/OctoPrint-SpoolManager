@@ -456,6 +456,11 @@ class SpoolmanagerPlugin(
 		## Export / Import
 		settings[SettingsKeys.SETTINGS_KEY_IMPORT_CSV_MODE] = SettingsKeys.KEY_IMPORTCSV_MODE_APPEND
 
+		## Temperature
+		settings[SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED] = False
+		settings[SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED] = False
+		settings[SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED] = False
+
 		## Debugging
 		settings[SettingsKeys.SETTINGS_KEY_SQL_LOGGING_ENABLED] = False
 
