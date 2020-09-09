@@ -7,6 +7,7 @@
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
             <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
             <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
+            <li><a href="#tab-spool-Temperature" data-toggle="tab">Temperature</a></li>
             <li><a href="#tab-spool-Debugging" data-toggle="tab">Debugging</a></li>
         </ul>
         <div class="tab-content">
@@ -251,6 +252,32 @@
                     </div>
                 </div>
                 -->
+            </div>
+
+            <!-- TEMPERATURE - TAB -->
+            <div class="tab-pane" id="tab-spool-Temperature">
+                <span class="help-inline">You will need to reselect your spool for changes from this page to take effect.</span>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.toolOffsetEnabled" > Update Tool Offset with Temperature value
+                        </label>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.bedOffsetEnabled" > Update Bed Offset with Bed Temperature value
+                        </label>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.enclosureOffsetEnabled" > Update Enclosure Offset with Enclosure Temperature value
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <!-- DEBUGGING - TAB -->

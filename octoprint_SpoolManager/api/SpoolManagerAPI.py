@@ -273,6 +273,11 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		if (spoolModel != None):
 			spoolModelAsDict = Transformer.transformSpoolModelToDict(spoolModel)
 
+		try:
+			self.set_temp_offsets(spoolModel)
+		except Exception as e:
+			self._sendMessageToClient("warning", "Temperature offsets failed to set!", str(e))
+
 		return flask.jsonify({
 								"selectedSpool": spoolModelAsDict
 							})

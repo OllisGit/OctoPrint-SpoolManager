@@ -356,6 +356,14 @@ class SpoolmanagerPlugin(
 		self.metaDataFilamentLength = 0.0
 
 	pass
+
+	def _on_printer_connected(self, payload):
+		try:
+			self.set_temp_offsets(self.loadSelectedSpool())
+		except Exception as e:
+			self._sendMessageToClient("warning", "Temperature offsets failed to set!", str(e))
+
+	pass
 	######################################################################################### Hooks and public functions
 
 	def on_after_startup(self):
@@ -394,6 +402,9 @@ class SpoolmanagerPlugin(
 		elif (Events.PRINT_CANCELLED == event):
 			self.alreadyCanceled = True
 			self._on_printJobFinished("canceled", payload)
+
+		elif (Events.CONNECTED == event):
+			self._on_printer_connected(payload)
 
 		if (Events.FILE_SELECTED == event or
 			Events.FILE_DESELECTED == event or
@@ -517,6 +528,26 @@ class SpoolmanagerPlugin(
 				pip="https://github.com/OllisGit/OctoPrint-SpoolManager/releases/latest/download/master.zip"
 			)
 		)
+
+	def set_temp_offsets(self, spoolModel):
+		toolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		bedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		enclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
+		offset_dict = dict()
+		if (toolOffsetEnabled == True and spoolModel != None):
+			#TODO support multiple tools - what to do with bed and enclosure if that's the case :|
+			#for tool in spoolModel:
+			#	offset_dict["tool%s" % tool["tool"]] = tool["spool"]["tool_offset"] if tool["spool"] is not None else 0
+			offset_dict["tool0"] = spoolModel.temperature if spoolModel.temperature is not None else 0
+
+		if (bedOffsetEnabled == True and spoolModel != None):
+			offset_dict["bed"] = spoolModel.bedTemperature if spoolModel.bedTemperature is not None else 0
+
+		if (enclosureOffsetEnabled == True and spoolModel != None):
+			offset_dict["chamber"] = spoolModel.encloserTemperature if spoolModel.encloserTemperature is not None else 0
+
+		self._printer.set_temperature_offset(offset_dict)
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
