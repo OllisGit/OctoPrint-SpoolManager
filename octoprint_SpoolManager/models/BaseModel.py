@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import datetime
 
-from peewee import Model, DateTimeField, AutoField
+from peewee import Model, DateTimeField, AutoField, BigAutoField, IntegerField
 
 
 # model definitions -- the standard "pattern" is to define a base model class

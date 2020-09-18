@@ -48,8 +48,46 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
         $.ajax({
             url: urlToCall,
             type: "GET"
-        }).done(function( data ){
+        }).always(function( data ){
             responseHandler(data)
+        });
+    }
+    //////////////////////////////////////////////////////////////////////////////// LOAD DatabaseMetaData
+    this.loadDatabaseMetaData = function (responseHandler){
+        var urlToCall = this.baseUrl + "plugin/"+this.pluginId+"/loadDatabaseMetaData";
+        $.ajax({
+            url: urlToCall,
+            type: "GET"
+        }).always(function( data ){
+            responseHandler(data)
+        });
+    }
+    //////////////////////////////////////////////////////////////////////////////// TEST DatabaseConnection
+    this.testDatabaseConnection = function (databaseSettings, responseHandler){
+        jsonPayload = ko.toJSON(databaseSettings)
+
+        $.ajax({
+            //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
+            url: this.baseUrl + "plugin/" + this.pluginId + "/testDatabaseConnection",
+            dataType: "json",
+            contentType: "application/json; charset=UTF-8",
+            data: jsonPayload,
+            type: "PUT"
+        }).always(function( data ){
+            responseHandler(data);
+        });
+    }
+
+    //////////////////////////////////////////////////////////////////////////////// CONFIRM DatabaseConnectionPoblem
+    this.confirmDatabaseProblemMessage = function (responseHandler){
+        $.ajax({
+            //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
+            url: this.baseUrl + "plugin/" + this.pluginId + "/confirmDatabaseProblemMessage",
+            dataType: "json",
+            contentType: "application/json; charset=UTF-8",
+            type: "PUT"
+        }).always(function( data ){
+            responseHandler(data);
         });
     }
 
@@ -62,7 +100,7 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
             //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
             url: urlToCall,
             type: "GET"
-        }).done(function( data ){
+        }).always(function( data ){
             responseHandler(data)
             //shoud be done by the server to make sure the server is informed countdownDialog.modal('hide');
             //countdownDialog.modal('hide');
@@ -82,7 +120,7 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
             contentType: "application/json; charset=UTF-8",
             data: jsonPayload,
             type: "PUT"
-        }).done(function( data ){
+        }).always(function( data ){
             responseHandler();
         });
     }
@@ -93,7 +131,7 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
             //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
             url: this.baseUrl + "plugin/" + this.pluginId + "/deleteSpool/" + databaseId,
             type: "DELETE"
-        }).done(function( data ){
+        }).always(function( data ){
             responseHandler();
         });
     }
@@ -111,7 +149,7 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
             contentType: "application/json; charset=UTF-8",
             data: jsonPayload,
             type: "PUT"
-        }).done(function( data ){
+        }).always(function( data ){
             responseHandler( data );
         });
     }
@@ -124,18 +162,22 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
             dataType: "json",
             contentType: "application/json; charset=UTF-8",
             type: "GET"
-        }).done(function( data ){
+        }).always(function( data ){
             responseHandler(data);
         });
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////// DELETE Database
-    this.callDeleteDatabase = function(responseHandler){
+    this.callDeleteDatabase = function(databaseType, databaseSettings, responseHandler){
+        jsonPayload = ko.toJSON(databaseSettings)
         $.ajax({
             //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
-            url: this.baseUrl + "plugin/"+this.pluginId+"/deleteDatabase",
-            type: "DELETE"
-        }).done(function( data ){
+            url: this.baseUrl + "plugin/"+this.pluginId+"/deleteDatabase/"+databaseType,
+            dataType: "json",
+            contentType: "application/json; charset=UTF-8",
+            data: jsonPayload,
+            type: "POST"
+        }).always(function( data ){
             responseHandler(data)
             //shoud be done by the server to make sure the server is informed countdownDialog.modal('hide');
             //countdownDialog.modal('hide');

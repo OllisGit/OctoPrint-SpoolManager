@@ -41,27 +41,11 @@ function SpoolManagerEditSpoolDialog(){
 
     var self = this;
 
-    self.componentFactory = new ComponentFactory();
-    self.spoolDialog = null;
-    self.closeDialogHandler = null;
-    self.spoolItemForEditing = null;
-    self.templateSpool = null;
-    self.noteEditor = null;
-
-    // Do I need these viewModels?
-    self.firstUseDatePickerModel = null;
-    self.lastUseDatePickerModel = null;
-    self.purchasedOndatePickerModel = null;
-    self.labelsViewModel = null;
-    self.filamentColorViewModel = null;
-    self.materialViewModel = null;
-
-    self.catalogs = null;
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////////// ITEM MODEL
     var DEFAULT_COLOR = "#ff0000";
     var densityMap = {
         PLA:	1.24,
+        PLA_plus:	1.24,
         ABS:	1.04,
         PETG:	1.27,
         NYLON:	1.52,
@@ -284,6 +268,27 @@ function SpoolManagerEditSpoolDialog(){
             }
         }
     };
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////// Instance Variables
+    self.componentFactory = new ComponentFactory();
+    self.spoolDialog = null;
+    self.closeDialogHandler = null;
+    self.spoolItemForEditing = null;
+    self.templateSpool = new SpoolItem({}, false);
+
+    self.noteEditor = null;
+
+    // Do I need these viewModels?
+    self.firstUseDatePickerModel = null;
+    self.lastUseDatePickerModel = null;
+    self.purchasedOndatePickerModel = null;
+    self.labelsViewModel = null;
+    self.filamentColorViewModel = null;
+    self.materialViewModel = null;
+
+    self.catalogs = null;
+
 
 //    Option to filter Attributes
 //    SpoolItem.prototype.toJSON = function() {
@@ -519,7 +524,7 @@ function SpoolManagerEditSpoolDialog(){
         return self.spoolItemForEditing;
     }
 
-    this._createSpoolItemForTemplate = function(spoolData){
+    this.createSpoolItemForTemplate = function(spoolData){
         self.templateSpool =  new SpoolItem(spoolData, false);
     }
 
@@ -536,7 +541,7 @@ function SpoolManagerEditSpoolDialog(){
 
     this.updateTemplateSpool = function(templateSpoolData){
         if (self.templateSpool == null){
-            self._createSpoolItemForTemplate(templateSpoolData)
+            self.createSpoolItemForTemplate(templateSpoolData)
         } else {
             self.templateSpool.update(templateSpoolData);
         }
@@ -575,13 +580,15 @@ function SpoolManagerEditSpoolDialog(){
             self.spoolItemForEditing.update(spoolItemCopy);
         }
         self.spoolItemForEditing.isSpoolVisible(true);
+
         self.spoolDialog.modal({
             //minHeight: function() { return Math.max($.fn.modal.defaults.maxHeight() - 80, 250); }
             keyboard: false,
             clickClose: true,
             showClose: false,
             backdrop: "static"
-        }).css({
+        })
+        .css({
             width: 'auto',
             'margin-left': function() { return -($(this).width() /2); }
         });

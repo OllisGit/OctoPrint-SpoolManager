@@ -11,6 +11,7 @@ import tempfile
 import threading
 from math import pi as PI
 
+from octoprint_SpoolManager import DatabaseManager
 from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 from octoprint_SpoolManager.common import StringUtils, CSVExportImporter
 from octoprint_SpoolManager.api import Transformer
@@ -32,7 +33,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	def _updateSpoolModelFromJSONData(self, spoolModel, jsonData):
 
 		spoolModel.version = self._getValueFromJSONOrNone("version", jsonData)
-		spoolModel.databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
+		# if statement is needed because assigning None is alos detected as an dirtyField
+		if (self._getValueFromJSONOrNone("databaseId", jsonData) != None):
+			spoolModel.databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
+
 		spoolModel.isTemplate = self._getValueFromJSONOrNone("isTemplate", jsonData)
 		spoolModel.displayName = self._getValueFromJSONOrNone("displayName", jsonData)
 		spoolModel.vendor = self._getValueFromJSONOrNone("vendor", jsonData)
@@ -302,7 +306,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 									  args=(sourceLocation,
 											importMode,
 											self._databaseManager,
-											self.get_plugin_data_folder(),
 											self._sendCSVUploadStatusToClient,
 											self._logger))
 			thread.daemon = True
@@ -318,7 +321,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		return flask.jsonify(started=True)
 
 
-	def _processCSVUploadAsync(self, path, importCSVMode, databaseManager, backupFolder, sendCSVUploadStatusToClient, logger):
+	def _processCSVUploadAsync(self, path, importCSVMode, databaseManager, sendCSVUploadStatusToClient, logger):
 		errorCollection = list()
 
 		# - parsing
@@ -344,7 +347,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# we could import some jobs
 
 			# - backup
-			backupDatabaseFilePath = databaseManager.backupDatabaseFile(backupFolder)
+			backupDatabaseFilePath = databaseManager.backupDatabaseFile()
 
 			# - import mode append/replace
 			if (SettingsKeys.KEY_IMPORTCSV_MODE_REPLACE == importCSVMode):
@@ -380,6 +383,20 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		sendCSVUploadStatusToClient("finished", "", backupDatabaseFilePath,  successMessage, errorCollection)
 		pass
 
+	def _buildDatabaseSettingsFromJson(self, jsonData):
+
+		databaseSettings = DatabaseManager.DatabaseSettings()
+		databaseSettings.useExternal = True
+		databaseSettings.type =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_TYPE, jsonData)
+		databaseSettings.host =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_HOST, jsonData)
+		databaseSettings.port =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_PORT, jsonData)
+		databaseSettings.name =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_NAME, jsonData)
+		databaseSettings.user =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_USER, jsonData)
+		databaseSettings.password =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_PASSWORD, jsonData)
+
+		return databaseSettings
+
+
 	#######################################################################################   DOWNLOAD DATABASE-FILE
 	@octoprint.plugin.BlueprintPlugin.route("/downloadDatabase", methods=["GET"])
 	def download_database(self):
@@ -390,15 +407,58 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 
 	#######################################################################################   DELETE DATABASE
-	@octoprint.plugin.BlueprintPlugin.route("/deleteDatabase", methods=["DELETE"])
-	def delete_database(self):
+	@octoprint.plugin.BlueprintPlugin.route("/deleteDatabase/<string:databaseType>", methods=["POST"])
+	def delete_database(self, databaseType):
 
-		self._databaseManager.reCreateDatabase()
+		databaseSettings = None
+		if (databaseType == "external"):
+			jsonData = request.json
+			databaseSettings = self._buildDatabaseSettingsFromJson(jsonData)
+
+		self._databaseManager.reCreateDatabase(databaseSettings)
 
 		return flask.jsonify({
 			"result": "success"
 		})
 
+
+
+	#######################################################################################   LOAD DATABASE METADATA
+	@octoprint.plugin.BlueprintPlugin.route("/loadDatabaseMetaData", methods=["GET"])
+	def loadDatabaseMetaData(self):
+
+		# databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
+		metaDataResult = self._databaseManager.loadDatabaseMetaInformations(None)
+
+		return flask.jsonify({
+			"metadata": metaDataResult
+		})
+
+	#######################################################################################   TEST DATABASE CONNECTION
+	@octoprint.plugin.BlueprintPlugin.route("/testDatabaseConnection", methods=["PUT"])
+	def testDatabaseConnection(self):
+
+		jsonData = request.json
+
+		databaseSettings = self._buildDatabaseSettingsFromJson(jsonData)
+
+		# databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
+		metaDataResult = self._databaseManager.loadDatabaseMetaInformations(databaseSettings)
+
+		return flask.jsonify({
+			"metadata": metaDataResult
+		})
+
+	###############################################################################  CONFIRM DATABASE CONNECTION PROBLEM
+	@octoprint.plugin.BlueprintPlugin.route("/confirmDatabaseProblemMessage", methods=["PUT"])
+	def confirmDatabaseConnectionProblem(self):
+
+		self.databaseConnectionProblemConfirmed = True
+
+		# return flask.jsonify({
+		# 	"metadata": metaDataResult
+		# })
+		return flask.jsonify()
 
 	###########################################################################################   EXPORT DATABASE as CSV
 	@octoprint.plugin.BlueprintPlugin.route("/exportSpools/<string:exportType>", methods=["GET"])
@@ -440,6 +500,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	##################################################################################################   LOAD ALL SPOOLS
 	@octoprint.plugin.BlueprintPlugin.route("/loadSpoolsByQuery", methods=["GET"])
 	def load_allSpools(self):
+
 		self._logger.debug("API Load all spool")
 		# sp1 = SpoolModel()
 		# sp1.displayName = "Spool No.1"
@@ -470,7 +531,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		tableQuery = flask.request.values
 
 		allSpools = self._databaseManager.loadAllSpoolsByQuery(tableQuery)
-		totalItemCount = self._databaseManager.countSpoolsByQuery(tableQuery)
+		totalItemCount = self._databaseManager.countSpoolsByQuery()
 
 		# allSpoolsAsDict = self._transformAllSpoolModelsToDict(allSpools)
 		allSpoolsAsDict = Transformer.transformAllSpoolModelsToDict(allSpools)
@@ -484,9 +545,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		tempateSpoolAsDict = None
 		allTemplateSpools = self._databaseManager.loadSpoolTemplateSpool()
-		for spool in allTemplateSpools:
-			tempateSpoolAsDict = Transformer.transformSpoolModelToDict(spool)
-			break
+		if (allTemplateSpools != None):
+			for spool in allTemplateSpools:
+				tempateSpoolAsDict = Transformer.transformSpoolModelToDict(spool)
+				break
 
 		catalogs = {
 			"vendors": vendors,
@@ -507,6 +569,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			pass
 
 		return flask.jsonify({
+								"databaseConnectionProblem": self._databaseManager.isConnected() == False,
 								"templateSpool": tempateSpoolAsDict,
 								"catalogs": catalogs,
 								"totalItemCount": totalItemCount,
@@ -518,6 +581,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		allMeterials = [
 			"PLA",
+			"PLA_plus",
 			"ABS",
 			"PETG",
 			"NYLON",
@@ -550,7 +614,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		if (databaseId != None):
 			self._logger.info("Update spool with database id '"+str(databaseId)+"'")
 			spoolModel = self._databaseManager.loadSpool(databaseId)
-			self._updateSpoolModelFromJSONData(spoolModel, jsonData)
+			if (spoolModel == None):
+				self._logger.warning("Save spool failed. Something is wrong")
+			else:
+				self._updateSpoolModelFromJSONData(spoolModel, jsonData)
 		else:
 			self._logger.info("Create new spool")
 			spoolModel = SpoolModel()

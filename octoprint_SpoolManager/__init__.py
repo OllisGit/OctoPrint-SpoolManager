@@ -28,16 +28,17 @@ class SpoolmanagerPlugin(
 
 	def initialize(self):
 		self._logger.info("Start initializing")
-		pluginDataBaseFolder = self.get_plugin_data_folder()
 
 		# DATABASE
+		self.databaseConnectionProblemConfirmed = False
 		sqlLoggingEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_SQL_LOGGING_ENABLED])
 		self._databaseManager = DatabaseManager(self._logger, sqlLoggingEnabled)
-		self._databaseManager.initDatabase(pluginDataBaseFolder, self._sendMessageToClient)
 
-		# Init values for initial settings view-page
-		self._settings.set( [SettingsKeys.SETTINGS_KEY_DATABASE_PATH], self._databaseManager.getDatabaseFileLocation())
-		self._settings.save()
+		databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
+
+		# init database
+		self._databaseManager.initDatabase(databaseSettings, self._sendMessageToClient)
+
 
 		# OTHER STUFF
 		self._filamentOdometer = None
@@ -147,7 +148,7 @@ class SpoolmanagerPlugin(
 
 	def _sendMessageToClient(self, type, title, message):
 		self._logger.warning("ToClient: " + type + "#" + title + "#" + message)
-
+		title = "SPM:" + title
 		self._sendDataToClient(dict(action="showPopUp",
 									type=type,
 									title= title,
@@ -200,6 +201,23 @@ class SpoolmanagerPlugin(
 		volume = length * math.pi * (radius * radius) / 1000
 		result = volume * density
 		return result
+
+	def _buildDatabaseSettingsFromPluginSettings(self):
+		databaseSettings = DatabaseManager.DatabaseSettings()
+		databaseSettings.useExternal = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL])
+		databaseSettings.type = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_TYPE])
+		databaseSettings.host = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_HOST])
+		databaseSettings.port = self._settings.get_int([SettingsKeys.SETTINGS_KEY_DATABASE_PORT])
+		databaseSettings.name = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_NAME])
+		databaseSettings.user = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_USER])
+		databaseSettings.password = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_PASSWORD])
+		pluginDataBaseFolder = self.get_plugin_data_folder()
+		databaseSettings.baseFolder = pluginDataBaseFolder
+		databaseSettings.fileLocation = self._databaseManager.getDatabaseFileLocation(databaseSettings.baseFolder)
+
+		return databaseSettings
+
+
 
 	# common states: STATE_CONNECTING("Connecting"), STATE_OPERATIONAL("Operational"),
 	# STATE_STARTING("Startinf..."), STATE_PRINTING("Printing or Sendind"), STATE_CANCELLING("Cancelling"),
@@ -311,7 +329,7 @@ class SpoolmanagerPlugin(
 
 		self._databaseManager.saveModel(spoolModel)
 		self._sendDataToClient(dict(
-									action="reloadTable and sidebarSpools"
+									action = "reloadTable and sidebarSpools"
 									))
 		pass
 
@@ -321,26 +339,42 @@ class SpoolmanagerPlugin(
 		time.sleep(3)
 		selectedSpoolAsDict = None
 
+		# Check if database is available
+		connected = self._databaseManager.reConnectToDatabase()
+		self._logger.info("ClientOpened. Database connected:"+str(connected))
+		# Don't show already shown message
+		if (self.databaseConnectionProblemConfirmed == False and
+			connected == False):
+			databaseErrorMessageDict = self._databaseManager.getCurrentErrorMessageDict();
+			# The databaseErrorMessages should always be present in that case.
+			if (databaseErrorMessageDict != None):
+				self._logger.error(databaseErrorMessageDict)
+				self._sendDataToClient(dict(action = "showConnectionProblem",
+											type = databaseErrorMessageDict["type"],
+											title = databaseErrorMessageDict["title"],
+											message = databaseErrorMessageDict["message"]))
+
 		# Send plugin storage information
 		## Storage
-		databaseFileLocation = ""
-		if (hasattr(self, "_databaseManager") == True):
-			databaseFileLocation = self._databaseManager.getDatabaseFileLocation()
+		if (self._databaseManager.isConnected() == True):
+			selectedSpool = self.loadSelectedSpool()
+			if (selectedSpool):
+				selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
+			else:
+				# spool not found
+				pass
 
-		selectedSpool = self.loadSelectedSpool()
-		if (selectedSpool):
-			selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
-		else:
-			# spool not found
-			pass
-
-		self._sendDataToClient(dict(action="initalData",
-									databaseFileLocation=databaseFileLocation,
-									selectedSpool=selectedSpoolAsDict,
-									isFilamentManagerPluginAvailable=self._filamentManagerPluginImplementation != None
+		pluginNotWorking = connected == False
+		self._sendDataToClient(dict(action = "initalData",
+									selectedSpool = selectedSpoolAsDict,
+									isFilamentManagerPluginAvailable = self._filamentManagerPluginImplementation != None,
+									pluginNotWorking = pluginNotWorking
 									))
 
 		pass
+
+	def _on_clientClosed(self, payload):
+		self.databaseConnectionProblemConfirmed = False
 
 	def _on_file_selectionChanged(self, payload):
 		if ("origin" in payload and "path" in payload):
@@ -379,6 +413,9 @@ class SpoolmanagerPlugin(
 		if (Events.CLIENT_OPENED == event):
 			self._on_clientOpened(payload)
 			return
+		if (Events.CLIENT_CLOSED == event):
+			self._on_clientClosed(payload)
+			return
 
 		elif (Events.PRINT_STARTED == event):
 			self.alreadyCanceled = False
@@ -407,6 +444,11 @@ class SpoolmanagerPlugin(
 	def on_settings_save(self, data):
 		# default save function
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+
+		databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
+
+		self._databaseManager.connectoToDatabase(databaseSettings)
+
 
 	# to allow the frontend to trigger an update
 	def on_api_get(self, request):
@@ -449,15 +491,28 @@ class SpoolmanagerPlugin(
 		settings[SettingsKeys.SETTINGS_KEY_SQL_LOGGING_ENABLED] = False
 
 		## Database
-		settings["databaseSettings"] = {
-			"useExternal": "true",
-			"type": "postgres",
-			"host": "localhost",
-			"port": 5432,
-			"databaseName": "PrintJobDatabase",
-			"user": "Olli",
-			"password": "illO"
-		}
+		## nested settings are not working, because if only a few attributes are changed it only returns these few attribuets, instead the default values + adjusted values
+
+		datbaseLocation = DatabaseManager.getDatabaseFileLocation(self.get_plugin_data_folder())
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL] = False
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_LOCAL_FILELOCATION] = datbaseLocation
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_TYPE] = "postgres"
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_HOST] = "localhost"
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_PORT] = 5432
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_NAME] = "SpoolDatabase"
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_USER] = "Olli"
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_PASSWORD] = "illO"
+		# {
+		# 	"localDatabaseFileLocation": "",
+		# 	"useExternal": False,
+		# 	"useExternalTest": "false",
+		# 	"type": "postgres",
+		# 	"host": "localhost",
+		# 	"port": 5432,
+		# 	"databaseName": "SpoolDatabase",
+		# 	"user": "Olli",
+		# 	"password": "illO"
+		# }
 
 		return settings
 
@@ -479,13 +534,14 @@ class SpoolmanagerPlugin(
 				"js/jquery.datetimepicker.full.min.js",
 				"js/tinycolor.js",
 				"js/pick-a-color.js",
-				"js/ResetSettingsUtilV2.js",
+				"js/ResetSettingsUtilV3.js",
 				"js/ComponentFactory.js",
 				"js/TableItemHelper.js",
 				"js/SpoolManager.js",
 				"js/SpoolManager-APIClient.js",
 				"js/SpoolManager-EditSpoolDialog.js",
-				"js/SpoolManager-ImportDialog.js"
+				"js/SpoolManager-ImportDialog.js",
+				"js/SpoolManager-DatabaseConnectionProblemDialog.js"
 			],
 			css=[
 				"css/quill.snow.css",
@@ -519,6 +575,16 @@ class SpoolmanagerPlugin(
 		)
 
 
+	def message_on_connect(self, comm, script_type, script_name, *args, **kwargs):
+		print(script_name)
+		if not script_type == "gcode" or not script_name == "afterPrinterConnected":
+			return None
+
+		prefix = None
+		postfix = "M117 OctoPrint connected"
+		variables = dict(myvariable="Hi! I'm a variable!")
+		return prefix, postfix, variables
+
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
@@ -532,6 +598,7 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.on_sentGCodeHook
+		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.on_sentGCodeHook,
+		"octoprint.comm.protocol.scripts": __plugin_implementation__.message_on_connect
 	}
 

@@ -18,7 +18,14 @@ class SettingsKeys():
 	KEY_IMPORTCSV_MODE_APPEND = "append"
 
 	## Storage
-	SETTINGS_KEY_DATABASE_PATH = "databaseFileLocation"
+	SETTINGS_KEY_DATABASE_USE_EXTERNAL = "databaseUseExternal"
+	SETTINGS_KEY_DATABASE_LOCAL_FILELOCATION = "databaseFileLocation"
+	SETTINGS_KEY_DATABASE_TYPE = "databaseType"
+	SETTINGS_KEY_DATABASE_HOST = "databaseHost"
+	SETTINGS_KEY_DATABASE_PORT = "databasePort"
+	SETTINGS_KEY_DATABASE_NAME = "databaseName"
+	SETTINGS_KEY_DATABASE_USER = "databaseUser"
+	SETTINGS_KEY_DATABASE_PASSWORD = "databasePassword"
 
 	## Debugging
 	SETTINGS_KEY_SQL_LOGGING_ENABLED = "sqlLoggingEnabled"

@@ -157,7 +157,7 @@
                     <!-- LOCAL DATABASE -->
                     <h4>Local SQLite3 Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
                     <label class="radio">
-                        <input type="radio" name="externalDatabaseGroup" value="false" data-bind="checked: pluginSettings.databaseSettings.useExternal"> Use local SqLite3 database
+                        <input type="radio" name="externalDatabaseGroup" data-bind="checked: pluginSettings.databaseUseExternal, checkedValue: false"> Use local SqLite3 database
                     </label>
 
                     <div class="controls">
@@ -166,8 +166,8 @@
                     <label class="control-label">Database file location</label>
                     <div class="controls">
                         <div class="input-append">
-                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: databaseFileLocation"/>
-                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: deleteDatabaseAction"><i class="icon-trash"></i></a>
+                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: pluginSettings.databaseFileLocation"/>
+                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: function() {deleteDatabaseAction('internal');}"><i class="icon-trash"></i></a>
                             <a href="#" class="btn btn-primary" title="Download Database" data-bind="attr: {href: downloadDatabaseUrl}" target="_blank"><i class="icon-download"></i></a>
                         </div>
                     </div>
@@ -179,78 +179,97 @@
                         e.g.<code>spoolmanager-backup-20200812-0924.db</code>
                     </div>
                 </div>
-<!--
                 <div class="control-group no-bottom-gap">
                     <label class="control-label">Item count</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="123">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.localSpoolItemCount" value="123">
                     </div>
                 </div>
 
                 <div class="control-group">
                     <label class="control-label">Scheme version</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="5">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.localSchemeVersionFromDatabaseModel" value="5">
+                        <span>Plugin version</span>
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.schemeVersionFromPlugin" value="5">
                     </div>
                 </div>
--->
-                <!-- EXTERNAL DATABASE
+
+                <!-- EXTERNAL DATABASE -->
                 <h4>External Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
                 <label class="radio">
-                    <input type="radio" name="externalDatabaseGroup" value="true" data-bind="checked: pluginSettings.databaseSettings.useExternal"> Use external database
+                    <input type="radio" name="externalDatabaseGroup" data-bind="checked: pluginSettings.databaseUseExternal, checkedValue: true"> Use external database
                 </label>
 
-                <div class="controls">
-                </div>
 
+                <div class="control-group">
+                    <label class="control-label">Type</label>
+                    <div class="controls">
+                        <select class="input-medium" data-bind="value: pluginSettings.databaseType">
+                                <option value="postgres">PostgreSQL</option>
+                                <option value="mysql">mySQL</option>
+                        </select>
+                        <button class="btn btn-warning pull-right" data-bind="click: function() {deleteDatabaseAction('external');}" style="margin-right: 80px;">ReCreate database</button>
+                    </div>
+                </div>
                 <div class="control-group">
                     <label class="control-label">Host</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.host"/>
-                        <button class="btn btn-info pull-right" style="margin-right: 80px;">Test connection</button>
+                        <input type="text" data-bind="value: pluginSettings.databaseHost"/>
+                        <button class="btn btn-info pull-right" data-bind="click: testDatabaseConnection" style="margin-right: 80px;">Test connection</button>
                     </div>
-
                 </div>
                 <div class="control-group">
                     <label class="control-label">Port</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.port"/>
+                        <input type="text" data-bind="value: pluginSettings.databasePort"/>
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">Database Name</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.databaseName"/>
+                        <input type="text" data-bind="value: pluginSettings.databaseName"/>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <label class="control-label">User</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.user"/>
+                        <input type="text" data-bind="value: pluginSettings.databaseUser"/>
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">Password</label>
                     <div class="controls">
-                        <input type="password" data-bind="value: pluginSettings.databaseSettings.password"/>
+                        <input type="password" data-bind="value: pluginSettings.databasePassword"/>
                     </div>
                 </div>
 
                 <div class="control-group no-bottom-gap">
                     <label class="control-label">Item count</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="123">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.externalSpoolItemCount" value="123">
                     </div>
                 </div>
 
                 <div class="control-group">
                     <label class="control-label">Scheme version</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="5">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.externalSchemeVersionFromDatabaseModel" value="5">
+                        <span>Plugin version</span>
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.schemeVersionFromPlugin" value="5">
                     </div>
                 </div>
-                -->
+                <div class="help-block" data-bind="visible: showDatabaseErrorMessage">
+                    <font color="red"><b><div data-bind="text: databaseErrorMessage"></div></b></font>
+                </div>
+                <div class="help-block" data-bind="visible: showSuccessMessage">
+                    <font color="green"><b>Database connection successful</b></font>
+                </div>
+                <div class="help-block" data-bind="visible: showUpdateSchemeMessage">
+                    <font color="orange"><b>Databasescheme doesn't match with required scheme version. Please do an <a target="newTab" href="https://github.com/OllisGit/OctoPrint-SpoolManager/wiki/Roadmap-to-an-external-Database">update</a>!</b></font>
+                </div>
+
             </div>
 
             <!-- DEBUGGING - TAB -->

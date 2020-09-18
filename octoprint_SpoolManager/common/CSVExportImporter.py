@@ -48,8 +48,8 @@ class CSVColumn:
 		self.description = description
 		self.formattorParser = formattorParser
 
-	def getCSV(self, printJobModel):
-		columnValue =  self.formattorParser.formatValue(printJobModel, self.fieldName)
+	def getCSV(self, spoolModel):
+		columnValue =  self.formattorParser.formatValue(spoolModel, self.fieldName)
 
 		columnValue = StringUtils.to_native_str(columnValue)
 
@@ -227,7 +227,7 @@ ALL_COLUMNS = {
 
 ####################################################################################################### -> EXPORT TO CSV
 
-def transform2CSV(allJobsDict):
+def transform2CSV(allJobs):
 	result = None
 	si = StringIO()	#TODO maybe a bad idea to use a internal memory based string, needs to be switched to response stream
 	# si = io.BytesIO()
@@ -247,17 +247,18 @@ def transform2CSV(allJobsDict):
 	yield csvLine
 
 	# Write CSV-Content
-	for job in allJobsDict:
-		csvRow = list()
-		for columnKey in ALL_COLUMNS_SORTED:
-			# print(columnKey)
-			csvColumn = ALL_COLUMNS[columnKey]
-			csvColumnValue = '"' + csvColumn.getCSV(job)  + '"'
-			csvRow.append(csvColumnValue)
-		csvLine = ",".join(csvRow) + "\n"
-		# print(csvLine)
-		yield csvLine
-		# writer.writerow(csvRow)
+	if (allJobs != None):
+		for job in allJobs:
+			csvRow = list()
+			for columnKey in ALL_COLUMNS_SORTED:
+				# print(columnKey)
+				csvColumn = ALL_COLUMNS[columnKey]
+				csvColumnValue = '"' + csvColumn.getCSV(job)  + '"'
+				csvRow.append(csvColumnValue)
+			csvLine = ",".join(csvRow) + "\n"
+			# print(csvLine)
+			yield csvLine
+			# writer.writerow(csvRow)
 	# result = si.getvalue()
 	# return result
 

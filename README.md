@@ -89,3 +89,13 @@ select2 https://select2.org/
 
 * WYSIWYG - Editor
 quill https://quilljs.com/
+
+------
+    docker-compose up
+_
+
+    docker-compose down --volumes
+_
+
+    docker-compose run postgres bash
+

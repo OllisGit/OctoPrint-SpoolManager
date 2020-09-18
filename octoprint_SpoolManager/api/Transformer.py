@@ -92,7 +92,8 @@ def transformSpoolModelToDict(spoolModel):
 
 def transformAllSpoolModelsToDict(allSpoolModels):
 	result = []
-	for job in allSpoolModels:
-		spoolAsDict = transformSpoolModelToDict(job)
-		result.append(spoolAsDict)
+	if (allSpoolModels != None):
+		for job in allSpoolModels:
+			spoolAsDict = transformSpoolModelToDict(job)
+			result.append(spoolAsDict)
 	return result
