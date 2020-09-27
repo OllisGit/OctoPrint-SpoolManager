@@ -88,12 +88,14 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	# 		return datetime.strptime(str(dateValue), '%d.%m.%Y %H:%M')
 	# 	return None
 
-	def loadSelectedSpool(self):
+	def loadSelectedSpool(self, ):
 		spoolModel = None
-
 		databaseId = self._settings.get_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID])
+
 		if (databaseId != None):
+			self._databaseManager.connectoToDatabase()
 			spoolModel = self._databaseManager.loadSpool(databaseId)
+			self._databaseManager.closeConnection()
 			if (spoolModel == None):
 				self._logger.warning(
 					"Last selected Spool from plugin-settings not found in database. Maybe deleted in the meantime.")
@@ -369,7 +371,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 					spool.remainingWeight = remainingWeight
 					# spool.save()
 
-				databaseManager.saveModel(spool)
+				databaseManager.saveSpool(spool)
 			pass
 		else:
 			errorCollection.append("Nothing to import!")
@@ -386,7 +388,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	def _buildDatabaseSettingsFromJson(self, jsonData):
 
 		databaseSettings = DatabaseManager.DatabaseSettings()
-		databaseSettings.useExternal = True
 		databaseSettings.type =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_TYPE, jsonData)
 		databaseSettings.host =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_HOST, jsonData)
 		databaseSettings.port =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_PORT, jsonData)
@@ -544,7 +545,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		materials = self._addAdditionalMaterials(materials)
 
 		tempateSpoolAsDict = None
-		allTemplateSpools = self._databaseManager.loadSpoolTemplateSpool()
+		allTemplateSpools = self._databaseManager.loadSpoolTemplate()
 		if (allTemplateSpools != None):
 			for spool in allTemplateSpools:
 				tempateSpoolAsDict = Transformer.transformSpoolModelToDict(spool)
@@ -623,7 +624,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			spoolModel = SpoolModel()
 			self._updateSpoolModelFromJSONData(spoolModel, jsonData)
 
-		databaseId = self._databaseManager.saveModel(spoolModel)
+		databaseId = self._databaseManager.saveSpool(spoolModel)
 
 		return flask.jsonify()
 

@@ -5,12 +5,27 @@ services:
 #    env_file:
 #      - database.env # configure postgres
     volumes:
-      - database-data:/var/lib/postgresql/data/ # persist data even if container shuts down
+      - postgres-data:/var/lib/postgresql/data/ # persist data even if container shuts down
     ports:
       - 5432:5432
     environment:
       - POSTGRES_DB=spoolmanagerdb
       - POSTGRES_USER=Olli
       - POSTGRES_PASSWORD=illO
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - mysql-db:/var/lib/mysql
+    ports:
+      - 3306:3306
+    restart: always
+    environment:
+      - MYSQL_DATABASE=spoolmanagerdb
+      - MYSQL_ROOT_PASSWORD=illO
+      - MYSQL_USER=Olli
+      - MYSQL_PASSWORD=illO
+
 volumes:
-  database-data: # named volumes can be managed easier using docker-compose
+  postgres-data: # named volumes can be managed easier using docker-compose
+  mysql-db:

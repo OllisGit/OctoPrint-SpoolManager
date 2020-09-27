@@ -157,7 +157,7 @@
                     <!-- LOCAL DATABASE -->
                     <h4>Local SQLite3 Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
                     <label class="radio">
-                        <input type="radio" name="externalDatabaseGroup" data-bind="checked: pluginSettings.databaseUseExternal, checkedValue: false"> Use local SqLite3 database
+                        <input type="radio" name="externalDatabaseGroup" data-bind="checked: externalDatabase, checkedValue: false"> Use local SqLite3 database
                     </label>
 
                     <div class="controls">
@@ -198,7 +198,7 @@
                 <!-- EXTERNAL DATABASE -->
                 <h4>External Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
                 <label class="radio">
-                    <input type="radio" name="externalDatabaseGroup" data-bind="checked: pluginSettings.databaseUseExternal, checkedValue: true"> Use external database
+                    <input type="radio" name="externalDatabaseGroup" data-bind="checked: externalDatabase, checkedValue: true"> Use external database
                 </label>
 
 

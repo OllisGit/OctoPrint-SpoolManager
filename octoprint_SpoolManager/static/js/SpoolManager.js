@@ -95,6 +95,11 @@ $(function() {
         ///////////////////////////////////////////////////// START: SETTINGS
         self.pluginNotWorking = ko.observable(false);
 
+        self.downloadDatabaseUrl = ko.observable();
+        self.databaseConnectionProblemDialog = new DatabaseConnectionProblemDialog();
+
+        self.externalDatabase = ko.observable(false);
+
         self.databaseMetaData = {
             localSchemeVersionFromDatabaseModel: ko.observable(),
             localSpoolItemCount: ko.observable(),
@@ -108,7 +113,6 @@ $(function() {
         self.databaseErrorMessage = ko.observable("");
         self.showLocalBusyIndicator = ko.observable(false);
         self.showExternalBusyIndicator = ko.observable(false);
-
 
         self.resetDatabaseMessages = function(){
             self.showSuccessMessage(false);
@@ -143,6 +147,61 @@ $(function() {
             }
         }
 
+        self.buildDatabaseSettings = function(){
+
+            var databaseSettings = {
+                databaseType: self.pluginSettings.databaseType(),
+                databaseHost: self.pluginSettings.databaseHost(),
+                databasePort: self.pluginSettings.databasePort(),
+                databaseName: self.pluginSettings.databaseName(),
+                databaseUser: self.pluginSettings.databaseUser(),
+                databasePassword: self.pluginSettings.databasePassword(),
+            }
+            return databaseSettings
+        }
+
+        self.testDatabaseConnection = function(){
+
+            self.resetDatabaseMessages()
+            self.showExternalBusyIndicator(true);
+
+//  TODO cleanup          var databaseSettings = {
+//                databaseType: self.pluginSettings.databaseType(),
+//                databaseHost: self.pluginSettings.databaseHost(),
+//                databasePort: self.pluginSettings.databasePort(),
+//                databaseName: self.pluginSettings.databaseName(),
+//                databaseUser: self.pluginSettings.databaseUser(),
+//                databasePassword: self.pluginSettings.databasePassword(),
+//            }
+            var databaseSettings = self.buildDatabaseSettings();
+            // api-call
+            self.apiClient.testDatabaseConnection(databaseSettings, function(responseData){
+                self.handleDatabaseMetaDataResponse(responseData);
+                self.showExternalBusyIndicator(false);
+            });
+        }
+
+        self.deleteDatabaseAction = function(databaseType) {
+            var result = confirm("Do you really want to delete all SpoolManager data?");
+            if (result == true){
+//  TODO cleanup
+//                var databaseSettings = {
+//                    databaseType: self.pluginSettings.databaseType(),
+//                    databaseHost: self.pluginSettings.databaseHost(),
+//                    databasePort: self.pluginSettings.databasePort(),
+//                    databaseName: self.pluginSettings.databaseName(),
+//                    databaseUser: self.pluginSettings.databaseUser(),
+//                    databasePassword: self.pluginSettings.databasePassword(),
+//                }
+                var databaseSettings = self.buildDatabaseSettings();
+                self.apiClient.callDeleteDatabase(databaseType, databaseSettings, function(responseData) {
+                    self.spoolItemTableHelper.reloadItems();
+                });
+            }
+        };
+
+
+
         $("#spoolmanger-settings-tab").find('a[data-toggle="tab"]').on('shown', function (e) {
 
               var activatedTab = e.target.hash; // activated tab
@@ -161,50 +220,8 @@ $(function() {
               }
         });
 
-        self.testDatabaseConnection = function(){
-
-            self.resetDatabaseMessages()
-            self.showExternalBusyIndicator(true);
-
-            var databaseSettings = {
-                databaseType: self.pluginSettings.databaseType(),
-                databaseHost: self.pluginSettings.databaseHost(),
-                databasePort: self.pluginSettings.databasePort(),
-                databaseName: self.pluginSettings.databaseName(),
-                databaseUser: self.pluginSettings.databaseUser(),
-                databasePassword: self.pluginSettings.databasePassword(),
-            }
-
-            // api-call
-            self.apiClient.testDatabaseConnection(databaseSettings, function(responseData){
-                self.handleDatabaseMetaDataResponse(responseData);
-                self.showExternalBusyIndicator(false);
-            });
-        }
-
-        self.databaseConnectionProblemDialog = new DatabaseConnectionProblemDialog();
-
         self.isFilamentManagerPluginAvailable = ko.observable(false);
 
-        self.downloadDatabaseUrl = ko.observable();
-
-        self.deleteDatabaseAction = function(databaseType) {
-            var result = confirm("Do you really want to delete all SpoolManager data?");
-            if (result == true){
-                var databaseSettings = {
-                    databaseType: self.pluginSettings.databaseType(),
-                    databaseHost: self.pluginSettings.databaseHost(),
-                    databasePort: self.pluginSettings.databasePort(),
-                    databaseName: self.pluginSettings.databaseName(),
-                    databaseUser: self.pluginSettings.databaseUser(),
-                    databasePassword: self.pluginSettings.databasePassword(),
-                }
-
-                self.apiClient.callDeleteDatabase(databaseType, databaseSettings, function(responseData) {
-                    self.spoolItemTableHelper.reloadItems();
-                });
-            }
-        };
 
 
         // - Import CSV
@@ -257,7 +274,9 @@ $(function() {
         // overwrite save-button
         const origSaveSettingsFunction = self.settingsViewModel.saveData;
         const newSaveSettingsFunction = function confirmSpoolSelectionBeforeStartPrint(data, successCallback, setAsSending) {
-            if (self.pluginSettings.databaseUseExternal() == true &&
+            debugger
+
+            if (self.externalDatabase() == true &&
                 (self.showDatabaseErrorMessage() == true || self.showUpdateSchemeMessage() == true)
                 ){
                 var check = confirm('External database will not work. Save settings anyway?');
@@ -577,6 +596,7 @@ $(function() {
             self.csvImportDialog.init(self.apiClient);
             // Database connection problem dialog
             self.databaseConnectionProblemDialog.init(self.apiClient);
+            self.externalDatabase(self.pluginSettings.databaseType() != "sqlite");
 
 
             self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
@@ -652,17 +672,17 @@ $(function() {
                 return;
             }
             if ("showConnectionProblem" == data.action){
+// TODO enable problem dialog again
+//                new PNotify({
+//                    title: 'ERROR:' + data.title,
+//                    text: data.message,
+//                    type: "error",
+//                    hide: false
+//                    });
 
-                new PNotify({
-                    title: 'ERROR:' + data.title,
-                    text: data.message,
-                    type: "error",
-                    hide: false
-                    });
-
-                self.databaseConnectionProblemDialog.showDialog(data, function(){
-                    // nothing special here, everything is done in the dialog
-                });
+//                self.databaseConnectionProblemDialog.showDialog(data, function(){
+//                    // nothing special here, everything is done in the dialog
+//                });
 
                 return;
             }

@@ -29,7 +29,6 @@ MODELS = [PluginMetaDataModel, SpoolModel]
 class DatabaseManager(object):
 
 	class DatabaseSettings:
-		useExternal = False
 		# Internal stuff
 		baseFolder = ""
 		fileLocation = ""
@@ -40,6 +39,9 @@ class DatabaseManager(object):
 		port = 0
 		user = ""
 		password = ""
+
+		def isExternal(self):
+			return self.type != "sqlite"
 
 		def __str__(self):
 			return str(self.__dict__)
@@ -57,7 +59,6 @@ class DatabaseManager(object):
 
 	################################################################################################## private functions
 	# "databaseSettings"] = {
-	# "useExternal": "true",
 	# "type": "postgres",
 	# "host": "localhost",
 	# "port": 5432,
@@ -65,18 +66,18 @@ class DatabaseManager(object):
 	# "user": "Olli",
 	# "password": "illO"
 
-	def _buildDatabaseConnection(self, databaseSettings):
+	def _buildDatabaseConnection(self):
 		database = None
-		if (databaseSettings.useExternal == False):
-			# local database
-			database = SqliteDatabase(databaseSettings.fileLocation)
+		if (self._databaseSettings.isExternal() == False):
+			# local database`
+			database = SqliteDatabase(self._databaseSettings.fileLocation)
 		else:
-			databaseType = databaseSettings.type
-			databaseName = databaseSettings.name
-			host = databaseSettings.host
-			port = databaseSettings.port
-			user = databaseSettings.user
-			password = databaseSettings.password
+			databaseType = self._databaseSettings.type
+			databaseName = self._databaseSettings.name
+			host = self._databaseSettings.host
+			port = self._databaseSettings.port
+			user = self._databaseSettings.user
+			password = self._databaseSettings.password
 			if ("postgres" == databaseType):
 				# Connect to a Postgres database.
 				database = PostgresqlDatabase(databaseName,
@@ -94,14 +95,7 @@ class DatabaseManager(object):
 
 		return database
 
-	def _createDatabase(self, forceCreateTables, databaseSettings=None):
-		# self._database = SqliteDatabase(self._databaseFileLocation)
-		# DatabaseManager.db = self._database
-		# self._database.bind(MODELS)
-
-		if (databaseSettings != None):
-			currentDatabaseSettings = self._databaseSettings
-			self.connectoToDatabase(databaseSettings)
+	def _createDatabase(self, forceCreateTables):
 
 		if forceCreateTables:
 			self._logger.info("Creating new database-tables, because FORCE == TRUE!")
@@ -110,12 +104,7 @@ class DatabaseManager(object):
 			# check, if we need an scheme upgrade
 			self._createOrUpgradeSchemeIfNecessary()
 
-		if (databaseSettings != None):
-			self.closeDatabase();
-			self._databaseSettings = currentDatabaseSettings
-			# self.connectoToDatabase(self._databaseSettings)
-
-		self._logger.info("Done DatabaseManager")
+		self._logger.info("Database created-check done")
 
 	def _createOrUpgradeSchemeIfNecessary(self):
 
@@ -131,9 +120,12 @@ class DatabaseManager(object):
 				# - SQLLite
 				errorMessage.startswith("no such table") or
 				# - Postgres
-				"does not exist" in errorMessage
+				"does not exist" in errorMessage or
+				# - mySQL errorcode=1146
+				"doesn\'t exist" in errorMessage
 			):
 				self._createDatabaseTables()
+				return
 			else:
 				self._logger.error(str(e))
 
@@ -141,7 +133,7 @@ class DatabaseManager(object):
 			currentDatabaseSchemeVersion = int(schemeVersionFromDatabaseModel.value)
 			if (currentDatabaseSchemeVersion < CURRENT_DATABASE_SCHEME_VERSION):
 				# auto upgrade done only for local database
-				if (self._databaseSettings.useExternal == True):
+				if (self._databaseSettings.isExternal() == True):
 					self._logger.info("Scheme upgrade is only done for local database")
 					return
 
@@ -156,8 +148,10 @@ class DatabaseManager(object):
 					self._logger.exception(e)
 					return
 				self._logger.info("...Database-scheme successfully upgraded.")
+			else:
+				self._logger.info("...Database-scheme upgraded not needed.")
 		else:
-			self._logger.info("...Database-scheme upgraded not needed.")
+			self._logger.warn("...something was strange. Should not be shwon in log. Check full log")
 		pass
 
 
@@ -320,48 +314,71 @@ class DatabaseManager(object):
 		wrappedHandler = WrappedLoggingHandler(self._sqlLogger)
 		logger.addHandler(wrappedHandler)
 
-		self.connectoToDatabase(self._databaseSettings, sendErrorPopUp=False)
-		if (self._isConnected == True):
+		connected = self.connectoToDatabase(sendErrorPopUp=False)
+		if (connected == True):
 			self._createDatabase(FORCE_CREATE_TABLES)
+			self.closeDatabase()
 
 		return self._currentErrorMessageDict
+
+	def assignNewDatabaseSettings(self, databaseSettings):
+		self._databaseSettings = databaseSettings
+
+	def testDatabaseConnection(self, databaseSettings = None):
+		result = None
+		backupCurrentDatabaseSettings = None
+		try:
+			# use provided databasesettings or default if not provided
+			if (databaseSettings != None):
+				backupCurrentDatabaseSettings = self._databaseSettings
+				self._databaseSettings = databaseSettings
+
+			succesfull = self.connectoToDatabase()
+			if (succesfull == False):
+				result = self.getCurrentErrorMessageDict()
+		finally:
+			try:
+				self.closeDatabase()
+			except:
+				pass # do nothing
+			self._databaseSettings = backupCurrentDatabaseSettings
+
+		return result
+
 
 	def getCurrentErrorMessageDict(self):
 		return self._currentErrorMessageDict
 
-	#
-	def reConnectToDatabase(self):
-		return self.connectoToDatabase(self._databaseSettings, sendErrorPopUp=False)
-
-	#
-	def connectoToDatabase(self, databaseSettings, sendErrorPopUp=True) :
+	# connect to the current database
+	def connectoToDatabase(self, withMetaCheck=False, sendErrorPopUp=True) :
 		# reset current errorDict
 		self._currentErrorMessageDict = None
 		self._isConnected = False
 
 		# build connection
-		self._databaseSettings = databaseSettings
-		self._logger.info("Databaseconnection with...")
-		self._logger.info(databaseSettings)
-		self._database = self._buildDatabaseConnection(databaseSettings)
-
-		# connect to Database
-		DatabaseManager.db = self._database
-		self._database.bind(MODELS)
-
 		try:
+			self._logger.info("Databaseconnection with...")
+			self._logger.info(self._databaseSettings)
+			self._database = self._buildDatabaseConnection()
+
+			# connect to Database
+			DatabaseManager.db = self._database
+			self._database.bind(MODELS)
+
 			self._database.connect()
 			self._logger.info("Database connection succesful. Checking Scheme versions")
-			schemeVersionFromPlugin = str(CURRENT_DATABASE_SCHEME_VERSION)
-			schemeVersionFromDatabaseModel = str(PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION).value)
-			if (schemeVersionFromPlugin != schemeVersionFromDatabaseModel):
-				errorMessage = "Plugin needs database scheme version: "+str(schemeVersionFromPlugin)+", but database has version: "+str(schemeVersionFromDatabaseModel);
-				self._storeErrorMessage("error", "database scheme version", errorMessage , False)
-				self._logger.error(errorMessage)
-				self._isConnected = False
-			else:
-				self._logger.info("...succesfull connected")
-				self._isConnected = True
+			# TODO do I realy need to check the meta-infos in the connect function
+			# schemeVersionFromPlugin = str(CURRENT_DATABASE_SCHEME_VERSION)
+			# schemeVersionFromDatabaseModel = str(PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION).value)
+			# if (schemeVersionFromPlugin != schemeVersionFromDatabaseModel):
+			# 	errorMessage = "Plugin needs database scheme version: "+str(schemeVersionFromPlugin)+", but database has version: "+str(schemeVersionFromDatabaseModel);
+			# 	self._storeErrorMessage("error", "database scheme version", errorMessage , False)
+			# 	self._logger.error(errorMessage)
+			# 	self._isConnected = False
+			# else:
+			# 	self._logger.info("...succesfull connected")
+			# 	self._isConnected = True
+			self._isConnected = True
 		except Exception as e:
 			errorMessage = str(e)
 			self._logger.error(errorMessage)
@@ -411,17 +428,36 @@ class DatabaseManager(object):
 	def reCreateDatabase(self, databaseSettings):
 		self._currentErrorMessageDict = None
 		self._logger.info("ReCreating Database")
-		self._createDatabase(True, databaseSettings)
+
+		backupCurrentDatabaseSettings = None
+		if (databaseSettings != None):
+			backupCurrentDatabaseSettings = self._databaseSettings
+			self._databaseSettings = databaseSettings
+		try:
+			# - connect to dataabase
+			self.connectoToDatabase()
+
+			self._createDatabase(True)
+
+			# - close dataabase
+			self.closeDatabase()
+		finally:
+			# - restore database settings
+			if (backupCurrentDatabaseSettings != None):
+				self._databaseSettings = backupCurrentDatabaseSettings
+
+
+
+
 
 	################################################################################################ DATABASE OPERATIONS
-	def loadDatabaseMetaInformations(self, databaseSettings):
-		if (databaseSettings == None):
-			# use current Settings
-			databaseSettings = self._databaseSettings
+	def loadDatabaseMetaInformations(self, databaseSettings = None):
+
+		backupCurrentDatabaseSettings = None
+		if (databaseSettings != None):
+			backupCurrentDatabaseSettings = self._databaseSettings
 		else:
-			# add localFilepath
-			databaseSettings.baseFolder = self._databaseSettings.baseFolder
-			databaseSettings.fileLocation = self._databaseSettings.fileLocation
+			databaseSettings = self._databaseSettings
 		# filelocation
 		# backupname
 		# scheme version
@@ -432,29 +468,35 @@ class DatabaseManager(object):
 		externalSchemeVersionFromDatabaseModel = "-"
 		externalSpoolItemCount = "-"
 		errorMessage = ""
-
+		loadResult = False
 		# - save current DatbaseSettings
-		currentDatabaseSettings = self._databaseSettings
-		currentDatabase = self._database
-		externalConnected = False
+		# currentDatabaseSettings = self._databaseSettings
+		# currentDatabase = self._database
+		# externalConnected = False
 		# always read local meta data
 		try:
-			# TODO filelocation and maybe backupfilename
-			shouldUseExternal = databaseSettings.useExternal
-			databaseSettings.useExternal= False
-			self.connectoToDatabase(databaseSettings, sendErrorPopUp=False)
+			# First load mete from local sqlite database
+			currentDatabaseType = databaseSettings.type
+			databaseSettings.type = "sqlite"
+			databaseSettings.baseFolder = self._databaseSettings.baseFolder
+			databaseSettings.fileLocation = self._databaseSettings.fileLocation
+			self._databaseSettings = databaseSettings
+
+			self.connectoToDatabase( sendErrorPopUp=False)
 			localSchemeVersionFromDatabaseModel = PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION).value
 			localSpoolItemCount = self.countSpoolsByQuery()
 			self.closeDatabase()
 
-			databaseSettings.useExternal = shouldUseExternal
-
-			if (shouldUseExternal == True):
+			# Use orign Databasetype to collect the other meta dtaa (if neeeded)
+			databaseSettings.type = currentDatabaseType
+			if (databaseSettings.isExternal() == True):
 				# External DB
-				externalConnected = self.connectoToDatabase(databaseSettings, sendErrorPopUp=False)
+				self._databaseSettings = databaseSettings
+				self.connectoToDatabase(sendErrorPopUp=False)
 				externalSchemeVersionFromDatabaseModel = PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION).value
 				externalSpoolItemCount = self.countSpoolsByQuery()
 				self.closeDatabase()
+			loadResult = True
 		except Exception as e:
 			errorMessage = str(e)
 			self._logger.exception(e)
@@ -462,14 +504,13 @@ class DatabaseManager(object):
 				self.closeDatabase()
 			except Exception:
 				pass #ignore close exception
-
-		# - restore/reconnect current DatabaseSettings
-		self._databaseSettings = currentDatabaseSettings
-		self._database = currentDatabase
-		self.connectoToDatabase(self._databaseSettings, sendErrorPopUp=False)
+		finally:
+			# restore orig. databasettings
+			if (backupCurrentDatabaseSettings != None):
+				self._databaseSettings = backupCurrentDatabaseSettings
 
 		return {
-			"success": externalConnected,
+			"success": loadResult,
 			"errorMessage": errorMessage,
 			"schemeVersionFromPlugin": schemeVersionFromPlugin,
 			"localSchemeVersionFromDatabaseModel": localSchemeVersionFromDatabaseModel,
@@ -479,200 +520,347 @@ class DatabaseManager(object):
 		}
 
 
-	def loadSpool(self, databaseId):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return
-
+	def loadSpool(self, databaseId, withReusedConnection=False):
 		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return
+			else:
+				self.connectoToDatabase()
 			return SpoolModel.get_by_id(databaseId)
 		except Exception as e:
+			self._logger.exception("Could not load Spool from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load Spool from database. See OctoPrint.log for details!")
 			return None
+		finally:
+			try:
+				if (withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
 		pass
 
 
-	def loadSpoolTemplateSpool(self):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return
+	def loadSpoolTemplate(self, withReusedConnection=False):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return
+			else:
+				self.connectoToDatabase()
+			return SpoolModel.select().where(SpoolModel.isTemplate == True)
+		except Exception as e:
+			self._logger.exception("Could not load SpoolTemplate from database")
 
-		return SpoolModel.select().where(SpoolModel.isTemplate == True)
-
-
-	def saveModel(self, model):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return
-
-		# databaseId = model.get_id()
-		# if (databaseId != None):
-		# 	# we need to update and we need to make
-		# 	spoolModel = self.loadSpool(databaseId)
-		# 	if (spoolModel == None):
-		# 		self._passMessageToClient("error", "DatabaseManager",
-		# 								  "Could not update the Spool, because it is already deleted!")
-		# 		return
-		# 	else:
-		# 		versionFromUI = model.version if model.version != None else 1
-		# 		versionFromDatabase = spoolModel.version if spoolModel.version != None else 1
-		# 		if (versionFromUI != versionFromDatabase):
-		# 			self._passMessageToClient("error", "DatabaseManager",
-		# 									  "Could not update the Spool, because someone already modified the spool. Do a reload!")
-		# 			return
-
-		with self._database.atomic() as transaction:  # Opens new transaction.
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load SpoolTemplate from database. See OctoPrint.log for details!")
+			return None
+		finally:
 			try:
-				if (model.isTemplate == True):
-					#  remove template flag from last templateSpool
-					SpoolModel.update({SpoolModel.isTemplate: False}).where(SpoolModel.isTemplate == True).execute()
+				if(withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		pass
 
-				model.save()
-				databaseId = model.get_id()
-				# do expicit commit
-				transaction.commit()
-			except Exception as e:
-				# Because this block of code is wrapped with "atomic", a
-				# new transaction will begin automatically after the call
-				# to rollback().
-				transaction.rollback()
-				self._logger.exception("Could not insert Spool into database")
 
-				self._passMessageToClient("error", "DatabaseManager", "Could not insert the printjob into the database. See OctoPrint.log for details!")
-			pass
+	def loadAllSpoolsByQuery(self, tableQuery = None, withReusedConnection = False):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return
+			else:
+				self.connectoToDatabase()
 
+			if (tableQuery == None):
+				return SpoolModel.select().order_by(SpoolModel.created.desc())
+
+			offset = int(tableQuery["from"])
+			limit = int(tableQuery["to"])
+			sortColumn = tableQuery["sortColumn"]
+			sortOrder = tableQuery["sortOrder"]
+			filterName = tableQuery["filterName"]
+
+			myQuery = SpoolModel.select().offset(offset).limit(limit)
+			if (filterName == "hideEmptySpools"):
+				myQuery = myQuery.where( (SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None))
+			# elif (filterName == "onlyFailed"):
+			# 	myQuery = myQuery.where(PrintJobModel.printStatusResult != "success")
+
+			if ("displayName" == sortColumn):
+				if ("desc" == sortOrder):
+					myQuery = myQuery.order_by(SpoolModel.displayName.desc())
+				else:
+					myQuery = myQuery.order_by(SpoolModel.displayName)
+			if ("lastUse" == sortColumn):
+				if ("desc" == sortOrder):
+					myQuery = myQuery.order_by(SpoolModel.lastUse.desc())
+				else:
+					myQuery = myQuery.order_by(SpoolModel.lastUse)
+			if ("firstUse" == sortColumn):
+				if ("desc" == sortOrder):
+					myQuery = myQuery.order_by(SpoolModel.firstUse.desc())
+				else:
+					myQuery = myQuery.order_by(SpoolModel.firstUse)
+			if ("remaining" == sortColumn):
+				if ("desc" == sortOrder):
+					myQuery = myQuery.order_by(SpoolModel.remainingWeight.desc())
+				else:
+					myQuery = myQuery.order_by(SpoolModel.remainingWeight)
+			if ("material" == sortColumn):
+				if ("desc" == sortOrder):
+					myQuery = myQuery.order_by(SpoolModel.material.desc())
+				else:
+					myQuery = myQuery.order_by(SpoolModel.material)
+
+			return myQuery
+
+		except Exception as e:
+			self._logger.exception("Could not load loadAllSpoolsByQuery from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not loadAllSpoolsByQuery from database. See OctoPrint.log for details!")
+			return None
+		finally:
+			try:
+				if(withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass  # do nothing
+		pass
+
+	def saveSpool(self, spoolModel, withReusedConnection=False):
+
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return None
+			else:
+				self.connectoToDatabase()
+
+			# databaseId = model.get_id()
+			# if (databaseId != None):
+			# 	# we need to update and we need to make
+			# 	spoolModel = self.loadSpool(databaseId)
+			# 	if (spoolModel == None):
+			# 		self._passMessageToClient("error", "DatabaseManager",
+			# 								  "Could not update the Spool, because it is already deleted!")
+			# 		return
+			# 	else:
+			# 		versionFromUI = model.version if model.version != None else 1
+			# 		versionFromDatabase = spoolModel.version if spoolModel.version != None else 1
+			# 		if (versionFromUI != versionFromDatabase):
+			# 			self._passMessageToClient("error", "DatabaseManager",
+			# 									  "Could not update the Spool, because someone already modified the spool. Do a reload!")
+			# 			return
+
+			with self._database.atomic() as transaction:  # Opens new transaction.
+				try:
+					if (spoolModel.isTemplate == True):
+						#  remove template flag from last templateSpool
+						SpoolModel.update({SpoolModel.isTemplate: False}).where(SpoolModel.isTemplate == True).execute()
+
+					spoolModel.save()
+					databaseId = spoolModel.get_id()
+					# do expicit commit
+					transaction.commit()
+				except Exception as e:
+					# Because this block of code is wrapped with "atomic", a
+					# new transaction will begin automatically after the call
+					# to rollback().
+					transaction.rollback()
+					self._logger.exception("Could not insert Spool into database")
+
+					self._passMessageToClient("error", "DatabaseManager", "Could not insert the printjob into the database. See OctoPrint.log for details!")
+				pass
+
+			return databaseId
+		except Exception as e:
+			self._logger.exception("Could not load saveModel from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load saveModel from database. See OctoPrint.log for details!")
+			return None
+		finally:
+			try:
+				if(withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		pass
+
+
+	def countSpoolsByQuery(self, withReusedConnection=False):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return None
+			else:
+				self.connectoToDatabase()
+
+			myQuery = SpoolModel.select()
+
+			return myQuery.count()
+		except Exception as e:
+			self._logger.exception("Could not load countSpoolsByQuery from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load countSpoolsByQuery from database. See OctoPrint.log for details!")
+			return None
+		finally:
+			try:
+				if (withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		pass
+
+
+	def loadCatalogVendors(self, tableQuery, withReusedConnection=False):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return set()
+			else:
+				self.connectoToDatabase()
+
+			result = set()
+			result.add("")
+			myQuery = SpoolModel.select(SpoolModel.vendor).distinct()
+			for spool in myQuery:
+				value = spool.vendor
+				if (value != None):
+					result.add(value)
+			return result;
+		except Exception as e:
+			self._logger.exception("Could not load loadCatalogVendors from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load loadCatalogVendors from database. See OctoPrint.log for details!")
+			return None
+		finally:
+			try:
+				if (withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		pass
+
+
+	def loadCatalogMaterials(self, tableQuery, withReusedConnection=False):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return set()
+			else:
+				self.connectoToDatabase()
+
+			result = set()
+			result.add("")
+			myQuery = SpoolModel.select(SpoolModel.material).distinct()
+			for spool in myQuery:
+				value = spool.material
+				if (value != None):
+					result.add(value)
+			return result;
+		except Exception as e:
+			self._logger.exception("Could not load SpoolTemplate from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load SpoolTemplate from database. See OctoPrint.log for details!")
+			return None
+		finally:
+			try:
+				if (withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		pass
+
+
+	def loadCatalogLabels(self, tableQuery, withReusedConnection=False):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return set()
+			else:
+				self.connectoToDatabase()
+
+			result = set()
+			result.add("")
+			myQuery = SpoolModel.select(SpoolModel.labels).distinct()
+			for spool in myQuery:
+				value = spool.labels
+				if (value != None):
+					spoolLabels = json.loads(value)
+					for singleLabel in spoolLabels:
+						result.add(singleLabel)
+			return result
+		except Exception as e:
+			self._logger.exception("Could not load loadCatalogLabels from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load loadCatalogLabels from database. See OctoPrint.log for details!")
+			return None
+		finally:
+			try:
+				if (withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		pass
+
+
+	def deleteSpool(self, databaseId, withReusedConnection=False):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return None
+			else:
+				self.connectoToDatabase()
+
+			with self._database.atomic() as transaction:  # Opens new transaction.
+				try:
+					# first delete relations
+					# n = FilamentModel.delete().where(FilamentModel.printJob == databaseId).execute()
+					# n = TemperatureModel.delete().where(TemperatureModel.printJob == databaseId).execute()
+
+					deleteResult = SpoolModel.delete_by_id(databaseId)
+					if (deleteResult == 0):
+						return None
+					pass
+				except Exception as e:
+					# Because this block of code is wrapped with "atomic", a
+					# new transaction will begin automatically after the call
+					# to rollback().
+					transaction.rollback()
+					self._logger.exception("Could not delete spool from database:" + str(e))
+
+					self._passMessageToClient("Spool-DatabaseManager", "Could not delete the spool ('"+ str(databaseId) +"') from the database. See OctoPrint.log for details!")
+					return None
+				pass
+		except Exception as e:
+			self._logger.exception("Could not load deleteSpool from database")
+
+			self._passMessageToClient("error", "DatabaseManager",
+									  "Could not load deleteSpool from database. See OctoPrint.log for details!")
+			return None
+		finally:
+			try:
+				if (withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		# success, return databaseId
 		return databaseId
-
-
-	def loadAllSpoolsByQuery(self, tableQuery):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return
-
-		if (tableQuery == None):
-			return SpoolModel.select().order_by(SpoolModel.created.desc())
-
-		offset = int(tableQuery["from"])
-		limit = int(tableQuery["to"])
-		sortColumn = tableQuery["sortColumn"]
-		sortOrder = tableQuery["sortOrder"]
-		filterName = tableQuery["filterName"]
-
-		myQuery = SpoolModel.select().offset(offset).limit(limit)
-		if (filterName == "hideEmptySpools"):
-			myQuery = myQuery.where( (SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None))
-		# elif (filterName == "onlyFailed"):
-		# 	myQuery = myQuery.where(PrintJobModel.printStatusResult != "success")
-
-		if ("displayName" == sortColumn):
-			if ("desc" == sortOrder):
-				myQuery = myQuery.order_by(SpoolModel.displayName.desc())
-			else:
-				myQuery = myQuery.order_by(SpoolModel.displayName)
-		if ("lastUse" == sortColumn):
-			if ("desc" == sortOrder):
-				myQuery = myQuery.order_by(SpoolModel.lastUse.desc())
-			else:
-				myQuery = myQuery.order_by(SpoolModel.lastUse)
-		if ("firstUse" == sortColumn):
-			if ("desc" == sortOrder):
-				myQuery = myQuery.order_by(SpoolModel.firstUse.desc())
-			else:
-				myQuery = myQuery.order_by(SpoolModel.firstUse)
-		if ("remaining" == sortColumn):
-			if ("desc" == sortOrder):
-				myQuery = myQuery.order_by(SpoolModel.remainingWeight.desc())
-			else:
-				myQuery = myQuery.order_by(SpoolModel.remainingWeight)
-		if ("material" == sortColumn):
-			if ("desc" == sortOrder):
-				myQuery = myQuery.order_by(SpoolModel.material.desc())
-			else:
-				myQuery = myQuery.order_by(SpoolModel.material)
-
-		return myQuery
-
-
-	def countSpoolsByQuery(self):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return
-
-		# filterName = tableQuery["filterName"]
-
-		myQuery = SpoolModel.select()
-		# if (filterName == "onlySuccess"):
-		# 	myQuery = myQuery.where(PrintJobModel.printStatusResult == "success")
-		# elif (filterName == "onlyFailed"):
-		# 	myQuery = myQuery.where(PrintJobModel.printStatusResult != "success")
-
-		return myQuery.count()
-
-
-	def loadCatalogVendors(self, tableQuery):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return list()
-
-		result = set()
-		result.add("")
-		myQuery = SpoolModel.select(SpoolModel.vendor).distinct()
-		for spool in myQuery:
-			value = spool.vendor
-			if (value != None):
-				result.add(value)
-		return result;
-
-
-	def loadCatalogMaterials(self, tableQuery):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return list()
-
-		result = set()
-		result.add("")
-		myQuery = SpoolModel.select(SpoolModel.material).distinct()
-		for spool in myQuery:
-			value = spool.material
-			if (value != None):
-				result.add(value)
-		return result;
-
-
-	def loadCatalogLabels(self, tableQuery):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return list()
-
-		result = set()
-		result.add("")
-		myQuery = SpoolModel.select(SpoolModel.labels).distinct()
-		for spool in myQuery:
-			value = spool.labels
-			if (value != None):
-				spoolLabels = json.loads(value)
-				for singleLabel in spoolLabels:
-					result.add(singleLabel)
-		return result;
-
-
-	def deleteSpool(self, databaseId):
-		if (self._isConnected == False):
-			self._logger.error("Database not connected. Check database-settings!")
-			return
-
-		with self._database.atomic() as transaction:  # Opens new transaction.
-			try:
-				# first delete relations
-				# n = FilamentModel.delete().where(FilamentModel.printJob == databaseId).execute()
-				# n = TemperatureModel.delete().where(TemperatureModel.printJob == databaseId).execute()
-
-				SpoolModel.delete_by_id(databaseId)
-			except Exception as e:
-				# Because this block of code is wrapped with "atomic", a
-				# new transaction will begin automatically after the call
-				# to rollback().
-				transaction.rollback()
-				self._logger.exception("Could not delete spool from database:" + str(e))
-
-				self._passMessageToClient("Spool-DatabaseManager", "Could not delete the spool ('"+ str(databaseId) +"') from the database. See OctoPrint.log for details!")
-			pass

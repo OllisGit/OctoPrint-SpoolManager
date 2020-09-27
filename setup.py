@@ -36,7 +36,8 @@ plugin_license = "AGPLv3"
 # Any additional requirements besides OctoPrint should be listed here
 plugin_requires = [
 	"peewee",
-	"psycopg2-binary"  # postgresdriver
+	"psycopg2-binary",  # postgres - driver
+	"pymysql"	#mysql - driver
 ]
 
 ### --------------------------------------------------------------------------------------------------------------------

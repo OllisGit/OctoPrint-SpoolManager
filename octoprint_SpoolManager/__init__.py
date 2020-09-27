@@ -204,7 +204,6 @@ class SpoolmanagerPlugin(
 
 	def _buildDatabaseSettingsFromPluginSettings(self):
 		databaseSettings = DatabaseManager.DatabaseSettings()
-		databaseSettings.useExternal = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL])
 		databaseSettings.type = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_TYPE])
 		databaseSettings.host = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_HOST])
 		databaseSettings.port = self._settings.get_int([SettingsKeys.SETTINGS_KEY_DATABASE_PORT])
@@ -287,7 +286,7 @@ class SpoolmanagerPlugin(
 			if (StringUtils.isEmpty(spoolModel.firstUse) == True):
 				firstUse = datetime.now()
 				spoolModel.firstUse = firstUse
-				self._databaseManager.saveModel(spoolModel)
+				self._databaseManager.saveSpool(spoolModel)
 				self._sendDataToClient(dict(
 											action="reloadTable"
 											))
@@ -327,7 +326,7 @@ class SpoolmanagerPlugin(
 			newUsedWeight = spoolUsedWeight + usedWeight
 			spoolModel.usedWeight = newUsedWeight
 
-		self._databaseManager.saveModel(spoolModel)
+		self._databaseManager.saveSpool(spoolModel)
 		self._sendDataToClient(dict(
 									action = "reloadTable and sidebarSpools"
 									))
@@ -340,11 +339,14 @@ class SpoolmanagerPlugin(
 		selectedSpoolAsDict = None
 
 		# Check if database is available
-		connected = self._databaseManager.reConnectToDatabase()
-		self._logger.info("ClientOpened. Database connected:"+str(connected))
+		# connected = self._databaseManager.reConnectToDatabase()
+		# self._logger.info("ClientOpened. Database connected:"+str(connected))
+
+		connectionErrorResult = self._databaseManager.testDatabaseConnection()
+
 		# Don't show already shown message
 		if (self.databaseConnectionProblemConfirmed == False and
-			connected == False):
+			connectionErrorResult != None):
 			databaseErrorMessageDict = self._databaseManager.getCurrentErrorMessageDict();
 			# The databaseErrorMessages should always be present in that case.
 			if (databaseErrorMessageDict != None):
@@ -356,7 +358,7 @@ class SpoolmanagerPlugin(
 
 		# Send plugin storage information
 		## Storage
-		if (self._databaseManager.isConnected() == True):
+		if (connectionErrorResult == None):
 			selectedSpool = self.loadSelectedSpool()
 			if (selectedSpool):
 				selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
@@ -364,7 +366,7 @@ class SpoolmanagerPlugin(
 				# spool not found
 				pass
 
-		pluginNotWorking = connected == False
+		pluginNotWorking = connectionErrorResult != None
 		self._sendDataToClient(dict(action = "initalData",
 									selectedSpool = selectedSpoolAsDict,
 									isFilamentManagerPluginAvailable = self._filamentManagerPluginImplementation != None,
@@ -447,7 +449,12 @@ class SpoolmanagerPlugin(
 
 		databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
 
-		self._databaseManager.connectoToDatabase(databaseSettings)
+		self._databaseManager.assignNewDatabaseSettings(databaseSettings)
+		testResult = self._databaseManager.testDatabaseConnection(databaseSettings)
+		if (testResult != None):
+			# TODO Send to client
+			pass
+
 
 
 	# to allow the frontend to trigger an update
@@ -494,7 +501,6 @@ class SpoolmanagerPlugin(
 		## nested settings are not working, because if only a few attributes are changed it only returns these few attribuets, instead the default values + adjusted values
 
 		datbaseLocation = DatabaseManager.getDatabaseFileLocation(self.get_plugin_data_folder())
-		settings[SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL] = False
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_LOCAL_FILELOCATION] = datbaseLocation
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_TYPE] = "postgres"
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_HOST] = "localhost"
@@ -504,8 +510,6 @@ class SpoolmanagerPlugin(
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_PASSWORD] = "illO"
 		# {
 		# 	"localDatabaseFileLocation": "",
-		# 	"useExternal": False,
-		# 	"useExternalTest": "false",
 		# 	"type": "postgres",
 		# 	"host": "localhost",
 		# 	"port": 5432,
