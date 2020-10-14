@@ -386,14 +386,14 @@ $(function() {
 //                            return;
 //                        }
                         if ("filamentNotEnough" == result){
-                            var check = confirm('Not enough filament. Do you want to start the print anyway?');
+                            var check = confirm("The selected spool '"+responseData.spoolName+"' does not have enough remaining filament. Do you want to start the print anyway?");
                             if (check == true) {
                                 origStartPrintFunction();
                             }
                             return;
                         }
                         if ("reminderSpoolSelection" == result){
-                            var question = "Please verify your selected Spool '"+responseData.spoolName+"'. Do you want to start the print anyway?";
+                            var question = "Do you want to start the print with the selected spool '"+responseData.spoolName+"'?";
                             var check = confirm(question);
                             if (check == true) {
                                 origStartPrintFunction();
