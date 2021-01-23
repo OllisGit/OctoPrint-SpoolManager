@@ -147,7 +147,7 @@ class SpoolmanagerPlugin(
 
 
 	def _sendMessageToClient(self, type, title, message):
-		self._logger.warning("ToClient: " + type + "#" + title + "#" + message)
+		self._logger.warning("SendToClient: " + type + "#" + title + "#" + message)
 		title = "SPM:" + title
 		self._sendDataToClient(dict(action="showPopUp",
 									type=type,
@@ -204,6 +204,7 @@ class SpoolmanagerPlugin(
 
 	def _buildDatabaseSettingsFromPluginSettings(self):
 		databaseSettings = DatabaseManager.DatabaseSettings()
+		databaseSettings.useExternal = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL])
 		databaseSettings.type = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_TYPE])
 		databaseSettings.host = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_HOST])
 		databaseSettings.port = self._settings.get_int([SettingsKeys.SETTINGS_KEY_DATABASE_PORT])
@@ -444,16 +445,16 @@ class SpoolmanagerPlugin(
 
 
 	def on_settings_save(self, data):
-		# default save function
+		# # default save function
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
-
-		databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
-
-		self._databaseManager.assignNewDatabaseSettings(databaseSettings)
-		testResult = self._databaseManager.testDatabaseConnection(databaseSettings)
-		if (testResult != None):
-			# TODO Send to client
-			pass
+		#
+		# databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
+		#
+		# self._databaseManager.assignNewDatabaseSettings(databaseSettings)
+		# testResult = self._databaseManager.testDatabaseConnection(databaseSettings)
+		# if (testResult != None):
+		# 	# TODO Send to client
+		# 	pass
 
 
 
@@ -499,10 +500,11 @@ class SpoolmanagerPlugin(
 
 		## Database
 		## nested settings are not working, because if only a few attributes are changed it only returns these few attribuets, instead the default values + adjusted values
-
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL] = False
 		datbaseLocation = DatabaseManager.getDatabaseFileLocation(self.get_plugin_data_folder())
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_LOCAL_FILELOCATION] = datbaseLocation
-		settings[SettingsKeys.SETTINGS_KEY_DATABASE_TYPE] = "postgres"
+		settings[SettingsKeys.SETTINGS_KEY_DATABASE_TYPE] = "sqlite"
+		# settings[SettingsKeys.SETTINGS_KEY_DATABASE_TYPE] = "postgres"
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_HOST] = "localhost"
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_PORT] = 5432
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_NAME] = "SpoolDatabase"

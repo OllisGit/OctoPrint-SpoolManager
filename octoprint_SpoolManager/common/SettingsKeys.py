@@ -18,6 +18,7 @@ class SettingsKeys():
 	KEY_IMPORTCSV_MODE_APPEND = "append"
 
 	## Storage
+	SETTINGS_KEY_DATABASE_USE_EXTERNAL = "useExternal"
 	SETTINGS_KEY_DATABASE_LOCAL_FILELOCATION = "databaseFileLocation"
 	SETTINGS_KEY_DATABASE_TYPE = "databaseType"
 	SETTINGS_KEY_DATABASE_HOST = "databaseHost"

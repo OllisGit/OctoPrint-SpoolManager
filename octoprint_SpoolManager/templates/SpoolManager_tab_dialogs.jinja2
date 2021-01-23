@@ -29,7 +29,7 @@
 
 
     <!--###############################################################  Spool EDIT Dialog -->
-    <div id="dialog_spool_select" class="modal fade large" >
+    <div id="dialog_spool_select" class="modal fade large">
         <div class="modal-header">
             <h4 class="modal-title" ></h4>
             <div class="row">
@@ -151,9 +151,9 @@
 
             </div>
         </div>
-        <div class="modal-body hack-flowbreak"  style="">
-            <form  class="form-horizontal" id="spool-form">
-                <div class="row">
+        <div class="modal-body hack-flowbreak"  >
+            <form  class="form-horizontal" id="spool-form" >
+                <div class="row" >
 <!-- LEFT COLUMN -->
                         <input type="hidden" data-bind="value: spoolDialog.spoolItemForEditing.version" />
                         <div class="span6" >
@@ -189,7 +189,7 @@
                                 <label class="control-label">Density <sup>2,3</sup></label>
                                 <div class="controls">
                                     <div class="input-append">
-                                        <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.density" />
+                                        <input type="number" step="0.01" min="0" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.density" />
                                         <span class="add-on">g/cm³</span>
                                     </div>
                                 </div>
@@ -198,12 +198,12 @@
                                 <label class="control-label">Diameter <sup>2</sup></label>
                                 <div class="controls">
                                     <div class="input-append">
-                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.diameter" />
+                                        <input type="number" step="0.01" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.diameter" />
                                         <span class="add-on">mm</span>
                                     </div>
                                     <div class="input-prepend input-append">
                                         <span class="add-on">±</span>
-                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.diameterTolerance" />
+                                        <input type="number" step="0.01" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.diameterTolerance" />
                                         <span class="add-on">mm</span>
                                     </div>
                                 </div>
@@ -212,7 +212,7 @@
                                 <label class="control-label">Flow Rate Compensation<sup>4</sup></label>
                                 <div class="controls">
                                     <div class="input-append">
-                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.flowRateCompensation" />
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.flowRateCompensation" />
                                         <span class="add-on">%</span>
                                     </div>
                                 </div>
@@ -222,13 +222,13 @@
                                 <label class="control-label">Temperature<sup>4</sup> Tool</label>
                                 <div class="row controls">
                                     <div class="input-append">
-                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
                                         <span class="add-on">°C</span>
                                     </div>
 
                                     <span>&nbsp;Bed</span>
                                     <div class="input-append">
-                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.bedTemperature" />
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.bedTemperature" />
                                         <span class="add-on">°C</span>
                                     </div>
                                 </div>
@@ -237,7 +237,7 @@
                                 <label class="control-label">Encloser</label>
                                 <div class="controls">
                                     <div class="input-append">
-                                        <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.encloserTemperature" />
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.encloserTemperature" />
                                         <span class="add-on">°C</span>
                                     </div>
                                 </div>
@@ -298,7 +298,7 @@
                                         <label class="control-label">Cost</label>
                                         <div class="controls">
                                             <div class="input-append">
-                                                <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.cost"/>
+                                                <input type="number" step="0.01" min="0" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.cost"/>
                                                 <span class="add-on" data-bind="text: pluginSettings.currencySymbol" >€</span>
                                             </div>
                                         </div>
@@ -318,12 +318,12 @@
                                     <label class="control-label">Total weight <sup>2</sup></label>
                                     <div class="controls">
                                         <div class="input-append">
-                                            <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.totalWeight" />
+                                            <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.totalWeight" />
                                             <span class="add-on">g</span>
                                         </div>
                                         <span>&nbsp;Spool</span>
                                         <div class="input-append">
-                                            <input type="text" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.spoolWeight" />
+                                            <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.spoolWeight" />
                                             <span class="add-on">g</span>
                                         </div>
 
@@ -333,7 +333,7 @@
                                     <label class="control-label">Used weight</label>
                                     <div class="controls">
                                         <div class="input-append">
-                                            <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.usedWeight" />
+                                            <input type="number" step="0.01" min="0" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.usedWeight" />
                                             <span class="add-on">g</span>
                                         </div>
                                         <span class="input-append">
@@ -346,7 +346,7 @@
                                     <label class="control-label">Remaining weight</label>
                                     <div class="controls">
                                         <span class="input-append">
-                                            <input type="text" class="input-small text-right" disabled data-bind="value: spoolDialog.spoolItemForEditing.remainingWeight" />
+                                            <input type="number" step="0.01" min="0" class="input-small text-right" disabled data-bind="value: spoolDialog.spoolItemForEditing.remainingWeight" />
                                             <span class="add-on">g</span>
                                         </span>
                                         <span class="input-append">
@@ -360,7 +360,7 @@
                                     <label class="control-label">Total length</label>
                                     <div class="controls">
                                         <div class="input-append">
-                                            <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.totalLength" />
+                                            <input type="number" step="1" min="0" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.totalLength" />
                                             <span class="add-on">mm</span>
                                         </div>
                                     </div>
@@ -369,7 +369,7 @@
                                     <label class="control-label">Used length</label>
                                     <div class="controls">
                                         <span class="input-append">
-                                            <input type="text" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.usedLength" />
+                                            <input type="number" step="1" min="0" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.usedLength" />
                                             <span class="add-on">mm</span>
                                         </span>
                                         <span class="input-append">
@@ -382,7 +382,7 @@
                                     <label class="control-label">Remaining length</label>
                                     <div class="controls">
                                         <span class="input-append">
-                                            <input type="text" disabled class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.remainingLength" />
+                                            <input type="number" step="1" min="0" disabled class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.remainingLength" />
                                             <span class="add-on">mm</span>
                                         </span>
                                         <span class="input-append">
@@ -422,7 +422,7 @@
                 </div>
             </form>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="position:relative;">
             <div class="control-group">
                 <div class="controls row-fluid">
                     <span class="span8" style="text-align:left">

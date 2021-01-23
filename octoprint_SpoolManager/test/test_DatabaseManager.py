@@ -10,7 +10,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 class TestDatabase(unittest.TestCase):
 
 	sqliteDatabaseSettings = DatabaseManager.DatabaseSettings()
-	sqliteDatabaseSettings.type = "sqlite"
+	sqliteDatabaseSettings.useExternal = True
 	sqliteDatabaseSettings.baseFolder = "/Users/o0632/Library/Application Support/OctoPrint/data/SpoolManager/"
 
 	postgresDatabaseSettings = DatabaseManager.DatabaseSettings()
@@ -98,13 +98,35 @@ class TestDatabase(unittest.TestCase):
 		allSpoolModels = self.databaseManager.loadAllSpoolsByQuery()
 		self.assertEqual( 0, len(allSpoolModels), "Database not reCreated. Still spools inside")
 
+	##################################################################################################   REUSABEL CONNECTION
+	def _test_handleReusableConnectionl(self):
+
+		self.databaseManager.initDatabase(self.postgresDatabaseSettings, self._clientOutput)
+		self.databaseManager.connectoToDatabase()
+		spool = self.databaseManager.loadSpool(1, withReusedConnection=True)
+		import time
+		time.sleep(3)
+		print(spool.displayName)
+
+		allSpoolModels = self.databaseManager.loadAllSpoolsByQuery(withReusedConnection=True)
+		print(len(allSpoolModels))
+		import time
+		time.sleep(3)
+
+		if (allSpoolModels != None):
+			for spoolModel in allSpoolModels:
+				print(spoolModel.displayName)
+
+
+		self.databaseManager.closeDatabase()
+
 	##################################################################################################   LOAD SINGLE SPOOL
 	def _test_loadSingleSpool(self):
 
 		self.databaseManager.initDatabase(self.sqliteDatabaseSettings, self._clientOutput)
 		spool = self.databaseManager.loadSpool(1)
-		import time
-		time.sleep(3)
+		# import time
+		# time.sleep(3)
 		print(spool.displayName)
 
 	##################################################################################################   LOAD ALL SPOOLS
@@ -135,13 +157,18 @@ class TestDatabase(unittest.TestCase):
 		self.assertEqual("TESTSPOOL - Number1", spoolModel.displayName, "Spool not saved")
 
 	##################################################################################################   DELETE SPOOL
-	def test_deleteSpool(self):
+	def _test_deleteSpool(self):
 		self.databaseManager.initDatabase(self.postgresDatabaseSettings, self._clientOutput)
 		databaseId = 3
 		print(databaseId)
 
 		deletedDatabaseId = self.databaseManager.deleteSpool(databaseId)
 		self.assertEqual(databaseId, deletedDatabaseId, "Spool not deleted")
+
+
+	##################################################################################################   DELETE SPOOL
+	def test_materialModels(self):
+		self.databaseManager.initDatabase(self.sqliteDatabaseSettings, self._clientOutput)
 
 
 

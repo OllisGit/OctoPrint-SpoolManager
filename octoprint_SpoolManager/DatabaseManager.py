@@ -12,19 +12,19 @@ from octoprint_SpoolManager.WrappedLoggingHandler import WrappedLoggingHandler
 from peewee import *
 
 from octoprint_SpoolManager.api import Transformer
-from octoprint_SpoolManager.models import SpoolModel
 from octoprint_SpoolManager.models.BaseModel import BaseModel
 from octoprint_SpoolManager.models.PluginMetaDataModel import PluginMetaDataModel
 from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 
+# from octoprint_SpoolManager.models.MaterialModel import MaterialModel
+# from octoprint_SpoolManager.models.MaterialCharacteristicModel import MaterialCharacteristicModel
+
 FORCE_CREATE_TABLES = False
 
-CURRENT_DATABASE_SCHEME_VERSION = 3
+CURRENT_DATABASE_SCHEME_VERSION = 4
 
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
-
-
 
 class DatabaseManager(object):
 
@@ -33,15 +33,13 @@ class DatabaseManager(object):
 		baseFolder = ""
 		fileLocation = ""
 		# External stuff
-		type = "postgresql" # sqlite, mysql, postgresql
+		useExternal = False
+		type = "postgresql" # postgresql,  mysql NOT sqlite
 		name = ""
 		host = ""
 		port = 0
 		user = ""
 		password = ""
-
-		def isExternal(self):
-			return self.type != "sqlite"
 
 		def __str__(self):
 			return str(self.__dict__)
@@ -68,7 +66,7 @@ class DatabaseManager(object):
 
 	def _buildDatabaseConnection(self):
 		database = None
-		if (self._databaseSettings.isExternal() == False):
+		if (self._databaseSettings.useExternal == False):
 			# local database`
 			database = SqliteDatabase(self._databaseSettings.fileLocation)
 		else:
@@ -110,8 +108,12 @@ class DatabaseManager(object):
 
 		self._logger.info("Check if database-scheme upgrade needed...")
 		schemeVersionFromDatabaseModel = None
+		schemeVersionFromDatabase = None
 		try:
-			schemeVersionFromDatabaseModel = PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION)
+			cursor = self.db.execute_sql('select "value" from "spo_pluginmetadatamodel" where key="'+PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION+'";')
+			result = cursor.fetchone()
+			schemeVersionFromDatabase = int(result[0])
+			self._logger.info("Current databasescheme: " + str(schemeVersionFromDatabase))
 			pass
 		except Exception as e:
 			self.closeDatabase()
@@ -129,12 +131,12 @@ class DatabaseManager(object):
 			else:
 				self._logger.error(str(e))
 
-		if not schemeVersionFromDatabaseModel == None:
-			currentDatabaseSchemeVersion = int(schemeVersionFromDatabaseModel.value)
+		if not schemeVersionFromDatabase == None:
+			currentDatabaseSchemeVersion = schemeVersionFromDatabase
 			if (currentDatabaseSchemeVersion < CURRENT_DATABASE_SCHEME_VERSION):
 				# auto upgrade done only for local database
-				if (self._databaseSettings.isExternal() == True):
-					self._logger.info("Scheme upgrade is only done for local database")
+				if (self._databaseSettings.useExternal == True):
+					self._logger.warn("Scheme upgrade is only done for local database")
 					return
 
 				# evautate upgrade steps (from 1-2 , 1...6)
@@ -169,9 +171,51 @@ class DatabaseManager(object):
 	def _upgradeFrom4To5(self):
 		self._logger.info(" Starting 4 -> 5")
 
+		self._logger.info(" Successfully 4 -> 5")
 
 	def _upgradeFrom3To4(self):
 		self._logger.info(" Starting 3 -> 4")
+		# What is changed:
+		# BaseModel, so add to all tables
+		# - updated = DateTimeField(default=datetime.datetime.now)
+		# - version = SmallIntegerField(null=True)
+		# - originator = FixedCharField(null=True, max_length=60)
+		# SpoolModel
+		# - materialCharacteristic = CharField(null=True, index=True) # strong, soft,... # since V4: new
+		# - material = CharField(null=True, index=True)	# since V4: added index
+		# - vendor = CharField(null=True, index=True) # since V4: added index
+
+		connection = sqlite3.connect(self._databaseSettings.fileLocation)
+		cursor = connection.cursor()
+
+		sql = """
+		PRAGMA foreign_keys=off;
+		BEGIN TRANSACTION;
+
+			ALTER TABLE 'spo_pluginmetadatamodel' ADD 'updated' DATETIME;
+			ALTER TABLE 'spo_pluginmetadatamodel' ADD 'version' INTEGER;
+			ALTER TABLE 'spo_pluginmetadatamodel' ADD 'originator' CHAR(60);
+			UPDATE 'spo_pluginmetadatamodel' SET version=1;
+
+			ALTER TABLE 'spo_spoolmodel' ADD 'updated' DATETIME;
+			ALTER TABLE 'spo_spoolmodel' ADD 'originator' CHAR(60);
+
+			ALTER TABLE 'spo_spoolmodel' ADD 'materialCharacteristic' VARCHAR(255);
+
+			CREATE INDEX spoolmodel_materialCharacteristic ON spo_spoolmodel (materialCharacteristic);
+			CREATE INDEX spoolmodel_material ON spo_spoolmodel (material);
+			CREATE INDEX spoolmodel_vendor ON spo_spoolmodel (vendor);
+
+			UPDATE 'spo_pluginmetadatamodel' SET value=4 WHERE key='databaseSchemeVersion';
+		COMMIT;
+		PRAGMA foreign_keys=on;
+		"""
+		cursor.executescript(sql)
+
+		connection.close()
+
+		self._logger.info(" Successfully 3 -> 4")
+		pass
 
 
 	def _upgradeFrom2To3(self):
@@ -183,7 +227,7 @@ class DatabaseManager(object):
 		# - bedTemperature = IntegerField(null=True)  # since V3
 		# - encloserTemperature = IntegerField(null=True)  # since V3
 
-		connection = sqlite3.connect(self._databaseFileLocation)
+		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
 
 		sql = """
@@ -216,7 +260,7 @@ class DatabaseManager(object):
 		# What is changed:
 		# - SpoolModel: Add Column colorName
 		# - SpoolModel: Add Column remainingWeight (needed fro filtering, sorting)
-		connection = sqlite3.connect(self._databaseFileLocation)
+		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
 
 		sql = """
@@ -290,7 +334,6 @@ class DatabaseManager(object):
 		databaseFileLocation = os.path.join(pluginDataBaseFolder, "spoolmanager.db")
 		return databaseFileLocation
 
-
 	def initDatabase(self, databaseSettings, sendMessageToClient):
 
 		self._logger.info("Init DatabaseManager")
@@ -341,7 +384,8 @@ class DatabaseManager(object):
 				self.closeDatabase()
 			except:
 				pass # do nothing
-			self._databaseSettings = backupCurrentDatabaseSettings
+			if (backupCurrentDatabaseSettings != None):
+				self._databaseSettings = backupCurrentDatabaseSettings
 
 		return result
 
@@ -381,7 +425,7 @@ class DatabaseManager(object):
 			self._isConnected = True
 		except Exception as e:
 			errorMessage = str(e)
-			self._logger.error(errorMessage)
+			self._logger.exception("connectoToDatabase")
 			self.closeDatabase()
 			# type, title, message
 			self._storeErrorMessage("error", "connection problem", errorMessage, sendErrorPopUp)
@@ -411,16 +455,15 @@ class DatabaseManager(object):
 			logger.setLevel(logging.ERROR)
 			self._sqlLogger.setLevel(logging.ERROR)
 
-
 	def backupDatabaseFile(self):
 		now = datetime.datetime.now()
 		currentDate = now.strftime("%Y%m%d-%H%M")
-		backupDatabaseFilePath = self._databaseFileLocation[0:-3] + "-backup-"+currentDate+".db"
+		backupDatabaseFilePath = self._databaseSettings.fileLocation[0:-3] + "-backup-"+currentDate+".db"
 		# backupDatabaseFileName = "spoolmanager-backup-"+currentDate+".db"
 		# backupDatabaseFilePath = os.path.join(backupFolder, backupDatabaseFileName)
 		if not os.path.exists(backupDatabaseFilePath):
-			shutil.copy(self._databaseFileLocation, backupDatabaseFilePath)
-			self._logger.info("Backup of spoolmanager database created '"+backupDatabaseFilePath+"'")
+			shutil.copy(self._databaseSettings.fileLocation, backupDatabaseFilePath)
+			self._logger.info("Backup of spoolmanager database created '" + backupDatabaseFilePath + "'")
 		else:
 			self._logger.warn("Backup of spoolmanager database ('" + backupDatabaseFilePath + "') is already present. No backup created.")
 		return backupDatabaseFilePath
@@ -447,17 +490,41 @@ class DatabaseManager(object):
 				self._databaseSettings = backupCurrentDatabaseSettings
 
 
-
-
-
 	################################################################################################ DATABASE OPERATIONS
+	def _handleReusableConnection(self, databaseCallMethode, withReusedConnection, methodeNameForLogging, defaultReturnValue=None):
+		try:
+			if (withReusedConnection == True):
+				if (self._isConnected == False):
+					self._logger.error("Database not connected. Check database-settings!")
+					return defaultReturnValue
+			else:
+				self.connectoToDatabase()
+			return databaseCallMethode()
+		except Exception as e:
+			errorMessage = "Database call error in methode " + methodeNameForLogging
+			self._logger.exception(errorMessage)
+
+			self._passMessageToClient("error",
+									  "DatabaseManager",
+									  errorMessage + ". See OctoPrint.log for details!")
+			return defaultReturnValue
+		finally:
+			try:
+				if (withReusedConnection == False):
+					self._closeDatabase()
+			except:
+				pass # do nothing
+		pass
+
 	def loadDatabaseMetaInformations(self, databaseSettings = None):
 
 		backupCurrentDatabaseSettings = None
 		if (databaseSettings != None):
 			backupCurrentDatabaseSettings = self._databaseSettings
 		else:
+			# use default settings
 			databaseSettings = self._databaseSettings
+			backupCurrentDatabaseSettings = self._databaseSettings
 		# filelocation
 		# backupname
 		# scheme version
@@ -475,21 +542,30 @@ class DatabaseManager(object):
 		# externalConnected = False
 		# always read local meta data
 		try:
-			# First load mete from local sqlite database
 			currentDatabaseType = databaseSettings.type
+
+			# First load meta from local sqlite database
 			databaseSettings.type = "sqlite"
 			databaseSettings.baseFolder = self._databaseSettings.baseFolder
 			databaseSettings.fileLocation = self._databaseSettings.fileLocation
 			self._databaseSettings = databaseSettings
-
-			self.connectoToDatabase( sendErrorPopUp=False)
-			localSchemeVersionFromDatabaseModel = PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION).value
-			localSpoolItemCount = self.countSpoolsByQuery()
-			self.closeDatabase()
+			try:
+				self.connectoToDatabase( sendErrorPopUp=False)
+				localSchemeVersionFromDatabaseModel = PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION).value
+				localSpoolItemCount = self.countSpoolsByQuery()
+				self.closeDatabase()
+			except Exception as e:
+				errorMessage = "local database: " + str(e)
+				self._logger.error("Connecting to local database not possible")
+				self._logger.exception(e)
+				try:
+					self.closeDatabase()
+				except Exception:
+					pass  # ignore close exception
 
 			# Use orign Databasetype to collect the other meta dtaa (if neeeded)
 			databaseSettings.type = currentDatabaseType
-			if (databaseSettings.isExternal() == True):
+			if (databaseSettings.useExternal == True):
 				# External DB
 				self._databaseSettings = databaseSettings
 				self.connectoToDatabase(sendErrorPopUp=False)
@@ -519,64 +595,21 @@ class DatabaseManager(object):
 			"externalSpoolItemCount": externalSpoolItemCount
 		}
 
-
 	def loadSpool(self, databaseId, withReusedConnection=False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return
-			else:
-				self.connectoToDatabase()
+		def databaseCallMethode():
 			return SpoolModel.get_by_id(databaseId)
-		except Exception as e:
-			self._logger.exception("Could not load Spool from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load Spool from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if (withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		pass
-
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadSpool")
 
 	def loadSpoolTemplate(self, withReusedConnection=False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return
-			else:
-				self.connectoToDatabase()
+		def databaseCallMethode():
 			return SpoolModel.select().where(SpoolModel.isTemplate == True)
-		except Exception as e:
-			self._logger.exception("Could not load SpoolTemplate from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load SpoolTemplate from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if(withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		pass
-
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadSpoolTemplate")
 
 	def loadAllSpoolsByQuery(self, tableQuery = None, withReusedConnection = False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return
-			else:
-				self.connectoToDatabase()
 
+		def databaseCallMethode():
 			if (tableQuery == None):
 				return SpoolModel.select().order_by(SpoolModel.created.desc())
 
@@ -617,33 +650,13 @@ class DatabaseManager(object):
 					myQuery = myQuery.order_by(SpoolModel.material.desc())
 				else:
 					myQuery = myQuery.order_by(SpoolModel.material)
-
 			return myQuery
 
-		except Exception as e:
-			self._logger.exception("Could not load loadAllSpoolsByQuery from database")
-
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not loadAllSpoolsByQuery from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if(withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass  # do nothing
-		pass
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadAllSpoolsByQuery")
 
 	def saveSpool(self, spoolModel, withReusedConnection=False):
 
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return None
-			else:
-				self.connectoToDatabase()
-
+		def databaseCallMethode():
 			# databaseId = model.get_id()
 			# if (databaseId != None):
 			# 	# we need to update and we need to make
@@ -662,6 +675,26 @@ class DatabaseManager(object):
 
 			with self._database.atomic() as transaction:  # Opens new transaction.
 				try:
+					databaseId = spoolModel.databaseId
+					if (databaseId != None):
+						versionFromUI = None
+						# we need to update and we need to make sure nobody else modify the data
+						currentSpoolModel = self.loadSpool(databaseId, withReusedConnection)
+						if (currentSpoolModel == None):
+							self._passMessageToClient("error", "DatabaseManager",
+													  "Could not update the Spool, because it is already deleted!")
+							return
+						else:
+							versionFromUI = spoolModel.version if spoolModel.version != None else 1
+							versionFromDatabase = currentSpoolModel.version if currentSpoolModel.version != None else 1
+							if (versionFromUI != versionFromDatabase):
+								self._passMessageToClient("error", "DatabaseManager",
+														  "Could not update the Spool, because someone already modified the spool. Do a manuel reload!")
+								return
+							# okay fits, increate version
+						newVersion = versionFromUI + 1
+						spoolModel.version = newVersion
+
 					if (spoolModel.isTemplate == True):
 						#  remove template flag from last templateSpool
 						SpoolModel.update({SpoolModel.isTemplate: False}).where(SpoolModel.isTemplate == True).execute()
@@ -677,61 +710,22 @@ class DatabaseManager(object):
 					transaction.rollback()
 					self._logger.exception("Could not insert Spool into database")
 
-					self._passMessageToClient("error", "DatabaseManager", "Could not insert the printjob into the database. See OctoPrint.log for details!")
+					self._passMessageToClient("error", "DatabaseManager", "Could not insert the spool into the database. See OctoPrint.log for details!")
 				pass
 
 			return databaseId
-		except Exception as e:
-			self._logger.exception("Could not load saveModel from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load saveModel from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if(withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		pass
-
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "saveSpool")
 
 	def countSpoolsByQuery(self, withReusedConnection=False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return None
-			else:
-				self.connectoToDatabase()
-
+		def databaseCallMethode():
 			myQuery = SpoolModel.select()
-
 			return myQuery.count()
-		except Exception as e:
-			self._logger.exception("Could not load countSpoolsByQuery from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load countSpoolsByQuery from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if (withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		pass
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "countSpoolsByQuery")
 
-
-	def loadCatalogVendors(self, tableQuery, withReusedConnection=False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return set()
-			else:
-				self.connectoToDatabase()
-
+	def loadCatalogVendors(self, withReusedConnection=False):
+		def databaseCallMethode():
 			result = set()
 			result.add("")
 			myQuery = SpoolModel.select(SpoolModel.vendor).distinct()
@@ -740,30 +734,11 @@ class DatabaseManager(object):
 				if (value != None):
 					result.add(value)
 			return result;
-		except Exception as e:
-			self._logger.exception("Could not load loadCatalogVendors from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load loadCatalogVendors from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if (withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		pass
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogVendors", set())
 
-
-	def loadCatalogMaterials(self, tableQuery, withReusedConnection=False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return set()
-			else:
-				self.connectoToDatabase()
-
+	def loadCatalogMaterials(self, withReusedConnection=False):
+		def databaseCallMethode():
 			result = set()
 			result.add("")
 			myQuery = SpoolModel.select(SpoolModel.material).distinct()
@@ -772,30 +747,11 @@ class DatabaseManager(object):
 				if (value != None):
 					result.add(value)
 			return result;
-		except Exception as e:
-			self._logger.exception("Could not load SpoolTemplate from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load SpoolTemplate from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if (withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		pass
-
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogMaterials", set())
 
 	def loadCatalogLabels(self, tableQuery, withReusedConnection=False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return set()
-			else:
-				self.connectoToDatabase()
-
+		def databaseCallMethode():
 			result = set()
 			result.add("")
 			myQuery = SpoolModel.select(SpoolModel.labels).distinct()
@@ -806,30 +762,11 @@ class DatabaseManager(object):
 					for singleLabel in spoolLabels:
 						result.add(singleLabel)
 			return result
-		except Exception as e:
-			self._logger.exception("Could not load loadCatalogLabels from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load loadCatalogLabels from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if (withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		pass
-
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogLabels", set())
 
 	def deleteSpool(self, databaseId, withReusedConnection=False):
-		try:
-			if (withReusedConnection == True):
-				if (self._isConnected == False):
-					self._logger.error("Database not connected. Check database-settings!")
-					return None
-			else:
-				self.connectoToDatabase()
-
+		def databaseCallMethode():
 			with self._database.atomic() as transaction:  # Opens new transaction.
 				try:
 					# first delete relations
@@ -839,6 +776,7 @@ class DatabaseManager(object):
 					deleteResult = SpoolModel.delete_by_id(databaseId)
 					if (deleteResult == 0):
 						return None
+					return databaseId
 					pass
 				except Exception as e:
 					# Because this block of code is wrapped with "atomic", a
@@ -850,17 +788,5 @@ class DatabaseManager(object):
 					self._passMessageToClient("Spool-DatabaseManager", "Could not delete the spool ('"+ str(databaseId) +"') from the database. See OctoPrint.log for details!")
 					return None
 				pass
-		except Exception as e:
-			self._logger.exception("Could not load deleteSpool from database")
 
-			self._passMessageToClient("error", "DatabaseManager",
-									  "Could not load deleteSpool from database. See OctoPrint.log for details!")
-			return None
-		finally:
-			try:
-				if (withReusedConnection == False):
-					self._closeDatabase()
-			except:
-				pass # do nothing
-		# success, return databaseId
-		return databaseId
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "deleteSpool")

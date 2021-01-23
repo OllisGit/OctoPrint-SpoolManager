@@ -98,7 +98,6 @@ $(function() {
         self.downloadDatabaseUrl = ko.observable();
         self.databaseConnectionProblemDialog = new DatabaseConnectionProblemDialog();
 
-        self.externalDatabase = ko.observable(false);
 
         self.databaseMetaData = {
             localSchemeVersionFromDatabaseModel: ko.observable(),
@@ -128,21 +127,23 @@ $(function() {
                 if (errorMessage != null && errorMessage.length != 0){
                     self.showDatabaseErrorMessage(true);
                     self.databaseErrorMessage(errorMessage);
+                }
+                var success = metadata["success"];
+                if (success != null && success == true){
+                    self.showSuccessMessage(true);
                 } else {
-                    var success = metadata["success"];
-                    if (success != null && success == true){
-                        self.showSuccessMessage(true);
-                    }
-                    self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
-                    self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
-                    self.databaseMetaData.localSpoolItemCount(metadata["localSpoolItemCount"]);
-                    self.databaseMetaData.externalSchemeVersionFromDatabaseModel(metadata["externalSchemeVersionFromDatabaseModel"]);
-                    self.databaseMetaData.externalSpoolItemCount(metadata["externalSpoolItemCount"]);
-                    self.databaseMetaData.schemeVersionFromPlugin(metadata["schemeVersionFromPlugin"]);
+                    self.showSuccessMessage(false);
+                }
 
-                    if (self.databaseMetaData.schemeVersionFromPlugin() != self.databaseMetaData.externalSchemeVersionFromDatabaseModel()){
-                        self.showUpdateSchemeMessage(true);
-                    }
+                self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
+                self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
+                self.databaseMetaData.localSpoolItemCount(metadata["localSpoolItemCount"]);
+                self.databaseMetaData.externalSchemeVersionFromDatabaseModel(metadata["externalSchemeVersionFromDatabaseModel"]);
+                self.databaseMetaData.externalSpoolItemCount(metadata["externalSpoolItemCount"]);
+                self.databaseMetaData.schemeVersionFromPlugin(metadata["schemeVersionFromPlugin"]);
+
+                if (self.databaseMetaData.schemeVersionFromPlugin() != self.databaseMetaData.externalSchemeVersionFromDatabaseModel()){
+                    self.showUpdateSchemeMessage(true);
                 }
             }
         }
@@ -274,9 +275,9 @@ $(function() {
         // overwrite save-button
         const origSaveSettingsFunction = self.settingsViewModel.saveData;
         const newSaveSettingsFunction = function confirmSpoolSelectionBeforeStartPrint(data, successCallback, setAsSending) {
-            debugger
+debugger
 
-            if (self.externalDatabase() == true &&
+            if (self.pluginSettings.useExternal() == true &&
                 (self.showDatabaseErrorMessage() == true || self.showUpdateSchemeMessage() == true)
                 ){
                 var check = confirm('External database will not work. Save settings anyway?');
@@ -596,8 +597,6 @@ $(function() {
             self.csvImportDialog.init(self.apiClient);
             // Database connection problem dialog
             self.databaseConnectionProblemDialog.init(self.apiClient);
-            self.externalDatabase(self.pluginSettings.databaseType() != "sqlite");
-
 
             self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
                 var payload = {

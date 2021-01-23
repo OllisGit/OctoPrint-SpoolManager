@@ -32,7 +32,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 	def _updateSpoolModelFromJSONData(self, spoolModel, jsonData):
 
-		spoolModel.version = self._getValueFromJSONOrNone("version", jsonData)
+		spoolModel.version = self._toIntFromJSONOrNone("version", jsonData)
 		# if statement is needed because assigning None is alos detected as an dirtyField
 		if (self._getValueFromJSONOrNone("databaseId", jsonData) != None):
 			spoolModel.databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
@@ -41,21 +41,21 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModel.displayName = self._getValueFromJSONOrNone("displayName", jsonData)
 		spoolModel.vendor = self._getValueFromJSONOrNone("vendor", jsonData)
 		spoolModel.material = self._getValueFromJSONOrNone("material", jsonData)
-		spoolModel.density = self._getValueFromJSONOrNone("density", jsonData)
-		spoolModel.diameter = self._getValueFromJSONOrNone("diameter", jsonData)
-		spoolModel.diameterTolerance = self._getValueFromJSONOrNone("diameterTolerance", jsonData)
+		spoolModel.density = self._toFloatFromJSONOrNone("density", jsonData)
+		spoolModel.diameter = self._toFloatFromJSONOrNone("diameter", jsonData)
+		spoolModel.diameterTolerance = self._toFloatFromJSONOrNone("diameterTolerance", jsonData)
 		spoolModel.colorName = self._getValueFromJSONOrNone("colorName", jsonData)
 		spoolModel.color = self._getValueFromJSONOrNone("color", jsonData)
-		spoolModel.flowRateCompensation = self._getValueFromJSONOrNone("flowRateCompensation", jsonData)
-		spoolModel.temperature = self._getValueFromJSONOrNone("temperature", jsonData)
-		spoolModel.bedTemperature = self._getValueFromJSONOrNone("bedTemperature", jsonData)
-		spoolModel.encloserTemperature = self._getValueFromJSONOrNone("encloserTemperature", jsonData)
-		spoolModel.totalWeight = self._getValueFromJSONOrNone("totalWeight", jsonData)
-		spoolModel.spoolWeight = self._getValueFromJSONOrNone("spoolWeight", jsonData)
-		spoolModel.remainingWeight = self._getValueFromJSONOrNone("remainingWeight", jsonData)
-		spoolModel.totalLength = self._getValueFromJSONOrNone("totalLength", jsonData)
-		spoolModel.usedLength = self._getValueFromJSONOrNone("usedLength", jsonData)
-		spoolModel.usedWeight = self._getValueFromJSONOrNone("usedWeight", jsonData)
+		spoolModel.flowRateCompensation = self._toIntFromJSONOrNone("flowRateCompensation", jsonData)
+		spoolModel.temperature = self._toIntFromJSONOrNone("temperature", jsonData)
+		spoolModel.bedTemperature = self._toIntFromJSONOrNone("bedTemperature", jsonData)
+		spoolModel.encloserTemperature = self._toIntFromJSONOrNone("encloserTemperature", jsonData)
+		spoolModel.totalWeight = self._toFloatFromJSONOrNone("totalWeight", jsonData)
+		spoolModel.spoolWeight = self._toFloatFromJSONOrNone("spoolWeight", jsonData)
+		spoolModel.remainingWeight = self._toFloatFromJSONOrNone("remainingWeight", jsonData)
+		spoolModel.totalLength = self._toIntFromJSONOrNone("totalLength", jsonData)
+		spoolModel.usedLength = self._toIntFromJSONOrNone("usedLength", jsonData)
+		spoolModel.usedWeight = self._toFloatFromJSONOrNone("usedWeight", jsonData)
 		spoolModel.code = self._getValueFromJSONOrNone("code", jsonData)
 
 		spoolModel.firstUse = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("firstUse", jsonData))
@@ -63,7 +63,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModel.purchasedOn = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("purchasedOn", jsonData))
 
 		spoolModel.purchasedFrom = self._getValueFromJSONOrNone("purchasedFrom", jsonData)
-		spoolModel.cost = self._getValueFromJSONOrNone("cost", jsonData)
+		spoolModel.cost = self._toFloatFromJSONOrNone("cost", jsonData)
 		spoolModel.costUnit = self._getValueFromJSONOrNone("costUnit", jsonData)
 
 		spoolModel.labels = json.dumps(self._getValueFromJSONOrNone("labels", jsonData))
@@ -78,6 +78,34 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		if key in json:
 			return json[key]
 		return None
+
+	def _toFloatFromJSONOrNone(self, key, json):
+		value = self._getValueFromJSONOrNone(key, json)
+		if (value != None):
+			if (StringUtils.isNotEmpty(value)):
+				try:
+					value = float(value)
+				except Exception as e:
+					errorMessage = str(e)
+					self._logger.error("could not transform value '"+str(value)+"' for key '"+key+"' to float:" + errorMessage)
+					value = None
+			else:
+				value = None
+		return value
+
+	def _toIntFromJSONOrNone(self, key, json):
+		value = self._getValueFromJSONOrNone(key, json)
+		if (value != None):
+			if (StringUtils.isNotEmpty(value)):
+				try:
+					value = int(value)
+				except Exception as e:
+					errorMessage = str(e)
+					self._logger.error("could not transform value '"+str(value)+"' for key '"+key+"' to int:" + errorMessage)
+					value = None
+			else:
+				value = None
+		return value
 
 	# def _formatDateOrNone(self, dateValue):
 	# 	if dateValue != None:
@@ -334,7 +362,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# importStatus, currenLineNumber, backupFilePath,  successMessages, errorCollection
 			sendCSVUploadStatusToClient("running", lineNumber, "", "", errorCollection)
 
-
 		resultOfSpools = CSVExportImporter.parseCSV(path, updateParsingStatus, errorCollection, logger)
 
 		if (len(errorCollection) != 0):
@@ -388,6 +415,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	def _buildDatabaseSettingsFromJson(self, jsonData):
 
 		databaseSettings = DatabaseManager.DatabaseSettings()
+		databaseSettings.useExternal =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL, jsonData)
 		databaseSettings.type =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_TYPE, jsonData)
 		databaseSettings.host =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_HOST, jsonData)
 		databaseSettings.port =  self._getValueFromJSONOrNone(SettingsKeys.SETTINGS_KEY_DATABASE_PORT, jsonData)
@@ -612,9 +640,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		jsonData = request.json
 
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
+		self._databaseManager.connectoToDatabase()
 		if (databaseId != None):
 			self._logger.info("Update spool with database id '"+str(databaseId)+"'")
-			spoolModel = self._databaseManager.loadSpool(databaseId)
+			spoolModel = self._databaseManager.loadSpool(databaseId, withReusedConnection=True)
 			if (spoolModel == None):
 				self._logger.warning("Save spool failed. Something is wrong")
 			else:
@@ -624,7 +653,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			spoolModel = SpoolModel()
 			self._updateSpoolModelFromJSONData(spoolModel, jsonData)
 
-		databaseId = self._databaseManager.saveSpool(spoolModel)
+		databaseId = self._databaseManager.saveSpool(spoolModel, withReusedConnection=True)
+		self._databaseManager.closeDatabase()
 
 		return flask.jsonify()
 
