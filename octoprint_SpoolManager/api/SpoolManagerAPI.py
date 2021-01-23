@@ -4,11 +4,13 @@ from __future__ import absolute_import
 import octoprint.plugin
 import datetime
 import flask
-from flask import jsonify, request, make_response, Response, send_file
+from flask import jsonify, request, make_response, Response, send_file, abort
 import json
 import shutil
 import tempfile
 import threading
+import qrcode
+from io import BytesIO     # for handling byte strings
 from math import pi as PI
 
 from octoprint_SpoolManager import DatabaseManager
@@ -310,6 +312,44 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		return flask.jsonify({
 								"selectedSpool": spoolModelAsDict
 							})
+
+	#####################################################################################################   SELECT SPOOL BY QR
+	@octoprint.plugin.BlueprintPlugin.route("/QR/<id>", methods=["GET"])
+	def select_spool_qr(self,id):
+		self._logger.info("API select spool by QR code")
+
+		spoolModel = self._selectSpool(id)
+
+		spoolModelAsDict = None
+		if (spoolModel != None):
+			spoolModelAsDict = Transformer.transformSpoolModelToDict(spoolModel)
+			#Take us back to the SpoolManager plugin tab
+			return flask.redirect(flask.url_for("index", _external=True)+"#tab_plugin_SpoolManager",307)
+		else:
+			abort(404)
+
+
+	#####################################################################################################   GENERATE QR FOR SPOOL
+	@octoprint.plugin.BlueprintPlugin.route("/generateQR/<id>", methods=["GET"])
+	def generate_spool_qr(self,id):
+		if (self._databaseManager.loadSpool(id) is not None):
+			self._logger.info("API generate QR code for Spool")
+
+			qrMaker = qrcode.QRCode(
+				border=1,
+			)
+
+			qrMaker.add_data(flask.url_for("index", _external=True)+"/plugin/SpoolManager/QR/"+id)
+			qrMaker.make(fit=True)
+			qrImage = qrMaker.make_image(fill_color="darkgreen", back_color="white")
+
+			qr_io = BytesIO()
+			qrImage.save(qr_io, 'JPEG', quality=100)
+			qr_io.seek(0)
+
+			return send_file(qr_io, mimetype='image/jpeg')                                                
+		else:
+			abort(404)
 
 	######################################################################################   UPLOAD CSV FILE (in Thread)
 

@@ -243,6 +243,17 @@
                                 </div>
                             </div>
 
+                             <div class="control-group" data-bind="visible: spoolDialog.isExistingSpool">
+                                <label class="control-label">QR Code</label>
+                                <div class="controls">
+                                    <div class="">
+                                        <a data-bind="attr: {href: '/plugin/SpoolManager/generateQR/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">
+                                            <img class="qr-code" alt="QR Code" data-bind="attr: {src: '/plugin/SpoolManager/generateQR/'+spoolDialog.spoolItemForEditing.databaseId() }">
+                                        </a>
+                                    </div>
+                               </div>
+                            </div>
+
 <!-- QR-Code scanner
                             <div class="control-group">
                                 <label class="control-label">QR/Bar-Code</label>
