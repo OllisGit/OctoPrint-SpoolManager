@@ -21,7 +21,7 @@ COLUMN_DIAMETER_TOLERANCE = "Diameter Tolerance[mm]"
 COLUMN_FLOWRATECOMPENSATION = "Flow rate compensation [%]"
 COLUMN_TEMPERATURE = "Temperature [C]"
 COLUMN_TEMPERATURE_BED = "Bed Temperature [C]"
-COLUMN_TEMPERATURE_ENCLOSER = "Encloser Temperature [C]"
+COLUMN_TEMPERATURE_ENCLOSURE = "Enclosure Temperature [C]"
 COLUMN_TOTAL_WEIGHT = "Total weight [g]"
 COLUMN_SPOOL_WEIGHT = "Spool weight [g]"
 COLUMN_USED_WEIGHT = "Used weight [g]"
@@ -48,8 +48,8 @@ class CSVColumn:
 		self.description = description
 		self.formattorParser = formattorParser
 
-	def getCSV(self, printJobModel):
-		columnValue =  self.formattorParser.formatValue(printJobModel, self.fieldName)
+	def getCSV(self, spoolModel):
+		columnValue =  self.formattorParser.formatValue(spoolModel, self.fieldName)
 
 		columnValue = StringUtils.to_native_str(columnValue)
 
@@ -149,7 +149,7 @@ class NumberCSVFormattorParser:
 			fieldValue = int(fieldValue)
 		if ("bedTemperature" == fieldName):
 			fieldValue = int(fieldValue)
-		if ("encloserTemperature" == fieldName):
+		if ("enclosureTemperature" == fieldName):
 			fieldValue = int(fieldValue)
 		if ("totalWeight" == fieldName):
 			fieldValue = float(fieldValue)
@@ -180,7 +180,7 @@ ALL_COLUMNS_SORTED = [
 	COLUMN_FLOWRATECOMPENSATION,
 	COLUMN_TEMPERATURE,
 	COLUMN_TEMPERATURE_BED,
-	COLUMN_TEMPERATURE_ENCLOSER,
+	COLUMN_TEMPERATURE_ENCLOSURE,
 	COLUMN_TOTAL_WEIGHT,
 	COLUMN_SPOOL_WEIGHT,
 	COLUMN_USED_WEIGHT,
@@ -208,7 +208,7 @@ ALL_COLUMNS = {
 	COLUMN_FLOWRATECOMPENSATION: CSVColumn("flowRateCompensation", COLUMN_FLOWRATECOMPENSATION, "", NumberCSVFormattorParser()),
 	COLUMN_TEMPERATURE: CSVColumn("temperature", COLUMN_TEMPERATURE, "", NumberCSVFormattorParser()),
 	COLUMN_TEMPERATURE_BED: CSVColumn("bedTemperature", COLUMN_TEMPERATURE_BED, "", NumberCSVFormattorParser()),
-	COLUMN_TEMPERATURE_ENCLOSER: CSVColumn("encloserTemperature", COLUMN_TEMPERATURE_ENCLOSER, "", NumberCSVFormattorParser()),
+	COLUMN_TEMPERATURE_ENCLOSURE: CSVColumn("enclosureTemperature", COLUMN_TEMPERATURE_ENCLOSURE, "", NumberCSVFormattorParser()),
 	COLUMN_TOTAL_WEIGHT: CSVColumn("totalWeight", COLUMN_TOTAL_WEIGHT, "", NumberCSVFormattorParser()),
 	COLUMN_SPOOL_WEIGHT: CSVColumn("spoolWeight", COLUMN_SPOOL_WEIGHT, "", NumberCSVFormattorParser()),
 	COLUMN_USED_WEIGHT: CSVColumn("usedWeight", COLUMN_USED_WEIGHT, "", NumberCSVFormattorParser()),
@@ -227,7 +227,7 @@ ALL_COLUMNS = {
 
 ####################################################################################################### -> EXPORT TO CSV
 
-def transform2CSV(allJobsDict):
+def transform2CSV(allJobs):
 	result = None
 	si = StringIO()	#TODO maybe a bad idea to use a internal memory based string, needs to be switched to response stream
 	# si = io.BytesIO()
@@ -247,17 +247,18 @@ def transform2CSV(allJobsDict):
 	yield csvLine
 
 	# Write CSV-Content
-	for job in allJobsDict:
-		csvRow = list()
-		for columnKey in ALL_COLUMNS_SORTED:
-			# print(columnKey)
-			csvColumn = ALL_COLUMNS[columnKey]
-			csvColumnValue = '"' + csvColumn.getCSV(job)  + '"'
-			csvRow.append(csvColumnValue)
-		csvLine = ",".join(csvRow) + "\n"
-		# print(csvLine)
-		yield csvLine
-		# writer.writerow(csvRow)
+	if (allJobs != None):
+		for job in allJobs:
+			csvRow = list()
+			for columnKey in ALL_COLUMNS_SORTED:
+				# print(columnKey)
+				csvColumn = ALL_COLUMNS[columnKey]
+				csvColumnValue = '"' + csvColumn.getCSV(job)  + '"'
+				csvRow.append(csvColumnValue)
+			csvLine = ",".join(csvRow) + "\n"
+			# print(csvLine)
+			yield csvLine
+			# writer.writerow(csvRow)
 	# result = si.getvalue()
 	# return result
 

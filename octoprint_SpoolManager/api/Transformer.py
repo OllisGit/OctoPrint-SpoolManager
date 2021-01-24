@@ -39,7 +39,6 @@ def _calculateUsedPercentage(usedWeight, totalWeight):
 
 	return None
 
-
 def transformSpoolModelToDict(spoolModel):
 	spoolAsDict = spoolModel.__data__
 
@@ -89,10 +88,10 @@ def transformSpoolModelToDict(spoolModel):
 
 	return spoolAsDict
 
-
 def transformAllSpoolModelsToDict(allSpoolModels):
 	result = []
-	for job in allSpoolModels:
-		spoolAsDict = transformSpoolModelToDict(job)
-		result.append(spoolAsDict)
+	if (allSpoolModels != None):
+		for job in allSpoolModels:
+			spoolAsDict = transformSpoolModelToDict(job)
+			result.append(spoolAsDict)
 	return result

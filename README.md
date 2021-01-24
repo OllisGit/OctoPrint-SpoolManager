@@ -4,8 +4,6 @@
 [![Released](https://img.shields.io/badge/dynamic/json.svg?color=brightgreen&label=released&url=https://api.github.com/repos/OllisGit/OctoPrint-SpoolManager/releases&query=$[0].published_at)]()
 ![GitHub Releases (by Release)](https://img.shields.io/github/downloads/OllisGit/OctoPrint-SpoolManager/latest/total.svg)
 
-
-
 The OctoPrint-Plugin manages all spool informations and stores it in a database.
 
 #### Support my Efforts
@@ -14,6 +12,11 @@ This plugin, as well as my [other plugins](https://github.com/OllisGit/) were de
 If you like it, I would be thankful about a cup of coffee :)
 
 [![More coffee, more code](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6SW5R6ZUKLB5E&source=url)
+
+## Tested with:
+- OctoPrint 1.5.2:  with Python 3.6.8 and Python 2.7.9
+- OctoPrint 1.4.2:  OPEN
+
 
 ## Included features
 
@@ -24,7 +27,6 @@ If you like it, I would be thankful about a cup of coffee :)
 - [X] CSV Export of "Legacy FilamentManager-Database" and SpoolManager
 - [X] CSV Import function
 - [ ] Labels
-- [ ] Provide "APIs" for [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
 
 ### UI features
 - [X] Better error-feedback (more then just the "happy-path")
@@ -36,16 +38,15 @@ If you like it, I would be thankful about a cup of coffee :)
 - [X] Force to select a spool before printing
 - [X] Warn if not enough filament is present
 - [X] Filter spool table
+- [X] Table column visibility
 
-## Planning
-
+## Planning / next features
+- [ ] External Database (IN PROGRESS)
+- [ ] PrintJobHistory integration [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
 - [ ] Multi Tool support
-- [ ] External Database
-- [ ] Table column visibility
 - [ ] Capture Spool-Image
 - [ ] Scan QR/Barcodes of a spool
-
-more planing details could be found [here](https://github.com/OllisGit/OctoPrint-SpoolManager/projects/1)
+- [ ] ...more planing details could be found [here](https://github.com/OllisGit/OctoPrint-SpoolManager/projects/1)
 
 ## Screenshots
 <!---
@@ -91,3 +92,13 @@ select2 https://select2.org/
 
 * WYSIWYG - Editor
 quill https://quilljs.com/
+
+------
+    docker-compose up
+_
+
+    docker-compose down --volumes
+_
+
+    docker-compose run postgres bash
+

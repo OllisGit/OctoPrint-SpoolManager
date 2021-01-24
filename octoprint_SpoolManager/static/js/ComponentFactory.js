@@ -227,7 +227,10 @@ function ComponentFactory(pluginId) {
 
         // sync: jquery -> observable
         pickColor.on("change", function () {
-            newColor = "#" + $(this).val();
+            var newColor = ""+$(this).val();
+            if (newColor.startsWith("#") == false){
+                newColor = "#" + $(this).val();
+            }
             componentViewModel.selectedColor(newColor);
         });
 

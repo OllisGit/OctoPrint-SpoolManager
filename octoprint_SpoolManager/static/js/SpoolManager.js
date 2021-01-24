@@ -84,44 +84,165 @@ $(function() {
         // Typs: error
         self.showPopUp = function(popupType, popupTitle, message){
             var title = popupType.toUpperCase() + ": " + popupTitle;
-            new PNotify({
-                title: title,
-                text: message,
-                type: popupType,
-                hide: false
+            var popupId = (title+message).replace(/([^a-z0-9]+)/gi, '-');
+            if($("."+popupId).length <1) {
+                new PNotify({
+                    title: title,
+                    text: message,
+                    type: popupType,
+                    hide: false,
+                    addclass: popupId
                 });
+            }
         };
 
-        ///////////////////////////////////////////////////// START: SETTINGS
 
+
+        // found here: https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript?rq=1
+        var getUrlParameter = function getUrlParameter(sParam) {
+            var sPageURL = window.location.search.substring(1),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+            for (i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+                }
+            }
+        };
+
+
+        ///////////////////////////////////////////////////// START: SETTINGS
+        self.pluginNotWorking = ko.observable(false);
+
+        self.downloadDatabaseUrl = ko.observable();
+        self.databaseConnectionProblemDialog = new DatabaseConnectionProblemDialog();
+
+
+        self.databaseMetaData = {
+            localSchemeVersionFromDatabaseModel: ko.observable(),
+            localSpoolItemCount: ko.observable(),
+            externalSchemeVersionFromDatabaseModel: ko.observable(),
+            externalSpoolItemCount: ko.observable(),
+            schemeVersionFromPlugin: ko.observable(),
+        }
+        self.showSuccessMessage = ko.observable(false);
+        self.showDatabaseErrorMessage = ko.observable(false);
+        self.showUpdateSchemeMessage = ko.observable(false);
+        self.databaseErrorMessage = ko.observable("");
         self.showLocalBusyIndicator = ko.observable(false);
         self.showExternalBusyIndicator = ko.observable(false);
-        $("#spoolmanger-settings-tab").find('a[data-toggle="tab"]').on('shown', function (e) {
-              var activatedTab = e.target.hash; // activated tab
-              var prevTab = e.relatedTarget.hash; // previous tab
-              console.info("PrevTab:" + prevTab + " ActiveTab:"+activatedTab);
 
-              if ("#tab-spool-Storage" == activatedTab){
-//                self.showLocalBusyIndicator(true);
-//                self.showExternalBusyIndicator(true);
-              }
-        });
+        self.resetDatabaseMessages = function(){
+            self.showSuccessMessage(false);
+            self.showDatabaseErrorMessage(false);
+            self.showUpdateSchemeMessage(false);
+            self.databaseErrorMessage("");
+        }
 
+        self.handleDatabaseMetaDataResponse = function(metaDataResponse){
+            var metadata = metaDataResponse["metadata"];
+            if (metadata != null){
+                var errorMessage = metadata["errorMessage"];
+                if (errorMessage != null && errorMessage.length != 0){
+                    self.showDatabaseErrorMessage(true);
+                    self.databaseErrorMessage(errorMessage);
+                }
+                var success = metadata["success"];
+                if (success != null && success == true){
+                    self.showSuccessMessage(true);
+                } else {
+                    self.showSuccessMessage(false);
+                }
 
+                self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
+                self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
+                self.databaseMetaData.localSpoolItemCount(metadata["localSpoolItemCount"]);
+                self.databaseMetaData.externalSchemeVersionFromDatabaseModel(metadata["externalSchemeVersionFromDatabaseModel"]);
+                self.databaseMetaData.externalSpoolItemCount(metadata["externalSpoolItemCount"]);
+                self.databaseMetaData.schemeVersionFromPlugin(metadata["schemeVersionFromPlugin"]);
 
-        self.isFilamentManagerPluginAvailable = ko.observable(false);
+                if (self.databaseMetaData.schemeVersionFromPlugin() != self.databaseMetaData.externalSchemeVersionFromDatabaseModel()){
+                    self.showUpdateSchemeMessage(true);
+                }
+            }
+        }
 
-        self.databaseFileLocation = ko.observable("hello");
-        self.downloadDatabaseUrl = ko.observable();
+        self.buildDatabaseSettings = function(){
 
-        self.deleteDatabaseAction = function() {
+            var databaseSettings = {
+                databaseType: self.pluginSettings.databaseType(),
+                databaseHost: self.pluginSettings.databaseHost(),
+                databasePort: self.pluginSettings.databasePort(),
+                databaseName: self.pluginSettings.databaseName(),
+                databaseUser: self.pluginSettings.databaseUser(),
+                databasePassword: self.pluginSettings.databasePassword(),
+            }
+            return databaseSettings
+        }
+
+        self.testDatabaseConnection = function(){
+
+            self.resetDatabaseMessages()
+            self.showExternalBusyIndicator(true);
+
+//  TODO cleanup          var databaseSettings = {
+//                databaseType: self.pluginSettings.databaseType(),
+//                databaseHost: self.pluginSettings.databaseHost(),
+//                databasePort: self.pluginSettings.databasePort(),
+//                databaseName: self.pluginSettings.databaseName(),
+//                databaseUser: self.pluginSettings.databaseUser(),
+//                databasePassword: self.pluginSettings.databasePassword(),
+//            }
+            var databaseSettings = self.buildDatabaseSettings();
+            // api-call
+            self.apiClient.testDatabaseConnection(databaseSettings, function(responseData){
+                self.handleDatabaseMetaDataResponse(responseData);
+                self.showExternalBusyIndicator(false);
+            });
+        }
+
+        self.deleteDatabaseAction = function(databaseType) {
             var result = confirm("Do you really want to delete all SpoolManager data?");
             if (result == true){
-                self.apiClient.callDeleteDatabase(function(responseData) {
+//  TODO cleanup
+//                var databaseSettings = {
+//                    databaseType: self.pluginSettings.databaseType(),
+//                    databaseHost: self.pluginSettings.databaseHost(),
+//                    databasePort: self.pluginSettings.databasePort(),
+//                    databaseName: self.pluginSettings.databaseName(),
+//                    databaseUser: self.pluginSettings.databaseUser(),
+//                    databasePassword: self.pluginSettings.databasePassword(),
+//                }
+                var databaseSettings = self.buildDatabaseSettings();
+                self.apiClient.callDeleteDatabase(databaseType, databaseSettings, function(responseData) {
                     self.spoolItemTableHelper.reloadItems();
                 });
             }
         };
+
+        $("#spoolmanger-settings-tab").find('a[data-toggle="tab"]').on('shown', function (e) {
+
+              var activatedTab = e.target.hash; // activated tab
+              var prevTab = e.relatedTarget.hash; // previous tab
+
+              if ("#tab-spool-Storage" == activatedTab){
+                  self.resetDatabaseMessages()
+
+                  self.showLocalBusyIndicator(true);
+                  self.showExternalBusyIndicator(true);
+                  self.apiClient.loadDatabaseMetaData(function(responseData) {
+                        self.handleDatabaseMetaDataResponse(responseData);
+                        self.showLocalBusyIndicator(false);
+                        self.showExternalBusyIndicator(false);
+                   });
+              }
+        });
+
+        self.isFilamentManagerPluginAvailable = ko.observable(false);
 
         // - Import CSV
         self.csvFileUploadName = ko.observable();
@@ -170,6 +291,23 @@ $(function() {
             self.csvImportUploadData.submit();
         };
 
+        // overwrite save-button
+        const origSaveSettingsFunction = self.settingsViewModel.saveData;
+        const newSaveSettingsFunction = function confirmSpoolSelectionBeforeStartPrint(data, successCallback, setAsSending) {
+            if (self.pluginSettings.useExternal() == true &&
+                (self.showDatabaseErrorMessage() == true || self.showUpdateSchemeMessage() == true)
+                ){
+                var check = confirm('External database will not work. Save settings anyway?');
+                if (check == true) {
+                    origSaveSettingsFunction(data, successCallback, setAsSending);
+                }
+                return
+            }
+            origSaveSettingsFunction(data, successCallback, setAsSending);
+            return;
+        }
+        self.settingsViewModel.saveData = newSaveSettingsFunction;
+
         ///////////////////////////////////////////////////// END: SETTINGS
 
 
@@ -195,8 +333,16 @@ $(function() {
 
         self.loadSpoolsForSidebar = function(){
             var currentFilterName = "all";
-            if (self.pluginSettings!= null && self.pluginSettings.hideEmptySpoolsInSidebar() == true){
-                currentFilterName = "hideEmptySpools";
+            if (self.pluginSettings!= null){
+                 if(self.pluginSettings.hideEmptySpoolsInSidebar() == true) {
+                     currentFilterName = "hideEmptySpools";
+                 }
+                 if(self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
+                     currentFilterName = "hideInactiveSpools";
+                 }
+                 if(self.pluginSettings.hideEmptySpoolsInSidebar() == true && self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
+                     currentFilterName = "hideEmptySpools,hideInactiveSpools";
+                 }
             }
 
             var tableQuery = {
@@ -209,20 +355,22 @@ $(function() {
 
             // api-call
             self.apiClient.callLoadSpoolsByQuery(tableQuery, function(responseData){
+
                 var allSpoolData = responseData["allSpools"]; // rawdtata
+                if (allSpoolData != null){
+                    var allSpoolItems = ko.utils.arrayMap(allSpoolData, function (spoolData) {
+                        var result = self.spoolDialog.createSpoolItemForTable(spoolData);
+                        return result;
+                    }); // transform to SpoolItems with KO.obseravables
+                    self.allSpoolsForSidebar(allSpoolItems);
 
-                var allSpoolItems = ko.utils.arrayMap(allSpoolData, function (spoolData) {
-                    var result = self.spoolDialog.createSpoolItemForTable(spoolData);
-                    return result;
-                }); // transform to SpoolItems with KO.obseravables
-                self.allSpoolsForSidebar(allSpoolItems);
-
-                var spoolItem = null;
-                var spoolData = responseData["selectedSpool"];
-                if (spoolData != null){
-                    spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                    var spoolItem = null;
+                    var spoolData = responseData["selectedSpool"];
+                    if (spoolData != null){
+                        spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                    }
+                    self.selectedSpoolForSidebar(spoolItem)
                 }
-                self.selectedSpoolForSidebar(spoolItem)
             });
         }
 
@@ -258,9 +406,6 @@ $(function() {
                 databaseId = spoolItem.databaseId();
             }
             self.apiClient.callSelectSpool(databaseId, function(responseData){
-                    // check if we need to send a warning
-//                    self.showPopUp("warning", "Keine Ahnng", "out off stuff");
-
                 var spoolItem = null;
                 var spoolData = responseData["selectedSpool"];
                 if (spoolData != null){
@@ -323,18 +468,23 @@ $(function() {
             assignVisibility("note");
         }
 
-
-
         ///////////////////////////////////////////////////////////////////////////////////////////////// TABLE BEHAVIOR
         self.spoolItemTableHelper = new TableItemHelper(function(tableQuery, observableTableModel, observableTotalItemCount){
             // api-call
             self.apiClient.callLoadSpoolsByQuery(tableQuery, function(responseData){
+
+                if (responseData["databaseConnectionProblem"] != null && responseData["databaseConnectionProblem"] == true){
+                    self.pluginNotWorking(true);
+                } else {
+                    self.pluginNotWorking(false);
+                }
+
                 totalItemCount = responseData["totalItemCount"];
                 allSpoolItems = responseData["allSpools"];
                 catalogs = responseData["catalogs"];
                 self.spoolDialog.updateCatalogs(catalogs);
-                templateSpool = responseData["templateSpool"];
-                self.spoolDialog.updateTemplateSpool(templateSpool);
+                templateSpoolData = responseData["templateSpool"];
+                self.spoolDialog.updateTemplateSpool(templateSpoolData);
 
                 var dataRows = ko.utils.arrayMap(allSpoolItems, function (spoolData) {
                     var result = self.spoolDialog.createSpoolItemForTable(spoolData);
@@ -355,7 +505,12 @@ $(function() {
             self.spoolDialog.showDialog(selectedSpoolItem, closeDialogHandler);
         };
 
-        closeDialogHandler = function(shouldTableReload){
+        closeDialogHandler = function(shouldTableReload, specialAction, currentSpoolItem){
+
+            if (specialAction === "selectSpoolForPrinting"){
+                self.selectSpoolForSidebar(currentSpoolItem);
+            }
+
             if (shouldTableReload == true){
                 self.spoolItemTableHelper.reloadItems();
                 // TODO auto reload of sidebar spools without loosing selection
@@ -386,14 +541,14 @@ $(function() {
 //                            return;
 //                        }
                         if ("filamentNotEnough" == result){
-                            var check = confirm('Not enough filament. Do you want to start the print anyway?');
+                            var check = confirm("The selected spool '"+responseData.spoolName+"' does not have enough remaining filament. Do you want to start the print anyway?");
                             if (check == true) {
                                 origStartPrintFunction();
                             }
                             return;
                         }
                         if ("reminderSpoolSelection" == result){
-                            var question = "Please verify your selected Spool '"+responseData.spoolName+"'. Do you want to start the print anyway?";
+                            var question = "Do you want to start the print with the selected spool '"+responseData.spoolName+"'?";
                             var check = confirm(question);
                             if (check == true) {
                                 origStartPrintFunction();
@@ -412,9 +567,9 @@ $(function() {
             }
 
             if (printAfterLoad && self.filesViewModel.listHelper.isSelected(data) && self.filesViewModel.enablePrint(data)) {
-                // file was already selected, just start the print job
+                // file was already selected, just start the print job with the newStartPrint function
                 // SPOOLMANAGER-CHANGE changed OctoPrint.job.start();
-                startPrintFunction();
+                newStartPrintFunction();
             } else {
                 // select file, start print job (if requested and within dimensions)
                 var withinPrintDimensions = self.filesViewModel.evaluatePrintDimensions(data, true);
@@ -455,7 +610,7 @@ $(function() {
             // Table visibility
             self. initTableVisibilities();
             // resetSettings-Stuff
-             new ResetSettingsUtilV2(self.pluginSettings).assignResetSettingsFeature(PLUGIN_ID, function(data){
+             new ResetSettingsUtilV3(self.pluginSettings).assignResetSettingsFeature(PLUGIN_ID, function(data){
                 // no additional reset function needed in V2
              });
 
@@ -465,10 +620,19 @@ $(function() {
             self.spoolDialog.initBinding(self.apiClient, self.pluginSettings);
             // Import Dialog
             self.csvImportDialog.init(self.apiClient);
+            // Database connection problem dialog
+            self.databaseConnectionProblemDialog.init(self.apiClient);
 
             self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
                 var payload = {
                         "hideEmptySpoolsInSidebar": newCheckedVaue
+                    };
+                OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
+                self.loadSpoolsForSidebar();
+            });
+            self.pluginSettings.hideInactiveSpoolsInSidebar.subscribe(function(newCheckedVaue){
+                var payload = {
+                        "hideInactiveSpoolsInSidebar": newCheckedVaue
                     };
                 OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
                 self.loadSpoolsForSidebar();
@@ -496,8 +660,8 @@ $(function() {
             }
 
             if ("initalData" == data.action){
-                self.databaseFileLocation(data.databaseFileLocation);
 
+                self.pluginNotWorking(data.pluginNotWorking);
                 self.isFilamentManagerPluginAvailable(data.isFilamentManagerPluginAvailable);
 
                 var selectedSpoolData = data.selectedSpool;
@@ -529,12 +693,21 @@ $(function() {
                 return;
             }
             if ("errorPopUp" == data.action){
-                new PNotify({
-                    title: 'ERROR:' + data.title,
-                    text: data.message,
-                    type: "error",
-                    hide: false
-                    });
+                self.showPopUp("error", 'ERROR:' + data.title, data.message);
+                return;
+            }
+            if ("showConnectionProblem" == data.action){
+// TODO enable problem dialog again
+//                new PNotify({
+//                    title: 'ERROR:' + data.title,
+//                    text: data.message,
+//                    type: "error",
+//                    hide: false
+//                    });
+
+//                self.databaseConnectionProblemDialog.showDialog(data, function(){
+//                    // nothing special here, everything is done in the dialog
+//                });
 
                 return;
             }
@@ -543,11 +716,36 @@ $(function() {
 
         self.onTabChange = function(next, current){
             //alert("Next:"+next +" Current:"+current);
+            // debugger
             if ("#tab_plugin_PrintJobHistory" == next){
                 //self.reloadTableData();
             }
         }
-
+        self.onAfterTabChange = function(current, previous){
+            //alert("Next:"+next +" Current:"+current);
+            if ("#tab_plugin_SpoolManager" == current){
+                // var selectedSpoolId = getUrlParameter("selectedSpoolId");
+                // if (selectedSpoolId) {
+                //     console.error("Id"+selectedSpoolId);
+                // }
+                var tabHashCode = window.location.hash;
+                if (tabHashCode.includes("-spoolId")){
+                    var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
+                    console.error(selectedSpoolId);
+                    // - Load SpoolItem from Backend
+                    // - Open SpoolItem
+                    self.apiClient.callSelectSpool(selectedSpoolId, function(responseData){
+                        var spoolItem = null;
+                        var spoolData = responseData["selectedSpool"];
+                        if (spoolData != null){
+                            spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                            spoolItem.selectedFromQRCode(true);
+                            self.showSpoolDialogAction(spoolItem);
+                        }
+                    });
+                }
+            }
+        }
 
     }
 
