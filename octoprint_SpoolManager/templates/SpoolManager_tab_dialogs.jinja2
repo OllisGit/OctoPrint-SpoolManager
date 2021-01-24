@@ -103,7 +103,7 @@
 <!--                <div class="span3"></div>-->
 
 
-                <div class="span2">
+                <div class="span1">
 <!-- Customize Field visiblity
 
                     <div id="configFields" class="btn-group" >
@@ -149,7 +149,16 @@
 -->
                 </div>
 
+                <div class="span1">
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isActive" > Active&nbsp;&nbsp;&nbsp;
+                    </label>
+                </div>
             </div>
+
+
+
+
         </div>
         <div class="modal-body hack-flowbreak"  >
             <form  class="form-horizontal" id="spool-form" >
@@ -234,21 +243,21 @@
                                 </div>
                             </div>
                             <div class="control-group ">
-                                <label class="control-label">Encloser</label>
+                                <label class="control-label">Enclosure</label>
                                 <div class="controls">
                                     <div class="input-append">
-                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.encloserTemperature" />
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.enclosureTemperature" />
                                         <span class="add-on">°C</span>
                                     </div>
                                 </div>
                             </div>
 
-                             <div class="control-group" data-bind="visible: spoolDialog.isExistingSpool">
+                             <div class="control-group" data-bind="visible: spoolDialog.isExistingSpool() && pluginSettings.qrCodeEnabled()">
                                 <label class="control-label">QR Code</label>
                                 <div class="controls">
                                     <div class="">
-                                        <a data-bind="attr: {href: '/plugin/SpoolManager/generateQR/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">
-                                            <img class="qr-code" alt="QR Code" data-bind="attr: {src: '/plugin/SpoolManager/generateQR/'+spoolDialog.spoolItemForEditing.databaseId() }">
+                                        <a data-bind="attr: {href: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">
+                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">
                                         </a>
                                     </div>
                                </div>
@@ -437,6 +446,7 @@
             <div class="control-group">
                 <div class="controls row-fluid">
                     <span class="span8" style="text-align:left">
+
                         <button type="button" class="btn btn-danger" data-bind="visible: spoolDialog.isExistingSpool,
                                                                                 disable: printerStateViewModel.isPrinting(),
                                                                                 click: spoolDialog.deleteSpoolItem" >Delete</button>
@@ -446,6 +456,8 @@
                         <button type="button" class="btn btn-warning" data-bind="visible: spoolDialog.isExistingSpool,
                                                                                 disable: printerStateViewModel.isPrinting(),
                                                                                 click: spoolDialog.copySpoolItem" >Copy</button>
+                        <!-- visible: spoolDialog.spoolItemForEditing.selectedFromQRCode() == true,                        -->
+                        <button class="btn btn-info" data-bind="click: spoolDialog.selectSpoolItemForPrinting" style="text-align:right">Select for Printing</button>
                         <label class="checkbox">
                                 <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isTemplate" > Mark as template.&nbsp;&nbsp;&nbsp;
 
@@ -460,7 +472,6 @@
                                     </span>
                                 </span>
                         </label>
-
                     </span>
                     <span class="span4 text-right">
 <!--                        data-bind="click: spoolDialog.closeSpoolItemDialog"-->

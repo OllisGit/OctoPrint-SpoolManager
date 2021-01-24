@@ -305,11 +305,11 @@ class SpoolmanagerPlugin(
 		lastUsage = datetime.now()
 		spoolModel.lastUse = lastUsage
 		# - Used length
-		currentExtrusionForAllTools = self._filamentOdometer.get_extrusion()
-		if (len(currentExtrusionForAllTools) == 0):
-			self._logger.warning("Odomenter could not detect any extrusion")
-			return
-		currentExtrusionLenght = currentExtrusionForAllTools[0] # TODO Support of multi-tool
+		currentExtrusionForAllTools = self._filamentOdometer.getExtrusionForAllTools()
+		# if (len(currentExtrusionForAllTools) == 0):
+		# 	self._logger.warning("Odomenter could not detect any extrusion")
+		# 	return
+		currentExtrusionLenght = currentExtrusionForAllTools # TODO Support of multi-tool
 		self._logger.info("Extruded filament length: " + str(currentExtrusionLenght))
 		spoolUsedLength = 0.0 if StringUtils.isEmpty(spoolModel.usedLength) == True else spoolModel.usedLength
 		self._logger.info("Current Spool filament length: " + str(spoolUsedLength))
@@ -383,12 +383,16 @@ class SpoolmanagerPlugin(
 		if ("origin" in payload and "path" in payload):
 			metadata = self._file_manager.get_metadata(payload["origin"], payload["path"])
 			if ("analysis" in metadata):
-				allFilemants = metadata["analysis"]["filament"]
-				# TODO support multiple tools
-				if (allFilemants):
-					self.metaDataFilamentLength = allFilemants["tool0"]["length"]
-					self.checkRemainingFilament()
-					return
+				if ("filament" in metadata["analysis"]):
+					allFilemants = metadata["analysis"]["filament"]
+					# TODO support multiple tools and not only tool0 (or first you got)
+					if (allFilemants):
+						for toolIndex in range(5):
+							toolName = "tool" + str(toolIndex)
+							if (toolName in allFilemants):
+								self.metaDataFilamentLength = allFilemants[toolName]["length"]
+								self.checkRemainingFilament()
+						return
 
 		self.metaDataFilamentLength = 0.0
 
@@ -486,11 +490,19 @@ class SpoolmanagerPlugin(
 		# Not visible
 		settings[SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID] = None
 		settings[SettingsKeys.SETTINGS_KEY_HIDE_EMPTY_SPOOL_IN_SIDEBAR] = False
+		settings[SettingsKeys.SETTINGS_KEY_HIDE_INACTIVE_SPOOL_IN_SIDEBAR] = True
 		## Genral
 		settings[SettingsKeys.SETTINGS_KEY_REMINDER_SELECTING_SPOOL] = True
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_SPOOL_NOT_SELECTED] = True
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH] = True
 		settings[SettingsKeys.SETTINGS_KEY_CURRENCY_SYMBOL] = "€"
+
+		## QR-Code
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_ENABLED] = True
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR] = "darkgreen"
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_BACKGROUND_COLOR] = "white"
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_WIDTH] = "100"
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_HEIGHT] = "100"
 
 		## Export / Import
 		settings[SettingsKeys.SETTINGS_KEY_IMPORT_CSV_MODE] = SettingsKeys.KEY_IMPORTCSV_MODE_APPEND

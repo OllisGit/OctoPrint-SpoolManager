@@ -80,12 +80,14 @@ function SpoolManagerEditSpoolDialog(){
             return "";
         };
 
+        this.selectedFromQRCode = ko.observable(false);
         // - list all attributes
         this.version = ko.observable();
         this.isSpoolVisible = ko.observable(false);
         this.isEmpty = ko.observable();
         this.databaseId = ko.observable();
         this.isTemplate = ko.observable();
+        this.isActive = ko.observable();
         this.displayName = ko.observable();
 //        this.vendor = ko.observable();
 //        this.material = ko.observable();
@@ -95,7 +97,7 @@ function SpoolManagerEditSpoolDialog(){
         this.flowRateCompensation = ko.observable();
         this.temperature = ko.observable();
         this.bedTemperature = ko.observable();
-        this.encloserTemperature = ko.observable();
+        this.enclosureTemperature = ko.observable();
         this.colorName = ko.observable();
         this.color = ko.observable();
         this.totalWeight = ko.observable();
@@ -166,6 +168,9 @@ function SpoolManagerEditSpoolDialog(){
         self.labelsViewModel = self.componentFactory.createLabels("spool-labels-select", $('#spool-form'));
         this.labels   = self.labelsViewModel.selectedOptions;
         this.allLabels = self.labelsViewModel.allOptions;
+
+
+
         // Fill Item with data
         this.update(spoolData);
     }
@@ -185,10 +190,12 @@ function SpoolManagerEditSpoolDialog(){
             this.allVendors(self.catalogs.vendors);
         }
 
+        this.selectedFromQRCode(updateData.selectedFromQRCode);
         this.isEmpty(data == null);
         this.version(updateData.version);
         this.databaseId(updateData.databaseId);
         this.isTemplate(updateData.isTemplate);
+        this.isActive(updateData.isActive);
         this.displayName(updateData.displayName);
         this.vendor(updateData.vendor);
 
@@ -209,7 +216,7 @@ function SpoolManagerEditSpoolDialog(){
         this.flowRateCompensation(updateData.flowRateCompensation);
         this.temperature(updateData.temperature);
         this.bedTemperature(updateData.bedTemperature);
-        this.encloserTemperature(updateData.encloserTemperature);
+        this.enclosureTemperature(updateData.enclosureTemperature);
         this.totalWeight(updateData.totalWeight);
         this.spoolWeight(updateData.spoolWeight);
         this.remainingWeight(updateData.remainingWeight);
@@ -329,6 +336,7 @@ function SpoolManagerEditSpoolDialog(){
 
     // Knockout stuff
     this.isExistingSpool = ko.observable(false);
+    this.spoolSelectedByQRCode = ko.observable(false);
 
 //    self.getValueOrDefault = function(data, attribute, defaultValue){
 //        if (data == null){
@@ -560,6 +568,7 @@ function SpoolManagerEditSpoolDialog(){
             self.spoolItemForEditing.update(templateSpoolItemCopy);
             // reset values for a new spool
             self.spoolItemForEditing.isTemplate(false);
+            self.spoolItemForEditing.isActive(true);
             self.spoolItemForEditing.databaseId(null);
             self.spoolItemForEditing.costUnit(self.pluginSettings.currencySymbol());
             self.spoolItemForEditing.displayName(null);
@@ -601,10 +610,10 @@ function SpoolManagerEditSpoolDialog(){
         spoolItemCopy = ko.mapping.toJS(self.spoolItemForEditing);
         self.spoolItemForEditing.update(spoolItemCopy);
         self.spoolItemForEditing.isTemplate(false);
+        self.spoolItemForEditing.isActive(true);
         self.spoolItemForEditing.databaseId(null);
         self.spoolItemForEditing.isSpoolVisible(true);
     }
-
 
     this.saveSpoolItem = function(){
 
@@ -647,5 +656,12 @@ function SpoolManagerEditSpoolDialog(){
                 self.closeDialogHandler(true);
             });
         }
+    }
+
+    this.selectSpoolItemForPrinting = function(){
+        self.spoolItemForEditing.isSpoolVisible(false);
+        self.spoolDialog.modal('hide');
+        self.closeDialogHandler(true, "selectSpoolForPrinting", self.spoolItemForEditing);
+
     }
 }

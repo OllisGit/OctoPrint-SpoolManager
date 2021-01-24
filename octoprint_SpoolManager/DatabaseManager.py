@@ -156,7 +156,6 @@ class DatabaseManager(object):
 			self._logger.warn("...something was strange. Should not be shwon in log. Check full log")
 		pass
 
-
 	def _upgradeDatabase(self,currentDatabaseSchemeVersion, targetDatabaseSchemeVersion):
 
 		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5]
@@ -184,7 +183,7 @@ class DatabaseManager(object):
 		# - materialCharacteristic = CharField(null=True, index=True) # strong, soft,... # since V4: new
 		# - material = CharField(null=True, index=True)	# since V4: added index
 		# - vendor = CharField(null=True, index=True) # since V4: added index
-
+		# - encloser -> rename to enclosureTemperature
 		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
 
@@ -199,12 +198,15 @@ class DatabaseManager(object):
 
 			ALTER TABLE 'spo_spoolmodel' ADD 'updated' DATETIME;
 			ALTER TABLE 'spo_spoolmodel' ADD 'originator' CHAR(60);
-
 			ALTER TABLE 'spo_spoolmodel' ADD 'materialCharacteristic' VARCHAR(255);
+			ALTER TABLE 'spo_spoolmodel' ADD 'isActive' INTEGER;
+			UPDATE 'spo_spoolmodel' SET isActive=1;
 
 			CREATE INDEX spoolmodel_materialCharacteristic ON spo_spoolmodel (materialCharacteristic);
 			CREATE INDEX spoolmodel_material ON spo_spoolmodel (material);
 			CREATE INDEX spoolmodel_vendor ON spo_spoolmodel (vendor);
+
+			ALTER TABLE spo_spoolmodel RENAME COLUMN encloserTemperature to enclosureTemperature;
 
 			UPDATE 'spo_pluginmetadatamodel' SET value=4 WHERE key='databaseSchemeVersion';
 		COMMIT;
@@ -217,7 +219,6 @@ class DatabaseManager(object):
 		self._logger.info(" Successfully 3 -> 4")
 		pass
 
-
 	def _upgradeFrom2To3(self):
 		self._logger.info(" Starting 2 -> 3")
 		# What is changed:
@@ -225,7 +226,7 @@ class DatabaseManager(object):
 		# - diameterTolerance = FloatField(null=True)  # since V3
 		# - flowRateCompensation = IntegerField(null=True)  # since V3
 		# - bedTemperature = IntegerField(null=True)  # since V3
-		# - encloserTemperature = IntegerField(null=True)  # since V3
+		# - enclosureTemperature = IntegerField(null=True)  # since V3
 
 		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
@@ -622,34 +623,36 @@ class DatabaseManager(object):
 			myQuery = SpoolModel.select().offset(offset).limit(limit)
 			if (filterName == "hideEmptySpools"):
 				myQuery = myQuery.where( (SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None))
-			# elif (filterName == "onlyFailed"):
-			# 	myQuery = myQuery.where(PrintJobModel.printStatusResult != "success")
+			if (filterName == "hideInactiveSpools"):
+				myQuery = myQuery.where( (SpoolModel.isActive == True) )
+			if (filterName == "hideEmptySpools,hideInactiveSpools"):
+				myQuery = myQuery.where( ((SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None)) & (SpoolModel.isActive == True) )
 
 			if ("displayName" == sortColumn):
 				if ("desc" == sortOrder):
 					myQuery = myQuery.order_by(SpoolModel.displayName.desc())
 				else:
-					myQuery = myQuery.order_by(SpoolModel.displayName)
+					myQuery = myQuery.order_by(SpoolModel.displayName.asc())
 			if ("lastUse" == sortColumn):
 				if ("desc" == sortOrder):
 					myQuery = myQuery.order_by(SpoolModel.lastUse.desc())
 				else:
-					myQuery = myQuery.order_by(SpoolModel.lastUse)
+					myQuery = myQuery.order_by(SpoolModel.lastUse.asc())
 			if ("firstUse" == sortColumn):
 				if ("desc" == sortOrder):
 					myQuery = myQuery.order_by(SpoolModel.firstUse.desc())
 				else:
-					myQuery = myQuery.order_by(SpoolModel.firstUse)
+					myQuery = myQuery.order_by(SpoolModel.firstUse.asc())
 			if ("remaining" == sortColumn):
 				if ("desc" == sortOrder):
 					myQuery = myQuery.order_by(SpoolModel.remainingWeight.desc())
 				else:
-					myQuery = myQuery.order_by(SpoolModel.remainingWeight)
+					myQuery = myQuery.order_by(SpoolModel.remainingWeight.asc())
 			if ("material" == sortColumn):
 				if ("desc" == sortOrder):
 					myQuery = myQuery.order_by(SpoolModel.material.desc())
 				else:
-					myQuery = myQuery.order_by(SpoolModel.material)
+					myQuery = myQuery.order_by(SpoolModel.material.asc())
 			return myQuery
 
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadAllSpoolsByQuery")

@@ -5,6 +5,7 @@
     <div class="tabbable"> <!-- Only required for left/right tabs -->
         <ul class="nav nav-tabs" id="spoolmanger-settings-tab">
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
+            <li><a href="#tab-spool-QR-Code" data-toggle="tab">QR - Code</a></li>
             <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
             <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
             <li><a href="#tab-spool-Debugging" data-toggle="tab">Debugging</a></li>
@@ -92,6 +93,31 @@ FPE;	2.16
                 </div>
 -->
 
+            </div>
+
+            <!-- QR - Code - TAB -->
+            <div class="tab-pane" id="tab-spool-QR-Code">
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.qrCodeEnabled" > Show generated QR-Code in Spool-Dialog.
+                        </label>
+                    </div>
+                </div>
+                <hr/>
+                <div class="control-group">
+                    <label class="control-label">Fill color</label>
+                    <div class="controls">
+                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeFillColor">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Background color</label>
+                    <div class="controls">
+                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeBackgroundColor">
+                    </div>
+                </div>
+                <span class="help-inline">You can use RGB color code like '#23dda0' or use named color 'red'!</span>
             </div>
 
             <!-- EXPORT / IMPORT - TAB -->

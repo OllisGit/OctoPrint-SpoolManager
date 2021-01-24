@@ -16,7 +16,9 @@ class SpoolModel(BaseModel):
 	######################
 	## SPOOL - FIELDS
 	######################
+
 	# version = IntegerField(null=True) # since V3, since V4: moved to BaseModel
+	isActive = BooleanField(null=True) # since V4
 	isTemplate = BooleanField(null=True)
 	displayName = CharField(null=True)
 	vendor = CharField(null=True, index=True) # since V4: added index
@@ -70,4 +72,4 @@ class SpoolModel(BaseModel):
 	# Temperature
 	temperature = IntegerField(null=True)
 	bedTemperature = IntegerField(null=True) # since V3
-	encloserTemperature = IntegerField(null=True) # since V3
+	enclosureTemperature = IntegerField(null=True) # since V3, V4 renamed from encloser to enclosure

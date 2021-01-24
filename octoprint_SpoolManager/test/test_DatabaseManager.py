@@ -10,7 +10,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 class TestDatabase(unittest.TestCase):
 
 	sqliteDatabaseSettings = DatabaseManager.DatabaseSettings()
-	sqliteDatabaseSettings.useExternal = True
+	sqliteDatabaseSettings.useExternal = False
 	sqliteDatabaseSettings.baseFolder = "/Users/o0632/Library/Application Support/OctoPrint/data/SpoolManager/"
 
 	postgresDatabaseSettings = DatabaseManager.DatabaseSettings()
@@ -130,17 +130,26 @@ class TestDatabase(unittest.TestCase):
 		print(spool.displayName)
 
 	##################################################################################################   LOAD ALL SPOOLS
-	def _test_loadAllSpools(self):
+	def test_loadAllSpools(self):
 
 		self.databaseManager.initDatabase(self.sqliteDatabaseSettings, self._clientOutput)
-		allSpoolModels = self.databaseManager.loadAllSpoolsByQuery()
+
+		tableQuery = {
+			"from": 0,
+			"to": 100,
+			"sortColumn": "remaining",
+			"sortOrder": "asc",
+			"filterName": "all"
+		}
+
+		allSpoolModels = self.databaseManager.loadAllSpoolsByQuery(tableQuery)
 		print(len(allSpoolModels))
-		import time
-		time.sleep(3)
+		# import time
+		# time.sleep(3)
 
 		if (allSpoolModels != None):
 			for spoolModel in allSpoolModels:
-				print(spoolModel.displayName)
+				print("Spool:'"+spoolModel.displayName + "' Weight:'" +str(spoolModel.remainingWeight) + "'")
 
 	##################################################################################################   SAVE SPOOL
 	def _test_saveSpool(self):
@@ -167,7 +176,7 @@ class TestDatabase(unittest.TestCase):
 
 
 	##################################################################################################   DELETE SPOOL
-	def test_materialModels(self):
+	def _test_materialModels(self):
 		self.databaseManager.initDatabase(self.sqliteDatabaseSettings, self._clientOutput)
 
 
