@@ -39,13 +39,13 @@ If you like it, I would be thankful about a cup of coffee :)
 - [X] Warn if not enough filament is present
 - [X] Filter spool table
 - [X] Table column visibility
+- [X] Scan QR/Barcodes of a spool
 
 ## Planning / next features
 - [ ] External Database (IN PROGRESS)
 - [ ] PrintJobHistory integration [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
 - [ ] Multi Tool support
 - [ ] Capture Spool-Image
-- [ ] Scan QR/Barcodes of a spool
 - [ ] ...more planing details could be found [here](https://github.com/OllisGit/OctoPrint-SpoolManager/projects/1)
 
 ## Screenshots
