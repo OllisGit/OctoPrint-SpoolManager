@@ -116,6 +116,7 @@ class DatabaseManager(object):
 			self._logger.info("Current databasescheme: " + str(schemeVersionFromDatabase))
 			pass
 		except Exception as e:
+			self._logger.exception(e)
 			self.closeDatabase()
 			errorMessage = str(e)
 			if (
