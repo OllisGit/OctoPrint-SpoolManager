@@ -185,6 +185,9 @@ class DatabaseManager(object):
 		# - material = CharField(null=True, index=True)	# since V4: added index
 		# - vendor = CharField(null=True, index=True) # since V4: added index
 		# - encloser -> rename to enclosureTemperature
+		#               ALTER TABLE spo_spoolmodel RENAME COLUMN encloserTemperature to enclosureTemperature; not working
+		#               SQLite did not support the ALTER TABLE RENAME COLUMN syntax before version 3.25.0.
+		#               see https://www.sqlitetutorial.net/sqlite-rename-column/#:~:text=SQLite%20did%20not%20support%20the,the%20version%20lower%20than%203.25.
 		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
 
@@ -207,7 +210,48 @@ class DatabaseManager(object):
 			CREATE INDEX spoolmodel_material ON spo_spoolmodel (material);
 			CREATE INDEX spoolmodel_vendor ON spo_spoolmodel (vendor);
 
-			ALTER TABLE spo_spoolmodel RENAME COLUMN encloserTemperature to enclosureTemperature;
+			ALTER TABLE 'spo_spoolmodel' RENAME TO 'spo_spoolmodel_old';
+			CREATE TABLE "spo_spoolmodel" (
+				"databaseId" INTEGER NOT NULL PRIMARY KEY,
+				"created" DATETIME NOT NULL,
+				"isTemplate" INTEGER,
+				"displayName" VARCHAR(255),
+				"vendor" VARCHAR(255),
+				"material" VARCHAR(255),
+				"density" REAL,
+				"diameter" REAL,
+				"colorName" VARCHAR(255),
+				"color" VARCHAR(255),
+				"temperature" INTEGER,
+				"totalWeight" REAL,
+				"usedWeight" REAL,
+				"remainingWeight" REAL,
+				"usedLength" INTEGER,
+				"code" VARCHAR(255),
+				"firstUse" DATETIME,
+				"lastUse" DATETIME,
+				"purchasedFrom" VARCHAR(255),
+				"purchasedOn" DATE,
+				"cost" REAL,
+				"costUnit" VARCHAR(255),
+				"labels" TEXT,
+				"noteText" TEXT,
+				"noteDeltaFormat" TEXT,
+				"noteHtml" TEXT,
+				'version' INTEGER,
+				'diameterTolerance' REAL,
+				'spoolWeight' REAL,
+				'flowRateCompensation' INTEGER,
+				'bedTemperature' INTEGER,
+				'enclosureTemperature' INTEGER,
+				'totalLength' INTEGER);
+
+				INSERT INTO 'spo_spoolmodel'
+				(databaseId, created, isTemplate, displayName, vendor, material, density, diameter, diameter, colorName, color, temperature, totalWeight, usedWeight, remainingWeight, usedLength, code, firstUse, lastUse, purchasedFrom, purchasedOn, cost, costUnit, labels, noteText, noteDeltaFormat, noteHtml, version, diameterTolerance, spoolWeight, flowRateCompensation, bedTemperature, enclosureTemperature, totalLength)
+				  SELECT databaseId, created, isTemplate, displayName, vendor, material, density, diameter, diameter, colorName, color, temperature, totalWeight, usedWeight, remainingWeight, usedLength, code, firstUse, lastUse, purchasedFrom, purchasedOn, cost, costUnit, labels, noteText, noteDeltaFormat, noteHtml, version, diameterTolerance, spoolWeight, flowRateCompensation, bedTemperature, encloserTemperature, totalLength
+				  FROM 'spo_spoolmodel_old';
+
+				DROP TABLE 'spo_spoolmodel_old';
 
 			UPDATE 'spo_pluginmetadatamodel' SET value=4 WHERE key='databaseSchemeVersion';
 		COMMIT;
