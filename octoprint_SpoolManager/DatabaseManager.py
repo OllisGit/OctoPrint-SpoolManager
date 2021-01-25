@@ -112,8 +112,14 @@ class DatabaseManager(object):
 		try:
 			cursor = self.db.execute_sql('select "value" from "spo_pluginmetadatamodel" where key="'+PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION+'";')
 			result = cursor.fetchone()
-			schemeVersionFromDatabase = int(result[0])
-			self._logger.info("Current databasescheme: " + str(schemeVersionFromDatabase))
+			if (result != None):
+				schemeVersionFromDatabase = int(result[0])
+				self._logger.info("Current databasescheme: " + str(schemeVersionFromDatabase))
+			else:
+				self._logger.warn("Strange, table is found (maybe), but there is no result of the schem version. Try to recreate a new db-scheme")
+				self.backupDatabaseFile() # safty first
+				self._createDatabaseTables()
+				return
 			pass
 		except Exception as e:
 			self._logger.exception(e)
@@ -389,6 +395,8 @@ class DatabaseManager(object):
 
 		databaseFileLocation = DatabaseManager.getDatabaseFileLocation(databaseSettings.baseFolder)
 		self._databaseSettings.fileLocation = databaseFileLocation
+		existsDatabaseFile = str(os.path.exists(self._databaseSettings.fileLocation))
+		self._logger.info("Databasefile '" +self._databaseSettings.fileLocation+ "' exists: " + existsDatabaseFile)
 
 		import logging
 		logger = logging.getLogger('peewee')
@@ -502,17 +510,22 @@ class DatabaseManager(object):
 			self._sqlLogger.setLevel(logging.ERROR)
 
 	def backupDatabaseFile(self):
-		now = datetime.datetime.now()
-		currentDate = now.strftime("%Y%m%d-%H%M")
-		backupDatabaseFilePath = self._databaseSettings.fileLocation[0:-3] + "-backup-"+currentDate+".db"
-		# backupDatabaseFileName = "spoolmanager-backup-"+currentDate+".db"
-		# backupDatabaseFilePath = os.path.join(backupFolder, backupDatabaseFileName)
-		if not os.path.exists(backupDatabaseFilePath):
-			shutil.copy(self._databaseSettings.fileLocation, backupDatabaseFilePath)
-			self._logger.info("Backup of spoolmanager database created '" + backupDatabaseFilePath + "'")
+
+		if (os.path.exists(self._databaseSettings.fileLocation)):
+			self._logger.info("Starting database backup")
+			now = datetime.datetime.now()
+			currentDate = now.strftime("%Y%m%d-%H%M")
+			backupDatabaseFilePath = self._databaseSettings.fileLocation[0:-3] + "-backup-"+currentDate+".db"
+			# backupDatabaseFileName = "spoolmanager-backup-"+currentDate+".db"
+			# backupDatabaseFilePath = os.path.join(backupFolder, backupDatabaseFileName)
+			if not os.path.exists(backupDatabaseFilePath):
+				shutil.copy(self._databaseSettings.fileLocation, backupDatabaseFilePath)
+				self._logger.info("Backup of spoolmanager database created '" + backupDatabaseFilePath + "'")
+			else:
+				self._logger.warn("Backup of spoolmanager database ('" + backupDatabaseFilePath + "') is already present. No backup created.")
+			return backupDatabaseFilePath
 		else:
-			self._logger.warn("Backup of spoolmanager database ('" + backupDatabaseFilePath + "') is already present. No backup created.")
-		return backupDatabaseFilePath
+			self._logger.info("No database backup needed, because there is no databasefile '"+str(self._databaseSettings.fileLocation)+"'")
 
 	def reCreateDatabase(self, databaseSettings):
 		self._currentErrorMessageDict = None
