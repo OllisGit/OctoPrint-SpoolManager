@@ -382,7 +382,7 @@ class DatabaseManager(object):
 
 	################################################################################################### public functions
 	@staticmethod
-	def getDatabaseFileLocation(pluginDataBaseFolder):
+	def buildDefaultDatabaseFileLocation(pluginDataBaseFolder):
 		databaseFileLocation = os.path.join(pluginDataBaseFolder, "spoolmanager.db")
 		return databaseFileLocation
 
@@ -393,7 +393,7 @@ class DatabaseManager(object):
 		self._passMessageToClient = sendMessageToClient
 		self._databaseSettings = databaseSettings
 
-		databaseFileLocation = DatabaseManager.getDatabaseFileLocation(databaseSettings.baseFolder)
+		databaseFileLocation = DatabaseManager.buildDefaultDatabaseFileLocation(databaseSettings.baseFolder)
 		self._databaseSettings.fileLocation = databaseFileLocation
 		existsDatabaseFile = str(os.path.exists(self._databaseSettings.fileLocation))
 		self._logger.info("Databasefile '" +self._databaseSettings.fileLocation+ "' exists: " + existsDatabaseFile)
@@ -420,6 +420,9 @@ class DatabaseManager(object):
 
 	def assignNewDatabaseSettings(self, databaseSettings):
 		self._databaseSettings = databaseSettings
+
+	def getDatabaseSettings(self):
+		return self._databaseSettings
 
 	def testDatabaseConnection(self, databaseSettings = None):
 		result = None

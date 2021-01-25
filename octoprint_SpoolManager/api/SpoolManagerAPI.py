@@ -491,7 +491,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	#######################################################################################   DOWNLOAD DATABASE-FILE
 	@octoprint.plugin.BlueprintPlugin.route("/downloadDatabase", methods=["GET"])
 	def downloadDatabase(self):
-		return send_file(self._databaseManager.getDatabaseFileLocation(),
+		return send_file(self._databaseManager.getDatabaseSettings().fileLocation,
 						 mimetype='application/octet-stream',
 						 attachment_filename='spoolmanager.db',
 						 as_attachment=True)

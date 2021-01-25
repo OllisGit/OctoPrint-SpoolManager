@@ -213,7 +213,7 @@ class SpoolmanagerPlugin(
 		databaseSettings.password = self._settings.get([SettingsKeys.SETTINGS_KEY_DATABASE_PASSWORD])
 		pluginDataBaseFolder = self.get_plugin_data_folder()
 		databaseSettings.baseFolder = pluginDataBaseFolder
-		databaseSettings.fileLocation = self._databaseManager.getDatabaseFileLocation(databaseSettings.baseFolder)
+		databaseSettings.fileLocation = self._databaseManager.buildDefaultDatabaseFileLocation(databaseSettings.baseFolder)
 
 		return databaseSettings
 
@@ -513,7 +513,7 @@ class SpoolmanagerPlugin(
 		## Database
 		## nested settings are not working, because if only a few attributes are changed it only returns these few attribuets, instead the default values + adjusted values
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_USE_EXTERNAL] = False
-		datbaseLocation = DatabaseManager.getDatabaseFileLocation(self.get_plugin_data_folder())
+		datbaseLocation = DatabaseManager.buildDefaultDatabaseFileLocation(self.get_plugin_data_folder())
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_LOCAL_FILELOCATION] = datbaseLocation
 		settings[SettingsKeys.SETTINGS_KEY_DATABASE_TYPE] = "sqlite"
 		# settings[SettingsKeys.SETTINGS_KEY_DATABASE_TYPE] = "postgres"
