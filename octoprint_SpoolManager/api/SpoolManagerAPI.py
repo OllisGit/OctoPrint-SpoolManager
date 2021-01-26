@@ -348,7 +348,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				error_correction=qrcode.constants.ERROR_CORRECT_H
 			)
 
-			qrMaker.add_data(flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", databaseId=databaseId))
+			qrMaker.add_data(flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, databaseId=databaseId))
 			qrMaker.make(fit=True, )
 
 			fillColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR])
