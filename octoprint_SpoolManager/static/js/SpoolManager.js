@@ -730,11 +730,13 @@ $(function() {
             // }
             var tabHashCode = window.location.hash;
             //we can only contain -spoolId on the very first page
-            if (tabHashCode.includes("-spoolId")){
+            if (tabHashCode.includes("#tab_plugin_SpoolManager-spoolId")){
                 var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
                 console.info('Loading spool: '+selectedSpoolId);
                 //Select the SpoolManager tab
                 $('a[href="#tab_plugin_SpoolManager"]').tab('show')
+                //Reset the hash
+                window.location.hash="#tab_plugin_SpoolManager"
                 // - Load SpoolItem from Backend
                 // - Open SpoolItem
                 self.apiClient.callSelectSpool(selectedSpoolId, function(responseData){
