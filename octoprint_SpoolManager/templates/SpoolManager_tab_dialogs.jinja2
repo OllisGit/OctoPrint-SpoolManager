@@ -256,8 +256,8 @@
                                 <label class="control-label">QR Code</label>
                                 <div class="controls">
                                     <div class="">
-                                        <a data-bind="attr: {href: '{{ url_for("generateSpoolQRCode") }}'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">
-                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("generateSpoolQRCode") }}'+spoolDialog.spoolItemForEditing.databaseId() }">
+                                        <a data-bind="attr: {href: '{{ url_for("plugin.SpoolManager.generateSpoolQRCode") }}'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">
+                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("plugin.SpoolManager.generateSpoolQRCode") }}'+spoolDialog.spoolItemForEditing.databaseId() }">
                                         </a>
                                     </div>
                                </div>
