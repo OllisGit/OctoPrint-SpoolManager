@@ -732,7 +732,9 @@ $(function() {
             //we can only contain -spoolId on the very first page
             if (tabHashCode.includes("-spoolId")){
                 var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
-                console.error(selectedSpoolId);
+                console.info('Loading spool: '+selectedSpoolId);
+                //Select the SpoolManager tab
+                $('a[href="#tab_plugin_SpoolManager"]').tab('show')
                 // - Load SpoolItem from Backend
                 // - Open SpoolItem
                 self.apiClient.callSelectSpool(selectedSpoolId, function(responseData){
