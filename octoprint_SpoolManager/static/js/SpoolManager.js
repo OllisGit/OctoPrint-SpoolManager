@@ -739,6 +739,7 @@ $(function() {
                     var spoolItem = null;
                     var spoolData = responseData["selectedSpool"];
                     if (spoolData != null){
+                        self.selectedSpoolForSidebar(spoolItem);
                         spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                         spoolItem.selectedFromQRCode(true);
                         self.showSpoolDialogAction(spoolItem);
