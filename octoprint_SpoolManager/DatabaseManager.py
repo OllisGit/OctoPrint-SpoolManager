@@ -209,6 +209,37 @@ class DatabaseManager(object):
 		self._logger.info(" Successfully 4 -> 5")
 		pass
 
+	def _upgradeFrom4To5_HACK(self, sqlStatement):
+
+		connection = sqlite3.connect(self._databaseSettings.fileLocation)
+		cursor = connection.cursor()
+
+		sql = """
+		PRAGMA foreign_keys=off;
+		BEGIN TRANSACTION;
+		"""
+
+			# ALTER TABLE 'spo_spoolmodel' ADD 'updated' DATETIME;
+			# ALTER TABLE 'spo_spoolmodel' ADD 'originator' CHAR(60);
+			# ALTER TABLE 'spo_spoolmodel' ADD 'materialCharacteristic' VARCHAR(255);
+			# ALTER TABLE 'spo_spoolmodel' ADD 'isActive' INTEGER;
+			# UPDATE 'spo_spoolmodel' SET isActive=1;
+			#
+			# CREATE INDEX spoolmodel_materialCharacteristic ON spo_spoolmodel (materialCharacteristic);
+			# CREATE INDEX spoolmodel_material ON spo_spoolmodel (material);
+			# CREATE INDEX spoolmodel_vendor ON spo_spoolmodel (vendor);
+			#
+			# UPDATE 'spo_pluginmetadatamodel' SET value=5 WHERE key='databaseSchemeVersion';
+
+		sql = sql + """
+		COMMIT;
+		PRAGMA foreign_keys=on;
+		"""
+		cursor.executescript(sql)
+
+		connection.close()
+
+
 
 	def _upgradeFrom3To4(self):
 		self._logger.info(" Starting 3 -> 4")
