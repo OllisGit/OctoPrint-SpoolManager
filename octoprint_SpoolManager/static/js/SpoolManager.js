@@ -723,28 +723,32 @@ $(function() {
         }
         self.onAfterTabChange = function(current, previous){
             //alert("Next:"+next +" Current:"+current);
-            if ("#tab_plugin_SpoolManager" == current){
-                // var selectedSpoolId = getUrlParameter("selectedSpoolId");
-                // if (selectedSpoolId) {
-                //     console.error("Id"+selectedSpoolId);
-                // }
-                var tabHashCode = window.location.hash;
-                if (tabHashCode.includes("-spoolId")){
-                    var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
-                    console.error(selectedSpoolId);
-                    // - Load SpoolItem from Backend
-                    // - Open SpoolItem
-                    self.apiClient.callSelectSpool(selectedSpoolId, function(responseData){
-                        var spoolItem = null;
-                        var spoolData = responseData["selectedSpool"];
-                        if (spoolData != null){
-                            spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
-                            spoolItem.selectedFromQRCode(true);
-                            self.showSpoolDialogAction(spoolItem);
-                        }
-                    });
-                }
+            //if ("#tab_plugin_SpoolManager" == current){
+            // var selectedSpoolId = getUrlParameter("selectedSpoolId");
+            // if (selectedSpoolId) {
+            //     console.error("Id"+selectedSpoolId);
+            // }
+            var tabHashCode = window.location.hash;
+            //we can only contain -spoolId on the very first page
+            if (tabHashCode.includes("#tab_plugin_SpoolManager-spoolId")){
+                var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
+                console.info('Loading spool: '+selectedSpoolId);
+                // - Load SpoolItem from Backend
+                // - Open SpoolItem
+                self.apiClient.callSelectSpool(selectedSpoolId, function(responseData){
+                    //Select the SpoolManager tab
+                    $('a[href="#tab_plugin_SpoolManager"]').tab('show')
+                    var spoolItem = null;
+                    var spoolData = responseData["selectedSpool"];
+                    if (spoolData != null){
+                        self.selectedSpoolForSidebar(spoolItem);
+                        spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                        spoolItem.selectedFromQRCode(true);
+                        self.showSpoolDialogAction(spoolItem);
+                    }
+                });
             }
+            //}
         }
 
     }
