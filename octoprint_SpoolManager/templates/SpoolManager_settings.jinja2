@@ -5,6 +5,7 @@
     <div class="tabbable"> <!-- Only required for left/right tabs -->
         <ul class="nav nav-tabs" id="spoolmanger-settings-tab">
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
+            <li><a href="#tab-spool-QR-Code" data-toggle="tab">QR - Code</a></li>
             <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
             <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
             <li><a href="#tab-spool-Temperature" data-toggle="tab">Temperature</a></li>
@@ -13,7 +14,14 @@
         <div class="tab-content">
             <!-- GENERAL - TAB -->
             <div class="tab-pane active" id="tab-spool-General">
-
+                <div class="control-group">
+                    <label class="control-label">Currency symbol</label>
+                    <div class="controls">
+                        <input type="text" class="input-mini text-center" data-bind="value: pluginSettings.currencySymbol">
+                    </div>
+                </div>
+                <hr/>
+                <h4>Notifications</h4>
                 <div class="control-group">
                     <div class="controls">
                         <label class="checkbox">
@@ -37,12 +45,80 @@
                             <code>diameter</code>, <code>density</code>, <code>total weight</code>!</span>
                     </div>
                 </div>
+<!--
+                <h4>Default Catalogs</h4>
+                <div>
+                    You can enter default values for the selection lists in the Spool edit dialog.<br/>
+                    Please be aware, if you change the values in the following textareas it is not reflected to existing values!
+                </div>
                 <div class="control-group">
-                    <label class="control-label">Currency symbol</label>
+                    <label class="control-label">Vendors</label>
                     <div class="controls">
-                        <input type="text" class="input-mini text-center" data-bind="value: pluginSettings.currencySymbol">
+                        <textarea id="vendorsTextArea"
+                                  rows="5"
+                                  style="width:90%"
+                                  >
+JANBEX
+MatterHackers
+Prusament
+Proto Pasta
+                        </textarea>
                     </div>
                 </div>
+                <div class="control-group">
+                    <label class="control-label">Materials</label>
+                    <div class="controls">
+                        <textarea id="materialTextArea"
+                                  rows="5"
+                                  style="width:90%"
+                                  >
+PLA;	1.24
+PLA_plus;	1.24
+ABS;	1.04
+PETG;	1.27
+NYLON;	1.52
+TPU;	1.21
+PC;	    1.3
+Wood;	1.28
+Carbon;	1.3
+PC_ABS;	1.19
+HIPS;	1.03
+PVA;	1.23
+ASA;	1.05
+PP;	    0.9
+POM;	1.4
+PMMA;	1.18
+FPE;	2.16
+                        </textarea>
+                    </div>
+                </div>
+-->
+
+            </div>
+
+            <!-- QR - Code - TAB -->
+            <div class="tab-pane" id="tab-spool-QR-Code">
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.qrCodeEnabled" > Show generated QR-Code in Spool-Dialog.
+                        </label>
+                    </div>
+                </div>
+                <hr/>
+                <div class="control-group">
+                    <label class="control-label">Fill color</label>
+                    <div class="controls">
+                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeFillColor">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Background color</label>
+                    <div class="controls">
+                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeBackgroundColor">
+                    </div>
+                </div>
+                <span class="help-inline">You can use RGB color code like '#23dda0' or use named color 'red'!</span>
             </div>
 
             <!-- EXPORT / IMPORT - TAB -->
@@ -158,7 +234,7 @@
                     <!-- LOCAL DATABASE -->
                     <h4>Local SQLite3 Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
                     <label class="radio">
-                        <input type="radio" name="externalDatabaseGroup" value="false" data-bind="checked: pluginSettings.databaseSettings.useExternal"> Use local SqLite3 database
+                        <input type="radio" name="externalDatabaseGroup" data-bind="checked: pluginSettings.useExternal, checkedValue: false"> Use local SqLite3 database
                     </label>
 
                     <div class="controls">
@@ -167,8 +243,8 @@
                     <label class="control-label">Database file location</label>
                     <div class="controls">
                         <div class="input-append">
-                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: databaseFileLocation"/>
-                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: deleteDatabaseAction"><i class="icon-trash"></i></a>
+                            <input type="text" disabled class="input-xlarge text-right" data-bind="value: pluginSettings.databaseFileLocation"/>
+                            <a href="#" class="btn btn-danger" title="ReCreate Database" data-bind="click: function() {deleteDatabaseAction('internal');}"><i class="icon-trash"></i></a>
                             <a href="#" class="btn btn-primary" title="Download Database" data-bind="attr: {href: downloadDatabaseUrl}" target="_blank"><i class="icon-download"></i></a>
                         </div>
                     </div>
@@ -180,76 +256,97 @@
                         e.g.<code>spoolmanager-backup-20200812-0924.db</code>
                     </div>
                 </div>
-<!--
                 <div class="control-group no-bottom-gap">
                     <label class="control-label">Item count</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="123">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.localSpoolItemCount" value="123">
                     </div>
                 </div>
 
                 <div class="control-group">
                     <label class="control-label">Scheme version</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="5">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.localSchemeVersionFromDatabaseModel" value="5">
+                        <span>Plugin version</span>
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.schemeVersionFromPlugin" value="5">
                     </div>
                 </div>
--->
+
                 <!-- EXTERNAL DATABASE
                 <h4>External Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
                 <label class="radio">
-                    <input type="radio" name="externalDatabaseGroup" value="true" data-bind="checked: pluginSettings.databaseSettings.useExternal"> Use external database
+                    <input type="radio" name="externalDatabaseGroup" data-bind="checked: pluginSettings.useExternal, checkedValue: true"> Use external database
                 </label>
 
-                <div class="controls">
-                </div>
 
+                <div class="control-group">
+                    <label class="control-label">Type</label>
+                    <div class="controls">
+                        <select class="input-medium" data-bind="value: pluginSettings.databaseType">
+                                <option value="postgres">PostgreSQL</option>
+                                <option value="mysql">mySQL</option>
+                        </select>
+                        <button class="btn btn-warning pull-right" data-bind="click: function() {deleteDatabaseAction('external');}" style="margin-right: 80px;">ReCreate database</button>
+                    </div>
+                </div>
                 <div class="control-group">
                     <label class="control-label">Host</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.host"/>
-                        <button class="btn btn-info pull-right" style="margin-right: 80px;">Test connection</button>
+                        <input type="text" data-bind="value: pluginSettings.databaseHost"/>
+                        <button class="btn btn-info pull-right" data-bind="click: testDatabaseConnection" style="margin-right: 80px;">Test connection</button>
                     </div>
-
                 </div>
                 <div class="control-group">
                     <label class="control-label">Port</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.port"/>
+                        <input type="text" data-bind="value: pluginSettings.databasePort"/>
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">Database Name</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.databaseName"/>
+                        <input type="text" data-bind="value: pluginSettings.databaseName"/>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <label class="control-label">User</label>
                     <div class="controls">
-                        <input type="text" data-bind="value: pluginSettings.databaseSettings.user"/>
+                        <input type="text" data-bind="value: pluginSettings.databaseUser"/>
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">Password</label>
                     <div class="controls">
-                        <input type="password" data-bind="value: pluginSettings.databaseSettings.password"/>
+                        <input type="password" data-bind="value: pluginSettings.databasePassword"/>
                     </div>
                 </div>
 
                 <div class="control-group no-bottom-gap">
                     <label class="control-label">Item count</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="123">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.externalSpoolItemCount" value="123">
                     </div>
                 </div>
 
                 <div class="control-group">
                     <label class="control-label">Scheme version</label>
                     <div class="controls">
-                        <input type="text" disabled class="input-small text-right" value="5">
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.externalSchemeVersionFromDatabaseModel" value="5">
+                        <span>Plugin version</span>
+                        <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.schemeVersionFromPlugin" value="5">
                     </div>
+                </div>
+                -->
+                <div class="help-block" data-bind="visible: showDatabaseErrorMessage">
+                    <span style="color: red; "><b><div data-bind="text: databaseErrorMessage"></div></b></span>
+                </div>
+                <div class="help-block" data-bind="visible: showSuccessMessage">
+                    <font color="green"><b>Database connection successful</b></font>
+                </div>
+                <!-- TODO add
+                <div class="help-block" data-bind="visible: showUpdateSchemeMessage">
+                    <font color="orange"><b>Databasescheme doesn't match with required scheme version. Please do an <a target="newTab" href="https://github.com/OllisGit/OctoPrint-SpoolManager/wiki/Roadmap-to-an-external-Database">update</a>!</b></font>
                 </div>
                 -->
             </div>

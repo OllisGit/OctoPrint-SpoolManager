@@ -5,7 +5,7 @@
 script:
 # debug  - echo 'Hello World'
   - export PLUGIN_VERSION=$(cat setup.py | grep 'plugin_version = "*"' | cut -d '"' -f2)
-  - zip -r master *
+  - zip -r master.zip * -x 3rdPartySoftware\* testdata\*
 # debug  - ls -al
 
 ## see "Fix travis automatic build and deploy"

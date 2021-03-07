@@ -9,21 +9,19 @@ from octoprint_SpoolManager.models.BaseModel import BaseModel
 
 class SpoolModel(BaseModel):
 
-	version = IntegerField(null=True) # since V3
+	########################################################
+	## SPOOL, MATERIAL, FILAMENT, PRINTER SETTINGS - FIELDS
+	########################################################
+
+	######################
+	## SPOOL - FIELDS
+	######################
+
+	# version = IntegerField(null=True) # since V3, since V4: moved to BaseModel
+	isActive = BooleanField(null=True) # since V4
 	isTemplate = BooleanField(null=True)
 	displayName = CharField(null=True)
-	vendor = CharField(null=True)
-	material = CharField(null=True)
-	density = FloatField(null=True)
-	diameter = FloatField(null=True)
-	diameterTolerance = FloatField(null=True) # since V3
-	colorName = CharField(null=True)
-	color = CharField(null=True)
-	flowRateCompensation = IntegerField(null=True) #since V3
-	# Temperature
-	temperature = IntegerField(null=True)
-	bedTemperature = IntegerField(null=True) # since V3
-	encloserTemperature = IntegerField(null=True) # since V3
+	vendor = CharField(null=True, index=True) # since V4: added index
 	# in g
 	totalWeight = FloatField(null=True)
 	spoolWeight = FloatField(null=True) # since V3
@@ -52,6 +50,26 @@ class SpoolModel(BaseModel):
 	noteDeltaFormat = TextField(null=True)
 	noteHtml = TextField(null=True)
 
-	# def __init__(self):
-	# 	#self.displayname = CharField(unique=True)
-	# 	pass
+	######################
+	## MATERIAL - FIELDS
+	######################
+	material = CharField(null=True, index=True)	# since V4: added index
+	materialCharacteristic = CharField(null=True, index=True) # strong, soft,... # since V4: new #TODO refactoring: list of predefined values
+	density = FloatField(null=True)
+
+	######################
+	## FILAMENT - FIELDS
+	######################
+	diameter = FloatField(null=True)
+	diameterTolerance = FloatField(null=True) # since V3
+	colorName = CharField(null=True)
+	color = CharField(null=True)
+
+	######################
+	## PRINTER SETTINGS - FIELDS
+	######################
+	flowRateCompensation = IntegerField(null=True) #since V3
+	# Temperature
+	temperature = IntegerField(null=True)
+	bedTemperature = IntegerField(null=True) # since V3
+	enclosureTemperature = IntegerField(null=True) # since V3, V4 renamed from encloser to enclosure
