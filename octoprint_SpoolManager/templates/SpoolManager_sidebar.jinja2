@@ -18,6 +18,10 @@
     <br>
     <nobr>
 <!--  Not needed autorelaod implemented      <a href="#" data-bind="click: loadSpoolsForSidebar" title="Reload spools entries"><span class="icon-refresh"></span></a>-->
+        <div>
+            <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideEmptySpoolsInSidebar" > Hide empty spools</span>
+            <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideInactiveSpoolsInSidebar" > Hide inactive spools</span>
+        </div>
         <span class="btn-group">
             <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">Spools<span class="caret"></span></button>
 
@@ -34,7 +38,6 @@
             </ul>
 
         </span>
-        <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideEmptySpoolsInSidebar" > Hide empty spools</span>
     </nobr>
 
   </div>

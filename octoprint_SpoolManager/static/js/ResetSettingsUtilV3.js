@@ -1,7 +1,7 @@
 /**
  *
  */
-function ResetSettingsUtilV2(pluginSettings){
+function ResetSettingsUtilV3(pluginSettings){
 
     var self = this;
     var pluginSettingsFromPlugin = pluginSettings;
@@ -62,8 +62,17 @@ function ResetSettingsUtilV2(pluginSettings){
                             // reset all values
                             for(var propName in data){
                                 propValue = data[propName];
-                                console.log(propName + ': ' + propValue);
-                                pluginSettingsFromPlugin[propName](propValue);
+                                // nested object, like databaseSettings? only a depth of 1
+                                if ("object" == typeof(propValue)){
+                                    for(var subPropName in propValue){
+                                        subPropValue = propValue[subPropName];
+//                                        console.log(propName + '-' + subPropName + ':' + subPropValue);
+                                        pluginSettingsFromPlugin[propName][subPropName](propValue);
+                                    }
+                                } else {
+//                                    console.log(propName + ': ' + propValue);
+                                    pluginSettingsFromPlugin[propName](propValue);
+                                }
                             }
                             // delegae to the client. So lient is able to reset/init other values
                             mapSettingsToViewModel_function(data);

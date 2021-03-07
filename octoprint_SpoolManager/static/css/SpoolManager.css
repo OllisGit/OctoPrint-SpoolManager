@@ -4,6 +4,11 @@
     margin-bottom:3px
 }
 
+.qr-code {
+    width: 100px;
+    height: 100px;
+}
+
 .debug-blue {
     outline: 1px solid blue;
 }
