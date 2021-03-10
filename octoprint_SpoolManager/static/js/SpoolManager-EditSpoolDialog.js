@@ -98,6 +98,9 @@ function SpoolManagerEditSpoolDialog(){
         this.temperature = ko.observable();
         this.bedTemperature = ko.observable();
         this.enclosureTemperature = ko.observable();
+        this.offsetTemperature = ko.observable();
+        this.offsetBedTemperature = ko.observable();
+        this.offsetEnclosureTemperature = ko.observable();
         this.colorName = ko.observable();
         this.color = ko.observable();
         this.totalWeight = ko.observable();
@@ -217,6 +220,9 @@ function SpoolManagerEditSpoolDialog(){
         this.temperature(updateData.temperature);
         this.bedTemperature(updateData.bedTemperature);
         this.enclosureTemperature(updateData.enclosureTemperature);
+        this.offsetTemperature(updateData.offsetTemperature);
+        this.offsetBedTemperature(updateData.offsetBedTemperature);
+        this.offsetEnclosureTemperature(updateData.offsetEnclosureTemperature);
         this.totalWeight(updateData.totalWeight);
         this.spoolWeight(updateData.spoolWeight);
         this.remainingWeight(updateData.remainingWeight);

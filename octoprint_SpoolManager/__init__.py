@@ -283,6 +283,10 @@ class SpoolmanagerPlugin(
 		self._filamentOdometer.reset()
 
 		spoolModel = self.loadSelectedSpool()
+
+		# Update Temperature Offsets
+		self.set_temp_offsets(spoolModel)
+
 		if (spoolModel != None):
 			if (StringUtils.isEmpty(spoolModel.firstUse) == True):
 				firstUse = datetime.now()
@@ -460,8 +464,37 @@ class SpoolmanagerPlugin(
 
 
 	def on_settings_save(self, data):
+		# Enable cleaning up any offsets that are turned off
+		oldToolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		oldBedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		oldEnclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
 		# # default save function
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+
+		# Clean up any offsets that are turned off
+		newToolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		newBedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		newEnclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
+		offsetCleanup = False
+		offset_dict = dict()
+		if newToolOffsetEnabled == False and oldToolOffsetEnabled == True:
+			offsetCleanup = True
+			offset_dict["tool0"] = 0
+		if newBedOffsetEnabled == False and oldBedOffsetEnabled == True:
+			offsetCleanup = True
+			offset_dict["bed"] = 0
+		if newEnclosureOffsetEnabled == False and oldEnclosureOffsetEnabled == True:
+			offsetCleanup = True
+			offset_dict["chamber"] = 0
+
+		if offsetCleanup :
+			self._printer.set_temperature_offset(offset_dict)
+
+		# Update Temperature Offsets
+		self.set_temp_offsets(self.loadSelectedSpool())
+
 		#
 		# databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
 		#
@@ -618,13 +651,13 @@ class SpoolmanagerPlugin(
 			#TODO support multiple tools - what to do with bed and enclosure if that's the case :|
 			#for tool in spoolModel:
 			#	offset_dict["tool%s" % tool["tool"]] = tool["spool"]["tool_offset"] if tool["spool"] is not None else 0
-			offset_dict["tool0"] = spoolModel.temperature if spoolModel.temperature is not None else 0
+			offset_dict["tool0"] = spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0
 
 		if (bedOffsetEnabled == True and spoolModel != None):
-			offset_dict["bed"] = spoolModel.bedTemperature if spoolModel.bedTemperature is not None else 0
+			offset_dict["bed"] = spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0
 
 		if (enclosureOffsetEnabled == True and spoolModel != None):
-			offset_dict["chamber"] = spoolModel.encloserTemperature if spoolModel.encloserTemperature is not None else 0
+			offset_dict["chamber"] = spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
 
 		self._printer.set_temperature_offset(offset_dict)
 

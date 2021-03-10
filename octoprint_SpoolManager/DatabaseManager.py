@@ -21,7 +21,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 
 FORCE_CREATE_TABLES = False
 
-CURRENT_DATABASE_SCHEME_VERSION = 5
+CURRENT_DATABASE_SCHEME_VERSION = 6
 
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
@@ -165,12 +165,44 @@ class DatabaseManager(object):
 
 	def _upgradeDatabase(self,currentDatabaseSchemeVersion, targetDatabaseSchemeVersion):
 
-		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5]
+		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5, self._upgradeFrom5To6]
 
 		for migrationMethodIndex in range(currentDatabaseSchemeVersion -1, targetDatabaseSchemeVersion -1):
 			self._logger.info("Database migration from '" + str(migrationMethodIndex + 1) + "' to '" + str(migrationMethodIndex + 2) + "'")
 			migrationFunctions[migrationMethodIndex]()
 			pass
+		pass
+
+
+	def _upgradeFrom5To6(self):
+		self._logger.info(" Starting 5 -> 6")
+		# What is changed:
+		# - version = IntegerField(null=True)  # since V3
+		# - diameterTolerance = FloatField(null=True)  # since V3
+		# - flowRateCompensation = IntegerField(null=True)  # since V3
+		# - bedTemperature = IntegerField(null=True)  # since V3
+		# - enclosureTemperature = IntegerField(null=True)  # since V3
+
+		connection = sqlite3.connect(self._databaseSettings.fileLocation)
+		cursor = connection.cursor()
+
+		sql = """
+		PRAGMA foreign_keys=off;
+		BEGIN TRANSACTION;
+
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetBedTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetEnclosureTemperature' INTEGER;
+
+			UPDATE 'spo_pluginmetadatamodel' SET value=6 WHERE key='databaseSchemeVersion';
+		COMMIT;
+		PRAGMA foreign_keys=on;
+		"""
+		cursor.executescript(sql)
+
+		connection.close()
+
+		self._logger.info(" Successfully 5 -> 6")
 		pass
 
 
