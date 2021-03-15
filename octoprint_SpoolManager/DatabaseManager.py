@@ -177,11 +177,9 @@ class DatabaseManager(object):
 	def _upgradeFrom5To6(self):
 		self._logger.info(" Starting 5 -> 6")
 		# What is changed:
-		# - version = IntegerField(null=True)  # since V3
-		# - diameterTolerance = FloatField(null=True)  # since V3
-		# - flowRateCompensation = IntegerField(null=True)  # since V3
-		# - bedTemperature = IntegerField(null=True)  # since V3
-		# - enclosureTemperature = IntegerField(null=True)  # since V3
+		# - offsetTemperature = IntegerField(null=True)  # since V6
+		# - offsetBedTemperature = IntegerField(null=True)  # since V6
+		# - offsetEnclosureTemperature = IntegerField(null=True)  # since V6
 
 		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
