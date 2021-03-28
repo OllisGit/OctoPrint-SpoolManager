@@ -299,12 +299,11 @@ $(function() {
                 ){
                 var check = confirm('External database will not work. Save settings anyway?');
                 if (check == true) {
-                    origSaveSettingsFunction(data, successCallback, setAsSending);
+                    return origSaveSettingsFunction(data, successCallback, setAsSending);
                 }
-                return
+                return null;
             }
-            origSaveSettingsFunction(data, successCallback, setAsSending);
-            return;
+            return origSaveSettingsFunction(data, successCallback, setAsSending);
         }
         self.settingsViewModel.saveData = newSaveSettingsFunction;
 
