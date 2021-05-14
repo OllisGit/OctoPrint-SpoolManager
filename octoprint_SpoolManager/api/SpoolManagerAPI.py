@@ -221,8 +221,11 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		lengthRounded = int(round(length))
 		return lengthRounded;
 
+	def _resetSelectedSpools(self):
+		self._settings.set([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS], [])
+		self._settings.save()
 
-	def _selectSpool(self, databaseId, toolIndex=0):
+	def _selectSpool(self, toolIndex, databaseId):
 		spoolModel = None
 		if (databaseId != None and databaseId != -1):
 			spoolModel = self._databaseManager.loadSpool(databaseId)
@@ -322,8 +325,9 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		jsonData = request.json
 
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
+		toolIndex = self._getValueFromJSONOrNone("toolIndex", jsonData)
 
-		spoolModel = self._selectSpool(databaseId)
+		spoolModel = self._selectSpool(toolIndex, databaseId)
 
 		spoolModelAsDict = None
 		if (spoolModel != None):
@@ -338,7 +342,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	def selectSpoolByQRCode(self, databaseId):
 		self._logger.info("API select spool by QR code" + str(databaseId))
 
-		spoolModel = self._selectSpool(databaseId)
+		spoolModel = self._selectSpool(0, databaseId)
 
 		spoolModelAsDict = None
 		if (spoolModel != None):
@@ -464,7 +468,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				# delete old database and init a clean database
 				databaseManager.reCreateDatabase()
 				# reset selected spool
-				self._selectSpool(None)
+				self._resetSelectedSpools()
 
 				importModeText = "fully replaced"
 
