@@ -313,7 +313,6 @@ $(function() {
         //////////////////////////////////////////////////////////////////////////////////////////////////// SIDEBAR
 
         self.allSpoolsForSidebar = ko.observableArray([]);
-        self.selectedSpoolForSidebar = ko.observable();
         self.selectedSpoolsForSidebar = ko.observableArray([]);
 
         self.deselectSpoolForSidebar = function(toolIndex, item){
@@ -685,13 +684,13 @@ $(function() {
 
                 self.pluginNotWorking(data.pluginNotWorking);
                 self.isFilamentManagerPluginAvailable(data.isFilamentManagerPluginAvailable);
-
-                var selectedSpoolData = data.selectedSpool;
-                if (selectedSpoolData != null){
-                    var selectedSpoolItem = self.spoolDialog.createSpoolItemForTable(selectedSpoolData);
-                    self.selectedSpoolForSidebar(selectedSpoolItem);
-                } else {
-                    self.selectedSpoolForSidebar(null);
+                var spoolsData = data.selectedSpools,
+                    slot, spoolData, spoolItem;
+                for(var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                    slot = self.selectedSpoolsForSidebar()[i];
+                    spoolData = (i < spoolsData.length) ? spoolsData[i] : null;
+                    spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
+                    slot.item(spoolItem);
                 }
                 return;
             }
@@ -763,9 +762,9 @@ $(function() {
                     var spoolItem = null;
                     var spoolData = responseData["selectedSpool"];
                     if (spoolData != null){
-                        self.selectedSpoolForSidebar(spoolItem);
                         spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                         spoolItem.selectedFromQRCode(true);
+                        self.selectedSpoolsForSidebar()[0].item(spoolItem);
                         self.showSpoolDialogAction(spoolItem);
                     }
                 });

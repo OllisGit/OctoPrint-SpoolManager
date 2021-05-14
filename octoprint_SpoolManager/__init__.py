@@ -337,7 +337,7 @@ class SpoolmanagerPlugin(
 		# start-workaround https://github.com/foosel/OctoPrint/issues/3400
 		import time
 		time.sleep(3)
-		selectedSpoolAsDict = None
+		selectedSpoolsAsDicts = []
 
 		# Check if database is available
 		# connected = self._databaseManager.reConnectToDatabase()
@@ -360,16 +360,14 @@ class SpoolmanagerPlugin(
 		# Send plugin storage information
 		## Storage
 		if (connectionErrorResult == None):
-			selectedSpool = self.loadSelectedSpool()
-			if (selectedSpool):
-				selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
-			else:
-				# spool not found
-				pass
+			selectedSpoolsAsDicts = [
+				(None if selectedSpool is None else Transformer.transformSpoolModelToDict(selectedSpool))
+				for selectedSpool in self.loadSelectedSpools()
+			]
 
 		pluginNotWorking = connectionErrorResult != None
 		self._sendDataToClient(dict(action = "initalData",
-									selectedSpool = selectedSpoolAsDict,
+									selectedSpools = selectedSpoolsAsDicts,
 									isFilamentManagerPluginAvailable = self._filamentManagerPluginImplementation != None,
 									pluginNotWorking = pluginNotWorking
 									))
