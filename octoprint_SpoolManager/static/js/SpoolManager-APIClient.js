@@ -137,11 +137,11 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////// SELECT Spool-Item
-    this.callSelectSpool = function (databaseId, responseHandler){
+    this.callSelectSpool = function (toolIndex, databaseId, responseHandler){
         if (databaseId == null){
             databaseId = -1;
         }
-        var jsonPayload = '{"databaseId":'+databaseId+'}';
+        var jsonPayload = '{"databaseId":'+databaseId+',"toolIndex":'+toolIndex+'}';
         $.ajax({
             //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
             url: this.baseUrl + "plugin/" + this.pluginId + "/selectSpool",

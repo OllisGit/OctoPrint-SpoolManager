@@ -315,23 +315,42 @@ $(function() {
         self.allSpoolsForSidebar = ko.observableArray([]);
         self.selectedSpoolForSidebar = ko.observable();
         self.selectedSpoolsForSidebar = ko.observableArray([]);
-        self.selectedSpoolText = ko.observable();
 
-
-        self.selectedSpoolForSidebar.subscribe(function(newSelectedSpool){
-
-            var selectSpoolText = _buildSpoolLabel(newSelectedSpool);
-            self.selectedSpoolText(selectSpoolText)
-
-        });
-
-
-        self.deselectSpoolsForSidebar = function(){
-            self.selectedSpoolForSidebar(null);
-            self.selectSpoolForSidebar(null);
+        self.deselectSpoolForSidebar = function(toolIndex, item){
+            self.selectSpoolForSidebar(toolIndex, null);
         }
 
-        self.loadSpoolsForSidebar = function(){
+        self.loadSpoolsForSidebar = function() {
+            // update filament list length
+            var currentProfileData = self.settingsViewModel.printerProfiles.currentProfileData(),
+                numExtruders = (currentProfileData ? currentProfileData.extruder.count() : 0),
+                currentSelectedSpools = self.selectedSpoolsForSidebar().length,
+                diff = numExtruders - currentSelectedSpools,
+                i, item;
+            if (diff !== 0) {
+                if (diff > 0) {
+                    for (i = 0; i < diff; i++) {
+                        item = {
+                            item: ko.observable(null),
+                            label: ko.observable(_buildSpoolLabel(null))
+                        }
+                        self.selectedSpoolsForSidebar().push(item);
+                        item.item.subscribe(function() {
+                            var label = item.label;
+                            return function(newSelectedSpool) {
+                                var selectSpoolText = _buildSpoolLabel(newSelectedSpool);
+                                label(selectSpoolText);
+                            }
+                        }());
+                    }
+                } else if (diff < 0) {
+                    for (i = 0; i > diff; i--) {
+                        self.selectedSpoolsForSidebar().pop();
+                    }
+                }
+                self.selectedSpoolsForSidebar.valueHasMutated();
+            }
+
             var currentFilterName = "all";
             if (self.pluginSettings!= null){
                  if(self.pluginSettings.hideEmptySpoolsInSidebar() == true) {
@@ -364,13 +383,14 @@ $(function() {
                     }); // transform to SpoolItems with KO.obseravables
                     self.allSpoolsForSidebar(allSpoolItems);
 
-                    var spoolItem = null;
-                    var spoolsData = responseData["selectedSpools"];
-
-                    if (spoolsData.length && spoolsData[0] != null){
-                        spoolItem = self.spoolDialog.createSpoolItemForTable(spoolsData[0]);
+                    var spoolsData = responseData["selectedSpools"],
+                        slot, spoolData, spoolItem;
+                    for(var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                        slot = self.selectedSpoolsForSidebar()[i];
+                        spoolData = (i < spoolsData.length) ? spoolsData[i] : null;
+                        spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
+                        slot.item(spoolItem);
                     }
-                    self.selectedSpoolForSidebar(spoolItem)
                 }
             });
         }
@@ -379,9 +399,9 @@ $(function() {
         _buildSpoolLabel = function(spoolItem){
             var spoolLabel = "No Spool selected!";
             if (spoolItem != null){
-                spoolLabel = '<span class="color-preview" style="background-color: '+spoolItem.color()+';" title="'+spoolItem.colorName()+'"></span>';
+                spoolLabel = '<span class="color-preview" style="background-color: '+spoolItem.color()+'; vertical-align: bottom;" title="'+spoolItem.colorName()+'"></span>';
                 var remainingInfo = _buildRemainingText(spoolItem);
-                spoolLabel += '<span style="vertical-align:super">'+spoolItem.material()+'-'+spoolItem.displayName()+' '+remainingInfo+'</span>'
+                spoolLabel += '<span style="">'+spoolItem.material()+' - '+spoolItem.displayName()+' '+remainingInfo+'</span>'
             }
             return spoolLabel;
         }
@@ -400,28 +420,28 @@ $(function() {
             return remainingInfo;
         }
 
-        self.selectSpoolForSidebar = function(spoolItem){
+        self.selectSpoolForSidebar = function(toolIndex, spoolItem){
             // api-call
             var databaseId = -1
             if (spoolItem != null){
                 databaseId = spoolItem.databaseId();
             }
-            self.apiClient.callSelectSpool(databaseId, function(responseData){
+            self.apiClient.callSelectSpool(toolIndex, databaseId, function(responseData){
                 var spoolItem = null;
                 var spoolData = responseData["selectedSpool"];
                 if (spoolData != null){
                     spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                 }
-                self.selectedSpoolForSidebar(spoolItem)
+                self.selectedSpoolsForSidebar()[toolIndex].item(spoolItem)
             });
         }
 
-        self.editSpoolFromSidebar = function(){
-            if (self.selectedSpoolForSidebar() == null){
+        self.editSpoolFromSidebar = function(toolIndex, item){
+            if (item.item() == null){
                 alert("Something is wrong. No Spool is selected to edit from sidebar!")
             }
 
-            var spoolItem = self.selectedSpoolForSidebar();
+            var spoolItem = item.item();
             self.showSpoolDialogAction(spoolItem);
         }
 
@@ -638,6 +658,7 @@ $(function() {
                 OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
                 self.loadSpoolsForSidebar();
             });
+            self.settingsViewModel.printerProfiles.currentProfileData.subscribe(self.loadSpoolsForSidebar);
         }
 
         self.onAfterBinding = function() {
@@ -736,7 +757,7 @@ $(function() {
                 console.info('Loading spool: '+selectedSpoolId);
                 // - Load SpoolItem from Backend
                 // - Open SpoolItem
-                self.apiClient.callSelectSpool(selectedSpoolId, function(responseData){
+                self.apiClient.callSelectSpool(0, selectedSpoolId, function(responseData){
                     //Select the SpoolManager tab
                     $('a[href="#tab_plugin_SpoolManager"]').tab('show')
                     var spoolItem = null;

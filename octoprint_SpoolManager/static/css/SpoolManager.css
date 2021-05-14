@@ -9,6 +9,22 @@
     height: 100px;
 }
 
+#selectedSpools > div {
+    display: flex;
+    align-items: flex-start;
+    line-height: 1.8em;
+    height: 1.8em;
+}
+#selectedSpools > div > * {
+    flex-grow: 0;
+}
+#selectedSpools > div > :first-child {
+    flex-grow: 1;
+}
+#selectedSpools > div > :not(:last-child) {
+    padding-right: 3px;
+}
+
 .debug-blue {
     outline: 1px solid blue;
 }
