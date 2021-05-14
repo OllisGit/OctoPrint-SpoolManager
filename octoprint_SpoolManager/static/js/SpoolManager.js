@@ -314,6 +314,7 @@ $(function() {
 
         self.allSpoolsForSidebar = ko.observableArray([]);
         self.selectedSpoolForSidebar = ko.observable();
+        self.selectedSpoolsForSidebar = ko.observableArray([]);
         self.selectedSpoolText = ko.observable();
 
 

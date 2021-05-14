@@ -120,19 +120,27 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	# 	return None
 
 	def loadSelectedSpool(self, ):
-		spoolModel = None
-		databaseId = self._settings.get_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID])
+		spoolModelList = self.loadSelectedSpools()
+		if not spoolModelList:
+			return None
+		return spoolModelList[0]
 
-		if (databaseId != None):
-			self._databaseManager.connectoToDatabase()
-			spoolModel = self._databaseManager.loadSpool(databaseId)
-			self._databaseManager.closeDatabase()
-			if (spoolModel == None):
-				self._logger.warning(
-					"Last selected Spool from plugin-settings not found in database. Maybe deleted in the meantime.")
+	def loadSelectedSpools(self):
+		spoolModelList = []
+		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
 
-		return spoolModel
+		for i, databaseId in enumerate(databaseIds):
+			spoolModel = None
+			if (databaseId != None):
+				self._databaseManager.connectoToDatabase()
+				spoolModel = self._databaseManager.loadSpool(databaseId)
+				self._databaseManager.closeDatabase()
+				if (spoolModel == None):
+					self._logger.warning(
+						"Last selected Spool for Tool %d from plugin-settings not found in database. Maybe deleted in the meantime." % i)
+			spoolModelList.append(spoolModel)
 
+		return spoolModelList
 
 	def _createSampleSpoolModel(self):
 		#DisplayName, Vendor, Material, Color[# code], Diameter [mm], Density [g/cm³], Temperature [°C], TotalWeight [g], UsedWeight [g], UsedLength [mm], FirstUse [dd.mm.yyyy hh:mm], LastUse [dd.mm.yyyy hh:mm], PurchasedFrom, PurchasedOn [dd.mm.yyyy hh:mm], Cost, CostUnit, Labels, NoteText
@@ -214,28 +222,39 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		return lengthRounded;
 
 
-	def _selectSpool(self, databaseId):
+	def _selectSpool(self, databaseId, toolIndex=0):
 		spoolModel = None
 		if (databaseId != None and databaseId != -1):
 			spoolModel = self._databaseManager.loadSpool(databaseId)
 			# check if loaded
 			if (spoolModel != None):
-				self._logger.info("Store selected spool '"+spoolModel.displayName+"' in settings.")
-
-				# - store spool in Settings
-				self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], databaseId)
-				self._settings.save()
-
-				self.checkRemainingFilament()
+				self._logger.info(
+					"Store selected spool %s for tool %d in settings." %
+					(spoolModel.displayName, toolIndex)
+				)
 			else:
-				self._logger.warning("Selected Spool with id '"+str(databaseId)+"' not in database anymore. Maybe deleted in the meantime.")
+				self._logger.warning(
+					"Selected Spool with id %d for tool %d not in database anymore. Maybe deleted in the meantime." %
+					(databaseId, toolIndex)
+				)
+
+		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
+		databaseIds = databaseIds + [None] * (toolIndex + 1 - len(databaseIds))  # pad list to the needed length
+
+		# todo: don't let a spool be in two tools at once
 
 		if (spoolModel == None):
 			# No selection
-			self._logger.info("Clear stored selected spool in settings.")
-			self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], None)
-			self._settings.save()
-			pass
+			self._logger.info("Clear stored selected spool for tool %d in settings." % toolIndex)
+			databaseIds[toolIndex] = None
+		else:
+			databaseIds[toolIndex] = databaseId
+
+		self._settings.set([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS], databaseIds)
+		self._settings.save()
+
+		if spoolModel is not None:
+			self.checkRemainingFilament()
 
 		return spoolModel
 
