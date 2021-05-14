@@ -365,9 +365,10 @@ $(function() {
                     self.allSpoolsForSidebar(allSpoolItems);
 
                     var spoolItem = null;
-                    var spoolData = responseData["selectedSpool"];
-                    if (spoolData != null){
-                        spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                    var spoolsData = responseData["selectedSpools"];
+
+                    if (spoolsData.length && spoolsData[0] != null){
+                        spoolItem = self.spoolDialog.createSpoolItemForTable(spoolsData[0]);
                     }
                     self.selectedSpoolForSidebar(spoolItem)
                 }

@@ -670,13 +670,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		# 	"colors": ["", "#123", "#456"],
 		# 	"labels": ["", "good", "bad"]
 		# }
-		selectedSpoolAsDict = None
-		selectedSpool = self.loadSelectedSpool()
-		if (selectedSpool):
-			selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
-		else:
-			# spool not found
-			pass
+		selectedSpoolsAsDicts = [
+			(None if selectedSpool is None else Transformer.transformSpoolModelToDict(selectedSpool))
+			for selectedSpool in self.loadSelectedSpools()
+		]
 
 		return flask.jsonify({
 								# "databaseConnectionProblem": self._databaseManager.isConnected() == False,
@@ -684,7 +681,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 								"catalogs": catalogs,
 								"totalItemCount": totalItemCount,
 								"allSpools": allSpoolsAsDict,
-								"selectedSpool": selectedSpoolAsDict
+								"selectedSpools": selectedSpoolsAsDicts
 							})
 
 	def _addAdditionalMaterials(self, databaseMaterials):
