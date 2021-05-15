@@ -522,7 +522,7 @@ $(function() {
         closeDialogHandler = function(shouldTableReload, specialAction, currentSpoolItem){
 
             if (specialAction === "selectSpoolForPrinting"){
-                self.selectSpoolForSidebar(currentSpoolItem);
+                self.selectSpoolForSidebar(0, currentSpoolItem);
             }
 
             if (shouldTableReload == true){
