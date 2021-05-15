@@ -40,7 +40,7 @@
     padding-right: 5px;
 }
 #selectedSpools .dropdown-menu {
-    max-height: 200px;
+    max-height: 320px;
     overflow: auto;
 }
 #selectedSpools .dropdown-menu .filament-label {
