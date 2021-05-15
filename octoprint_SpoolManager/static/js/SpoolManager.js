@@ -409,6 +409,15 @@ $(function() {
         }
 
         self.selectSpoolForSidebar = function(toolIndex, spoolItem){
+            var commitCurrentState;
+            if (self.printerStateViewModel.isPrinting()) {
+                commitCurrentState = confirm(
+                    'You are changing a spool while printing. SpoolManager will commit the usage so far to the previous spool, unless you wish otherwise.\n\n' +
+                    'Commit the usage of the print so far…\n' +
+                    '"OK": …to the previously selected spool\n' +
+                    '"Abort": …to the new spool'
+                )
+            }
             // api-call
             var databaseId = -1
             if (spoolItem != null){
@@ -426,7 +435,7 @@ $(function() {
                     spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                 }
                 self.selectedSpoolsForSidebar()[toolIndex](spoolItem)
-            });
+            }, commitCurrentState);
         }
 
         self.editSpoolFromSidebar = function(toolIndex, item){
@@ -788,6 +797,10 @@ $(function() {
                 var alreadyInTool = self.getSpoolItemSelectedTool(parseInt(selectedSpoolId));
                 if (alreadyInTool !== null) {
                     alert('This spool is already selected for tool ' + alreadyInTool + '!');
+                    return;
+                }
+                if (self.printerStateViewModel.isPrinting()) {
+                    // not doing this while printing
                     return;
                 }
                 // - Load SpoolItem from Backend

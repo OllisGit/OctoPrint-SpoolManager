@@ -317,6 +317,17 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
 		toolIndex = self._getValueFromJSONOrNone("toolIndex", jsonData)
 
+		if self._printer.is_printing():
+			# changing a spool mid-print? we want to know
+			commitCurrentState = self._getValueFromJSONOrNone("commitCurrentState", jsonData)
+			if commitCurrentState is None:
+				self._logger.warning("select/Spool endpoint called mid-print without commitCurrentState parameter - this shouldn't happen")
+				abort(409)
+
+			if commitCurrentState:
+				self.commitOdometerData()
+				self._logger.info("commitCurrentState == True")
+
 		spoolModel = self._selectSpool(toolIndex, databaseId)
 
 		spoolModelAsDict = None
@@ -331,6 +342,11 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	@octoprint.plugin.BlueprintPlugin.route("/selectSpoolByQRCode/<int:databaseId>", methods=["GET"])
 	def selectSpoolByQRCode(self, databaseId):
 		self._logger.info("API select spool by QR code" + str(databaseId))
+
+		if self._printer.is_printing():
+			# not doing this mid-print since we can't ask the user what to do
+			abort(409)
+			return
 
 		spoolModel = self._selectSpool(0, databaseId)
 
