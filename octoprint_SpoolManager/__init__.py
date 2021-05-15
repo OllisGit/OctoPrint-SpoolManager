@@ -291,16 +291,20 @@ class SpoolmanagerPlugin(
 		# starting new print
 		self._filamentOdometer.reset()
 
-		spoolModel = self.loadSelectedSpool()
-		if (spoolModel != None):
-			if (StringUtils.isEmpty(spoolModel.firstUse) == True):
-				firstUse = datetime.now()
-				spoolModel.firstUse = firstUse
-				self._databaseManager.saveSpool(spoolModel)
-				self._sendDataToClient(dict(
-											action="reloadTable"
-											))
-		pass
+		reloadTable = False
+		selectedSpools = self.loadSelectedSpools()
+		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+			spoolModel = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
+			if (spoolModel != None):
+				if (StringUtils.isEmpty(spoolModel.firstUse) == True):
+					firstUse = datetime.now()
+					spoolModel.firstUse = firstUse
+					self._databaseManager.saveSpool(spoolModel)
+					reloadTable = True
+		if reloadTable:
+			self._sendDataToClient(dict(
+										action="reloadTable"
+										))
 
 	#### print job finished
 	def _on_printJobFinished(self, printStatus, payload):
