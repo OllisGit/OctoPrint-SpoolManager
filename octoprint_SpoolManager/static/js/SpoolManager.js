@@ -544,37 +544,74 @@ $(function() {
         const newStartPrintFunction = function confirmSpoolSelectionBeforeStartPrint() {
                 // api-call
                 self.apiClient.allowedToPrint(function(responseData){
-                    var result = responseData.result;
-                    if ("startPrint" == result){
-                        origStartPrintFunction();
-                    } else {
-                        if ("noSpoolSelected" == result){
-                            var check = confirm('Do you want to start the print without a selected spool?');
-                            if (check == true) {
-                                origStartPrintFunction();
-                            }
-                            return;
+                    var result = responseData.result,
+                        check, itemList;
+
+                    if (result.noSpoolSelected.length) {
+                        itemList = [];
+                        for (item of result.noSpoolSelected) {
+                            itemList.push('Tool '+item.toolIndex)
                         }
-//                        Not needed because a length check is only done, if spool was selected
-//                        if ("noSpoolForUsageCheck" == result){
-//                            self.showPopUp("Error", "", "No Spool selected for usage check. Select a spool first");
-//                            return;
-//                        }
-                        if ("filamentNotEnough" == result){
-                            var check = confirm("The selected spool '"+responseData.spoolName+"' does not have enough remaining filament. Do you want to start the print anyway?");
-                            if (check == true) {
-                                origStartPrintFunction();
-                            }
-                            return;
+                        if (itemList.length === 1) {
+                            check = confirm(
+                                'There is no spool selected for ' + itemList[0] + ' despite it being used by this print.\n\n' +
+                                'Do you want to start the print without a selected spool?'
+                            );
+                        } else {
+                            check = confirm(
+                                'There are no spools selected for the following tools despite them being used by this print:\n' +
+                                '- '+ itemList.join('\n- ') + '\n\n' +
+                                'Do you want to start the print without selected spools?'
+                            );
                         }
-                        if ("reminderSpoolSelection" == result){
-                            var question = "Do you want to start the print with the selected spool '"+responseData.spoolName+"'?";
-                            var check = confirm(question);
-                            if (check == true) {
-                                origStartPrintFunction();
-                            }
+                        if (!check) {
+                            return;
                         }
                     }
+
+                    if (result.filamentNotEnough.length) {
+                        itemList = [];
+                        for (item of result.filamentNotEnough) {
+                            itemList.push("'" + item.spoolName + "' (tool "+item.toolIndex+")");
+                        }
+                        if (itemList.length === 1) {
+                            check = confirm(
+                                'The selected spool ' + itemList[0] + ' does not have enough remaining filament.\n\n' +
+                                'Do you want to start the print anyway?'
+                            );
+                        } else {
+                            check = confirm(
+                                'The following selected spools do not have enough remaining filament:\n' +
+                                '- '+ itemList.join('\n- ') + '\n\n' +
+                                'Do you want to start the print anyway?'
+                            );
+                        }
+                        if (!check) {
+                            return;
+                        }
+                    }
+
+                    if (result.reminderSpoolSelection.length) {
+                        itemList = [];
+                        for (item of result.reminderSpoolSelection) {
+                            itemList.push(((result.reminderSpoolSelection.length>1)?("Tool "+item.toolIndex+": "):'')+"'" + item.spoolName + "'");
+                        }
+                        if (itemList.length === 1) {
+                            check = confirm(
+                                'Do you want to start the print with the selected spool ' + itemList[0] + '?'
+                            );
+                        } else {
+                            check = confirm(
+                                "Do you want to start the print with following selected spools?\n" +
+                                '- '+ itemList.join('\n- ')
+                            );
+                        }
+                        if (!check) {
+                            return;
+                        }
+                    }
+
+                    origStartPrintFunction();
                 });
         };
 

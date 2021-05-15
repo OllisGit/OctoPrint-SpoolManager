@@ -50,7 +50,7 @@ class SpoolmanagerPlugin(
 
 		self._lastPrintState = None
 
-		self.metaDataFilamentLength = None
+		self.metaDataFilamentLengths = []
 
 		self.alreadyCanceled = False
 
@@ -60,82 +60,91 @@ class SpoolmanagerPlugin(
 
 	################################################################################################### public functions
 
-	def checkRemainingFilament(self):
-
+	def checkRemainingFilament(self, onlyToolIndex=None):
 		shouldWarn = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH])
-		if (shouldWarn == False):
+		if not shouldWarn:
 			return True
 
 		# - check, if spool change in pause-mode
 
 		# - check if new spool fits for current printjob
-		selectedSpool = self.loadSelectedSpool()
+		selectedSpools = self.loadSelectedSpools()
 
-		if (selectedSpool == None or self.metaDataFilamentLength == None):
-			return False
+		result = True
 
-		# need attributes present: diameter, density, totalWeight
-		warningMessage = "Following fields not set in Spool '" + selectedSpool.displayName + "': "
-		missing = False
+		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+			if onlyToolIndex is not None and onlyToolIndex != toolIndex:
+				continue
+			selectedSpool = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
 
-		diameter = selectedSpool.diameter
-		density = selectedSpool.density
-		totalWeight = selectedSpool.totalWeight
-		usedWeight = selectedSpool.usedWeight
-		if (diameter == None):
-			missing = True
-			warningMessage += "diameter "
-		if (density == None):
-			missing = True
-			warningMessage += "density "
-		if (totalWeight == None):
-			missing = True
-			warningMessage += "total weight"
-		if (usedWeight == None):
-			usedWeight = 0.0
+			if selectedSpool is None:
+				continue
 
-		if (missing == True):
-			self._sendMessageToClient("warning", "Filament prediction not possible!", warningMessage)
-			return False
+			diameter = selectedSpool.diameter
+			density = selectedSpool.density
+			totalWeight = selectedSpool.totalWeight
+			usedWeight = selectedSpool.usedWeight
 
-		warningMessage = "One of the needed fields are not a number in Spool '" + selectedSpool.displayName + "': "
-		notANumber = False
-		try:
-			diameter = float(diameter)
-		except ValueError:
-			notANumber = True
-			warningMessage += "diameter "
-		try:
-			density = float(density)
-		except ValueError:
-			notANumber = True
-			warningMessage += "density "
-		try:
-			totalWeight = float(totalWeight)
-		except ValueError:
-			notANumber = True
-			warningMessage += "total weight "
-		try:
-			usedWeight = float(usedWeight)
-		except ValueError:
-			notANumber = True
-			warningMessage += "used weight "
+			# need attributes present: diameter, density, totalWeight
+			missing_fields = []
+			if diameter is None:
+				missing_fields.append('diameter')
+			if diameter is None:
+				missing_fields.append('density')
+			if totalWeight is None:
+				missing_fields.append('total weight')
+			if usedWeight is None:
+				usedWeight = 0.0
 
-		if (notANumber == True):
-			self._sendMessageToClient("warning", "Filament prediction not possible!", warningMessage)
-			return False
+			if missing_fields:
+				self._sendMessageToClient(
+					"warning", "Filament prediction not possible!",
+					"Following fields not set in Spool '%s' (in tool %d): %s" % (selectedSpool.displayName, toolIndex, ', '.join(missing_fields))
+				)
+				result = False
+				continue
 
-		# Benötigtes Gewicht = gewicht(geplante länge, durchmesser, dichte)
-		requiredWeight = int(self._calculateWeight(self.metaDataFilamentLength, diameter, density))
+			not_a_number_fields = []
+			try:
+				diameter = float(diameter)
+			except ValueError:
+				not_a_number_fields.append('diameter')
+			try:
+				density = float(density)
+			except ValueError:
+				not_a_number_fields.append('density')
+			try:
+				totalWeight = float(totalWeight)
+			except ValueError:
+				not_a_number_fields.append('totalweight')
+			try:
+				usedWeight = float(usedWeight)
+			except ValueError:
+				not_a_number_fields.append('used weight')
 
-		# Vorhanden Gewicht = Gesamtgewicht - Verbrauchtes Gewicht
-		remainingWeight = totalWeight - usedWeight
+			if not_a_number_fields:
+				self._sendMessageToClient(
+					"warning", "Filament prediction not possible!",
+					"One of the needed fields are not a number in Spool '%s' (in tool %d): %s" % (selectedSpool.displayName, toolIndex, ', '.join(not_a_number_fields))
+				)
+				result = False
+				continue
 
-		if (remainingWeight < requiredWeight):
-			self._sendMessageToClient("warning", "Filament not enough!",
-									  "Required '" + str(requiredWeight) + "g' available from Spool '" + str(remainingWeight) + "g'!")
-			return False
-		return True
+			# Benötigtes Gewicht = gewicht(geplante länge, durchmesser, dichte)
+			requiredWeight = int(self._calculateWeight(filamentLength, diameter, density))
+
+			# Vorhanden Gewicht = Gesamtgewicht - Verbrauchtes Gewicht
+			remainingWeight = totalWeight - usedWeight
+
+			if remainingWeight < requiredWeight:
+				self._sendMessageToClient(
+					"warning", "Filament not enough!",
+				    "Required on tool %d: %dg, available from Spool '%s': '%dg'" % (toolIndex, requiredWeight, selectedSpool.displayName, remainingWeight)
+				)
+				result = False
+				continue
+
+		return result
 
 
 	################################################################################################## private functions
@@ -378,21 +387,18 @@ class SpoolmanagerPlugin(
 		self.databaseConnectionProblemConfirmed = False
 
 	def _on_file_selectionChanged(self, payload):
+		self.metaDataFilamentLengths = []
+
 		if ("origin" in payload and "path" in payload):
 			metadata = self._file_manager.get_metadata(payload["origin"], payload["path"])
 			if ("analysis" in metadata):
 				if ("filament" in metadata["analysis"]):
-					allFilemants = metadata["analysis"]["filament"]
-					# TODO support multiple tools and not only tool0 (or first you got)
-					if (allFilemants):
-						for toolIndex in range(5):
-							toolName = "tool" + str(toolIndex)
-							if (toolName in allFilemants):
-								self.metaDataFilamentLength = allFilemants[toolName]["length"]
-								self.checkRemainingFilament()
-						return
+					for toolName, toolData in metadata["analysis"]["filament"].items():
+						toolIndex = int(toolName[4:])
+						self.metaDataFilamentLengths += [0.0] * (toolIndex + 1 - len(self.metaDataFilamentLengths))
+						self.metaDataFilamentLengths[toolIndex] = toolData["length"]
 
-		self.metaDataFilamentLength = 0.0
+		self.checkRemainingFilament()
 
 	pass
 	######################################################################################### Hooks and public functions

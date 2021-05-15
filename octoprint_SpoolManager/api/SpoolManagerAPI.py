@@ -257,7 +257,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		self._settings.save()
 
 		if spoolModel is not None:
-			self.checkRemainingFilament()
+			# only check filament for the spool that was changed, as to not spam the user with warnings
+			self.checkRemainingFilament(toolIndex)
 
 		return spoolModel
 
@@ -283,39 +284,33 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		checkForFilamentLength = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH])
 		reminderSelectingSpool = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_REMINDER_SELECTING_SPOOL])
 
-		if (checkForFilamentLength == False and checkForSelectedSpool == False):
-			return flask.jsonify({
-				"result": "startPrint"
-			})
+		spoolModels = self.loadSelectedSpools()
+		result = {
+			'noSpoolSelected': [],
+			'filamentNotEnough': [],
+			'reminderSpoolSelection': [],
+		}
+		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+			# we go over the filamentlength because those are what matters for this print
+			if not filamentLength:
+				# if this tool is not used in this print, everything is fine
+				continue
 
-		spoolModel = self.loadSelectedSpool()
+			spoolModel = spoolModels[toolIndex] if toolIndex < len(spoolModels) else None
 
-		if (checkForSelectedSpool == True and spoolModel == None):
-			return flask.jsonify({
-				"result": "noSpoolSelected",
-			})
-
-		if (checkForFilamentLength == True and spoolModel != None):
-			# # check if loaded
-			# if (spoolModel == None):
-			# 	return flask.jsonify({
-			# 		"result": "noSpoolForUsageCheck",
-			# 	})
-			# else:
-			result = self.checkRemainingFilament()
-			if (result == False):
-				return flask.jsonify({
-					"result": "filamentNotEnough",
-				})
-
-		if (reminderSelectingSpool == True and spoolModel != None):
-			return flask.jsonify({
-				"result": "reminderSpoolSelection",
-				"spoolName": spoolModel.displayName
-			})
+			infoData = {
+				"toolIndex": toolIndex,
+				"spoolName": spoolModel.displayName if spoolModel else '(no spool selected)',
+			}
+			if spoolModel is not None:
+				if checkForFilamentLength and not self.checkRemainingFilament(toolIndex):
+					result['filamentNotEnough'].append(infoData)
+				result['reminderSpoolSelection'].append(infoData)
+			elif checkForSelectedSpool:
+				result['noSpoolSelected'].append(infoData)
 
 		return flask.jsonify({
-			"result": "startPrint"
+			"result": result
 		})
 
 	#####################################################################################################   SELECT SPOOL
