@@ -241,8 +241,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		# remove spool from other tool(s)
 		databaseIds = [(None if i == databaseId else i) for i in databaseIds]
 
-		# todo: don't let a spool be in two tools at once
-
 		if (spoolModel == None):
 			# No selection
 			self._logger.info("Clear stored selected spool for tool %d in settings." % toolIndex)
