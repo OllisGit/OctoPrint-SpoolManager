@@ -119,12 +119,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	# 		return datetime.strptime(str(dateValue), '%d.%m.%Y %H:%M')
 	# 	return None
 
-	def loadSelectedSpool(self, ):
-		spoolModelList = self.loadSelectedSpools()
-		if not spoolModelList:
-			return None
-		return spoolModelList[0]
-
 	def loadSelectedSpools(self):
 		spoolModelList = []
 		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
