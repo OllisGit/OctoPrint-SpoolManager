@@ -9,6 +9,9 @@
     height: 100px;
 }
 
+#sidebar_plugin_SpoolManager {
+    overflow: visible;
+}
 #selectedSpools > div {
     display: flex;
     align-items: baseline;
@@ -37,13 +40,15 @@
     padding-right: 5px;
 }
 #selectedSpools .dropdown-menu {
-    max-width:220px;
-    overflow: hidden;
+    max-height: 200px;
+    overflow: auto;
 }
 #selectedSpools .dropdown-menu .filament-label {
     white-space: normal;
     display: inline-block;
     vertical-align: top;
+    max-width: 180px;
+    overflow: hidden;
 }
 #selectedSpools .dropdown-menu .filament-label > span {
     white-space: nowrap;
