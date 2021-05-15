@@ -22,7 +22,7 @@
           <!-- /ko -->
           <!-- ko if: $data -->
           <div>
-             <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }" style="vertical-align: middle;"></span>
+             <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }"></span>
           </div>
           <div class="spool-label">
              <span data-bind="text: material"></span> - <span  data-bind="text: displayName"></span>
@@ -42,7 +42,7 @@
                 <ul class="dropdown-menu dropdown-menu-right" data-bind="foreach: $parent.allSpoolsForSidebar">
                     <li>
                         <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data, $parentContext.$index())">
-                            <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }" style="vertical-align: middle;"></span>
+                            <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
                             <span class="filament-label">
                                 <span><span data-bind="text: $data.material"></span> - <span data-bind="text: $data.displayName">FirstSpool</span></span>
                                 <span data-bind="text: $root.remainingText($data)"></span>

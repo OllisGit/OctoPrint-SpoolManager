@@ -26,6 +26,8 @@
 }
 #selectedSpools > div > div > .color-preview {
     margin-right: 0;
+    vertical-align: middle;
+    margin-top: -3px;
 }
 #selectedSpools > div > :not(:last-child) {
     padding-right: 5px;
