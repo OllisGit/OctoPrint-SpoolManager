@@ -5,24 +5,48 @@
       <div>
           <div>
              <b><span data-bind="text: $index"></span>:</b>
-             <span data-bind="html: label"></span>
           </div>
-          <div data-bind="visible: item">
+          <!--<div data-bind="visible: $data">
+             <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }" style="vertical-align: middle;"></span>
+          </div>-->
+          <!--<div class="spool-label" data-bind="visible: $data">
+             <span data-bind="text: spool.displayName"></span>
+          </div>
+          <div class="spool-label" data-bind="visible: $data">
+             No spool selected
+          </div>-->
+          <!-- ko ifnot: $data -->
+          <div class="spool-label">
+             No spool selected
+          </div>
+          <!-- /ko -->
+          <!-- ko if: $data -->
+          <div>
+             <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }" style="vertical-align: middle;"></span>
+          </div>
+          <div class="spool-label">
+             <span data-bind="text: material"></span> - <span  data-bind="text: displayName"></span>
+             <span data-bind="text: $root.remainingText($data)" class="spool-remaining"></span>
+          </div>
+          <div>
              <a href="#" data-bind="click: $parent.editSpoolFromSidebar.bind($data, $index())" title="Edit Spool"><span class="icon-edit"></span></a>
           </div>
-          <div data-bind="visible: item">
+          <div>
              <a href="#" data-bind="click: $parent.deselectSpoolForSidebar.bind($data, $index())" title="Deselect Spool"><span class="icon-remove"></span></a>
           </div>
+          <!-- /ko -->
           <div>
               <div class="btn-group">
                 <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
 
-                <ul class="dropdown-menu dropdown-menu-right" style="max-width:220px;" data-bind="foreach: $parent.allSpoolsForSidebar">
+                <ul class="dropdown-menu dropdown-menu-right" data-bind="foreach: $parent.allSpoolsForSidebar">
                     <li>
                         <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data, $parentContext.$index())">
                             <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }" style="vertical-align: middle;"></span>
-                            <span data-bind="text: $data.material"></span> - <span  data-bind="text: $data.displayName">FirstSpool (125g/96%)</span>
-                            <span data-bind="text: $root.remainingText($data)"></span>
+                            <span class="filament-label">
+                                <span><span data-bind="text: $data.material"></span> - <span data-bind="text: $data.displayName">FirstSpool</span></span>
+                                <span data-bind="text: $root.remainingText($data)"></span>
+                            </span>
                         </a>
                     </li>
                 </ul>

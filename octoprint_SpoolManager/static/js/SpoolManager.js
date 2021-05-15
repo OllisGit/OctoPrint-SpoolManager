@@ -329,18 +329,7 @@ $(function() {
             if (diff !== 0) {
                 if (diff > 0) {
                     for (i = 0; i < diff; i++) {
-                        item = {
-                            item: ko.observable(null),
-                            label: ko.observable(_buildSpoolLabel(null))
-                        }
-                        self.selectedSpoolsForSidebar().push(item);
-                        item.item.subscribe(function() {
-                            var label = item.label;
-                            return function(newSelectedSpool) {
-                                var selectSpoolText = _buildSpoolLabel(newSelectedSpool);
-                                label(selectSpoolText);
-                            }
-                        }());
+                        self.selectedSpoolsForSidebar().push(ko.observable(null));
                     }
                 } else if (diff < 0) {
                     for (i = 0; i > diff; i--) {
@@ -388,21 +377,10 @@ $(function() {
                         slot = self.selectedSpoolsForSidebar()[i];
                         spoolData = (i < spoolsData.length) ? spoolsData[i] : null;
                         spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
-                        slot.item(spoolItem);
+                        slot(spoolItem);
                     }
                 }
             });
-        }
-
-        // helper for create a Label for a Spool (Color-Box, Material, ...)
-        _buildSpoolLabel = function(spoolItem){
-            var spoolLabel = "No Spool selected!";
-            if (spoolItem != null){
-                spoolLabel = '<span class="color-preview" style="background-color: '+spoolItem.color()+'; vertical-align: bottom;" title="'+spoolItem.colorName()+'"></span>';
-                var remainingInfo = _buildRemainingText(spoolItem);
-                spoolLabel += '<span style="">'+spoolItem.material()+' - '+spoolItem.displayName()+' '+remainingInfo+'</span>'
-            }
-            return spoolLabel;
         }
 
         _buildRemainingText = function(spoolItem){
@@ -431,16 +409,16 @@ $(function() {
                 if (spoolData != null){
                     spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                 }
-                self.selectedSpoolsForSidebar()[toolIndex].item(spoolItem)
+                self.selectedSpoolsForSidebar()[toolIndex](spoolItem)
             });
         }
 
         self.editSpoolFromSidebar = function(toolIndex, item){
-            if (item.item() == null){
+            if (item() == null){
                 alert("Something is wrong. No Spool is selected to edit from sidebar!")
             }
 
-            var spoolItem = item.item();
+            var spoolItem = item();
             self.showSpoolDialogAction(spoolItem);
         }
 
@@ -727,7 +705,7 @@ $(function() {
                     slot = self.selectedSpoolsForSidebar()[i];
                     spoolData = (i < spoolsData.length) ? spoolsData[i] : null;
                     spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
-                    slot.item(spoolItem);
+                    slot(spoolItem);
                 }
                 return;
             }
@@ -801,7 +779,7 @@ $(function() {
                     if (spoolData != null){
                         spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                         spoolItem.selectedFromQRCode(true);
-                        self.selectedSpoolsForSidebar()[0].item(spoolItem);
+                        self.selectedSpoolsForSidebar()[0](spoolItem);
                         self.showSpoolDialogAction(spoolItem);
                     }
                 });
