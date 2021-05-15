@@ -3,18 +3,11 @@
 
     <div id="selectedSpools" data-bind="foreach: selectedSpoolsForSidebar">
       <div>
-          <div data-bind="if: $parent.selectedSpoolsForSidebar().length > 1">
+          <!-- ko if: $parent.selectedSpoolsForSidebar().length > 1 -->
+          <div>
              <b><span data-bind="text: $index"></span>:</b>
           </div>
-          <!--<div data-bind="visible: $data">
-             <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }" style="vertical-align: middle;"></span>
-          </div>-->
-          <!--<div class="spool-label" data-bind="visible: $data">
-             <span data-bind="text: spool.displayName"></span>
-          </div>
-          <div class="spool-label" data-bind="visible: $data">
-             No spool selected
-          </div>-->
+          <!-- /ko -->
           <!-- ko ifnot: $data -->
           <div class="spool-label">
              No spool selected
