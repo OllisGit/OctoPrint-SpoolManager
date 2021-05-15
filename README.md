@@ -40,6 +40,8 @@ If you like it, I would be thankful about a cup of coffee :)
 - [X] Filter spool table
 - [X] Table column visibility
 - [X] Scan QR/Barcodes of a spool
+- [X] Multi Tool support
+- [X] Support for manual mid-print filament change
 
 ## Planning / next features
 - [ ] External Database (IN PROGRESS)
