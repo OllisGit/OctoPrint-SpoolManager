@@ -3,7 +3,7 @@
 
     <div id="selectedSpools" data-bind="foreach: selectedSpoolsForSidebar">
       <div>
-          <div>
+          <div data-bind="if: $parent.selectedSpoolsForSidebar().length > 1">
              <b><span data-bind="text: $index"></span>:</b>
           </div>
           <!--<div data-bind="visible: $data">
