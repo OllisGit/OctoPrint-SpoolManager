@@ -29,6 +29,10 @@
     vertical-align: middle;
     margin-top: -3px;
 }
+#selectedSpools > div > div > .btn-group {
+    vertical-align: middle;
+    margin-top: -4px;
+}
 #selectedSpools > div > :not(:last-child) {
     padding-right: 5px;
 }

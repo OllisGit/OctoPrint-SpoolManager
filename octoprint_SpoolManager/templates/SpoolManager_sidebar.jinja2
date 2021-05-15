@@ -28,15 +28,14 @@
              <span data-bind="text: material"></span> - <span  data-bind="text: displayName"></span>
              <span data-bind="text: $root.remainingText($data)" class="spool-remaining"></span>
           </div>
-          <div>
-             <a href="#" data-bind="click: $parent.editSpoolFromSidebar.bind($data, $index())" title="Edit Spool"><span class="icon-edit"></span></a>
-          </div>
-          <div>
-             <a href="#" data-bind="click: $parent.deselectSpoolForSidebar.bind($data, $index())" title="Deselect Spool"><span class="icon-remove"></span></a>
-          </div>
           <!-- /ko -->
           <div>
               <div class="btn-group">
+                <!-- ko if: $data -->
+                <button class="btn btn-mini" data-bind="click: $parent.editSpoolFromSidebar.bind($data, $index())" title="Edit Spool"><span class="icon-edit"></span></button>
+                <button class="btn btn-mini" data-bind="click: $parent.deselectSpoolForSidebar.bind($data, $index())" title="Deselect Spool"><span class="icon-remove"></span></button>
+                <!-- /ko -->
+
                 <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
 
                 <ul class="dropdown-menu dropdown-menu-right" data-bind="foreach: $parent.allSpoolsForSidebar">
