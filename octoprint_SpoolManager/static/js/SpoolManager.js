@@ -397,11 +397,27 @@ $(function() {
             return remainingInfo;
         }
 
+        self.getSpoolItemSelectedTool = function(databaseId) {
+            var spoolItem;
+            for (var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                spoolItem = self.selectedSpoolsForSidebar()[i]();
+                if (spoolItem !== null && self.selectedSpoolsForSidebar()[i]().databaseId() === databaseId) {
+                    return i;
+                }
+            }
+            return null;
+        }
+
         self.selectSpoolForSidebar = function(toolIndex, spoolItem){
             // api-call
             var databaseId = -1
             if (spoolItem != null){
                 databaseId = spoolItem.databaseId();
+                var alreadyInTool = self.getSpoolItemSelectedTool(databaseId);
+                if (alreadyInTool !== null) {
+                    alert('This spool is already selected for tool ' + alreadyInTool + '!');
+                    return;
+                }
             }
             self.apiClient.callSelectSpool(toolIndex, databaseId, function(responseData){
                 var spoolItem = null;
@@ -769,6 +785,11 @@ $(function() {
             if (tabHashCode.includes("#tab_plugin_SpoolManager-spoolId")){
                 var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
                 console.info('Loading spool: '+selectedSpoolId);
+                var alreadyInTool = self.getSpoolItemSelectedTool(parseInt(selectedSpoolId));
+                if (alreadyInTool !== null) {
+                    alert('This spool is already selected for tool ' + alreadyInTool + '!');
+                    return;
+                }
                 // - Load SpoolItem from Backend
                 // - Open SpoolItem
                 self.apiClient.callSelectSpool(0, selectedSpoolId, function(responseData){

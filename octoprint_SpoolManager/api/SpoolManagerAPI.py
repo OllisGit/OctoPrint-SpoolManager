@@ -238,6 +238,9 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
 		databaseIds = databaseIds + [None] * (toolIndex + 1 - len(databaseIds))  # pad list to the needed length
 
+		# remove spool from other tool(s)
+		databaseIds = [(None if i == databaseId else i) for i in databaseIds]
+
 		# todo: don't let a spool be in two tools at once
 
 		if (spoolModel == None):
