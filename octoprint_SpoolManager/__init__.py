@@ -306,45 +306,55 @@ class SpoolmanagerPlugin(
 										action="reloadTable"
 										))
 
+	def commitOdometerData(self):
+		reload = False
+		selectedSpools = self.loadSelectedSpools()
+		for toolIndex, spoolModel in enumerate(selectedSpools):
+			if spoolModel is None:
+				self._logger.warning("Tool %d: No spool selected, could not update values after print" % toolIndex)
+				continue
+
+			# - Last usage datetime
+			lastUsage = datetime.now()
+			spoolModel.lastUse = lastUsage
+			# - Used length
+			try:
+				currentExtrusionLenght = self._filamentOdometer.get_extrusion('Tool%d' % toolIndex)
+			except KeyError:
+				self._logger.info("Tool %d: No filament extruded" % toolIndex)
+				continue
+			self._logger.info("Tool %d: Extruded filament length: %s" % (toolIndex, str(currentExtrusionLenght)))
+			spoolUsedLength = 0.0 if StringUtils.isEmpty(spoolModel.usedLength) == True else spoolModel.usedLength
+			self._logger.info("Tool %d: Current Spool filament length: %s" % (toolIndex, str(spoolUsedLength)))
+			newUsedLength = spoolUsedLength + currentExtrusionLenght
+			self._logger.info("Tool %d: New Spool filament length: %s" % (toolIndex, str(newUsedLength)))
+			spoolModel.usedLength = newUsedLength
+			# - Used weight
+			diameter = spoolModel.diameter
+			density = spoolModel.density
+			if diameter is None or density is None:
+				self._logger.warning(
+					"Tool %d: Could not update spool weight, because diameter or density not set in spool '%s'" % (toolIndex, spoolModel.displayName)
+				)
+			else:
+				usedWeight = self._calculateWeight(currentExtrusionLenght, diameter, density)
+				spoolUsedWeight = 0.0 if spoolModel.usedWeight == None else spoolModel.usedWeight
+				newUsedWeight = spoolUsedWeight + usedWeight
+				spoolModel.usedWeight = newUsedWeight
+
+			self._databaseManager.saveSpool(spoolModel)
+			reload = True
+
+		self._filamentOdometer.reset_extruded_length()
+
+		if reload:
+			self._sendDataToClient(dict(
+				action="reloadTable and sidebarSpools"
+			))
+
 	#### print job finished
 	def _on_printJobFinished(self, printStatus, payload):
-
-		spoolModel = self.loadSelectedSpool()
-		if (spoolModel == None):
-			self._logger.warning("No spool selected, could not update values after print")
-			return
-
-		# - Last usage datetime
-		lastUsage = datetime.now()
-		spoolModel.lastUse = lastUsage
-		# - Used length
-		currentExtrusionForAllTools = self._filamentOdometer.getExtrusionForAllTools()
-		# if (len(currentExtrusionForAllTools) == 0):
-		# 	self._logger.warning("Odomenter could not detect any extrusion")
-		# 	return
-		currentExtrusionLenght = currentExtrusionForAllTools # TODO Support of multi-tool
-		self._logger.info("Extruded filament length: " + str(currentExtrusionLenght))
-		spoolUsedLength = 0.0 if StringUtils.isEmpty(spoolModel.usedLength) == True else spoolModel.usedLength
-		self._logger.info("Current Spool filament length: " + str(spoolUsedLength))
-		newUsedLength = spoolUsedLength + currentExtrusionLenght
-		self._logger.info("New Spool filament length: " + str(newUsedLength))
-		spoolModel.usedLength = newUsedLength
-		# - Used weight
-		diameter = spoolModel.diameter
-		density = spoolModel.density
-		if (diameter == None or  density == None):
-			self._logger.warning("Could not update spool weight, because diameter or density not set in spool '"+spoolModel.displayName+"'")
-		else:
-			usedWeight = self._calculateWeight(currentExtrusionLenght, diameter, density)
-			spoolUsedWeight = 0.0 if spoolModel.usedWeight == None else spoolModel.usedWeight
-			newUsedWeight = spoolUsedWeight + usedWeight
-			spoolModel.usedWeight = newUsedWeight
-
-		self._databaseManager.saveSpool(spoolModel)
-		self._sendDataToClient(dict(
-									action = "reloadTable and sidebarSpools"
-									))
-		pass
+		self.commitOdometerData()
 
 	def _on_clientOpened(self, payload):
 		# start-workaround https://github.com/foosel/OctoPrint/issues/3400
