@@ -1,46 +1,59 @@
 <div id="sidebar_spool_select" class="control-group">
 <!--   TODO support for multiple spools for multiple tools -->
 
-  <div id="selectedSpool">
-    <nobr>
-        <span style="vertical-align:super" data-bind="visible: selectedSpoolForSidebar">
-            <a href="#" data-bind="click: editSpoolFromSidebar" title="Edit Spool"><span class="icon-edit"></span></a>
-        </span>
-        <span data-bind="html: selectedSpoolText">
-            <span class="color-preview" style="background-color: rgb(255, 255, 0);"></span>
-            <span style="vertical-align:super">PLA-FirstSpool (125g/96%)</span>
-        </span>
-        <span style="vertical-align:super" data-bind="visible: selectedSpoolForSidebar">
-            &nbsp
-            <a href="#" data-bind="click: deselectSpoolsForSidebar" title="Deselect Spool"><span class="icon-remove"></span></a>
-        </span>
-    </nobr>
-    <br>
+    <div id="selectedSpools" data-bind="foreach: selectedSpoolsForSidebar">
+      <div>
+          <!-- ko if: $parent.selectedSpoolsForSidebar().length > 1 -->
+          <div>
+             <b><span data-bind="text: $index"></span>:</b>
+          </div>
+          <!-- /ko -->
+          <!-- ko ifnot: $data -->
+          <div class="spool-label">
+             No spool selected
+          </div>
+          <!-- /ko -->
+          <!-- ko if: $data -->
+          <div>
+             <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }"></span>
+          </div>
+          <div class="spool-label">
+             <span data-bind="text: material"></span> - <span  data-bind="text: displayName"></span>
+             <span data-bind="text: $root.remainingText($data)" class="spool-remaining"></span>
+          </div>
+          <!-- /ko -->
+          <div>
+              <div class="btn-group">
+                <!-- ko if: $data -->
+                <button class="btn btn-mini" data-bind="click: $parent.editSpoolFromSidebar.bind($data, $index())" title="Edit Spool"><span class="icon-edit"></span></button>
+                <button class="btn btn-mini" data-bind="click: $parent.deselectSpoolForSidebar.bind($data, $index())" title="Deselect Spool"><span class="icon-remove"></span></button>
+                <!-- /ko -->
+
+                <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+
+                <ul class="dropdown-menu dropdown-menu-right" data-bind="foreach: $parent.allSpoolsForSidebar">
+                    <li>
+                        <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data, $parentContext.$index())">
+                            <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
+                            <span class="filament-label">
+                                <span><span data-bind="text: $data.material"></span> - <span data-bind="text: $data.displayName">FirstSpool</span></span>
+                                <span data-bind="text: $root.remainingText($data)"></span>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+
+            </div>
+          </div>
+      </div>
+    </div>
     <nobr>
 <!--  Not needed autorelaod implemented      <a href="#" data-bind="click: loadSpoolsForSidebar" title="Reload spools entries"><span class="icon-refresh"></span></a>-->
         <div>
             <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideEmptySpoolsInSidebar" > Hide empty spools</span>
             <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideInactiveSpoolsInSidebar" > Hide inactive spools</span>
         </div>
-        <span class="btn-group">
-            <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">Spools<span class="caret"></span></button>
-
-            <ul class="dropdown-menu" style="position:initial" data-bind="foreach: allSpoolsForSidebar">
-                <li>
-                    <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data)">
-                        <span style="vertical-align:super">
-                            <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
-                            <span data-bind="text: $data.material"></span> - <span  data-bind="text: $data.displayName">FirstSpool (125g/96%)</span>
-                            <span data-bind="text: $root.remainingText($data)"></span>
-                        </span>
-                    </a>
-                </li>
-            </ul>
-
-        </span>
     </nobr>
-
-  </div>
 
   <div>
     <small>Order: last used.</small>

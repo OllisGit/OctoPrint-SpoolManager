@@ -9,6 +9,51 @@
     height: 100px;
 }
 
+#sidebar_plugin_SpoolManager {
+    overflow: visible;
+}
+#selectedSpools > div {
+    display: flex;
+    align-items: baseline;
+    min-height: 1.8em;
+    margin-bottom: 5px;
+}
+#selectedSpools > div > * {
+    flex-grow: 0;
+}
+#selectedSpools > div > .spool-label {
+    flex-grow: 1;
+}
+#selectedSpools .spool-remaining {
+    white-space: nowrap;
+}
+#selectedSpools > div > div > .color-preview {
+    margin-right: 0;
+    vertical-align: middle;
+    margin-top: -3px;
+}
+#selectedSpools > div > div > .btn-group {
+    vertical-align: middle;
+    margin-top: -4px;
+}
+#selectedSpools > div > :not(:last-child) {
+    padding-right: 5px;
+}
+#selectedSpools .dropdown-menu {
+    max-height: 320px;
+    overflow: auto;
+}
+#selectedSpools .dropdown-menu .filament-label {
+    white-space: normal;
+    display: inline-block;
+    vertical-align: top;
+    max-width: 180px;
+    overflow: hidden;
+}
+#selectedSpools .dropdown-menu .filament-label > span {
+    white-space: nowrap;
+}
+
 .debug-blue {
     outline: 1px solid blue;
 }

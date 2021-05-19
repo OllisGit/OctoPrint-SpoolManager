@@ -119,20 +119,22 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	# 		return datetime.strptime(str(dateValue), '%d.%m.%Y %H:%M')
 	# 	return None
 
-	def loadSelectedSpool(self, ):
-		spoolModel = None
-		databaseId = self._settings.get_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID])
+	def loadSelectedSpools(self):
+		spoolModelList = []
+		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
 
-		if (databaseId != None):
-			self._databaseManager.connectoToDatabase()
-			spoolModel = self._databaseManager.loadSpool(databaseId)
-			self._databaseManager.closeDatabase()
-			if (spoolModel == None):
-				self._logger.warning(
-					"Last selected Spool from plugin-settings not found in database. Maybe deleted in the meantime.")
+		for i, databaseId in enumerate(databaseIds):
+			spoolModel = None
+			if (databaseId != None):
+				self._databaseManager.connectoToDatabase()
+				spoolModel = self._databaseManager.loadSpool(databaseId)
+				self._databaseManager.closeDatabase()
+				if (spoolModel == None):
+					self._logger.warning(
+						"Last selected Spool for Tool %d from plugin-settings not found in database. Maybe deleted in the meantime." % i)
+			spoolModelList.append(spoolModel)
 
-		return spoolModel
-
+		return spoolModelList
 
 	def _createSampleSpoolModel(self):
 		#DisplayName, Vendor, Material, Color[# code], Diameter [mm], Density [g/cm³], Temperature [°C], TotalWeight [g], UsedWeight [g], UsedLength [mm], FirstUse [dd.mm.yyyy hh:mm], LastUse [dd.mm.yyyy hh:mm], PurchasedFrom, PurchasedOn [dd.mm.yyyy hh:mm], Cost, CostUnit, Labels, NoteText
@@ -213,29 +215,45 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		lengthRounded = int(round(length))
 		return lengthRounded;
 
+	def _resetSelectedSpools(self):
+		self._settings.set([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS], [])
+		self._settings.save()
 
-	def _selectSpool(self, databaseId):
+	def _selectSpool(self, toolIndex, databaseId):
 		spoolModel = None
 		if (databaseId != None and databaseId != -1):
 			spoolModel = self._databaseManager.loadSpool(databaseId)
 			# check if loaded
 			if (spoolModel != None):
-				self._logger.info("Store selected spool '"+spoolModel.displayName+"' in settings.")
-
-				# - store spool in Settings
-				self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], databaseId)
-				self._settings.save()
-
-				self.checkRemainingFilament()
+				self._logger.info(
+					"Store selected spool %s for tool %d in settings." %
+					(spoolModel.displayName, toolIndex)
+				)
 			else:
-				self._logger.warning("Selected Spool with id '"+str(databaseId)+"' not in database anymore. Maybe deleted in the meantime.")
+				self._logger.warning(
+					"Selected Spool with id %d for tool %d not in database anymore. Maybe deleted in the meantime." %
+					(databaseId, toolIndex)
+				)
+
+		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
+		databaseIds = databaseIds + [None] * (toolIndex + 1 - len(databaseIds))  # pad list to the needed length
+
+		# remove spool from other tool(s)
+		databaseIds = [(None if i == databaseId else i) for i in databaseIds]
 
 		if (spoolModel == None):
 			# No selection
-			self._logger.info("Clear stored selected spool in settings.")
-			self._settings.set_int([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID], None)
-			self._settings.save()
-			pass
+			self._logger.info("Clear stored selected spool for tool %d in settings." % toolIndex)
+			databaseIds[toolIndex] = None
+		else:
+			databaseIds[toolIndex] = databaseId
+
+		self._settings.set([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS], databaseIds)
+		self._settings.save()
+
+		if spoolModel is not None:
+			# only check filament for the spool that was changed, as to not spam the user with warnings
+			self.checkRemainingFilament(toolIndex)
 
 		return spoolModel
 
@@ -261,39 +279,33 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		checkForFilamentLength = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH])
 		reminderSelectingSpool = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_REMINDER_SELECTING_SPOOL])
 
-		if (checkForFilamentLength == False and checkForSelectedSpool == False):
-			return flask.jsonify({
-				"result": "startPrint"
-			})
+		spoolModels = self.loadSelectedSpools()
+		result = {
+			'noSpoolSelected': [],
+			'filamentNotEnough': [],
+			'reminderSpoolSelection': [],
+		}
+		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+			# we go over the filamentlength because those are what matters for this print
+			if not filamentLength:
+				# if this tool is not used in this print, everything is fine
+				continue
 
-		spoolModel = self.loadSelectedSpool()
+			spoolModel = spoolModels[toolIndex] if toolIndex < len(spoolModels) else None
 
-		if (checkForSelectedSpool == True and spoolModel == None):
-			return flask.jsonify({
-				"result": "noSpoolSelected",
-			})
-
-		if (checkForFilamentLength == True and spoolModel != None):
-			# # check if loaded
-			# if (spoolModel == None):
-			# 	return flask.jsonify({
-			# 		"result": "noSpoolForUsageCheck",
-			# 	})
-			# else:
-			result = self.checkRemainingFilament()
-			if (result == False):
-				return flask.jsonify({
-					"result": "filamentNotEnough",
-				})
-
-		if (reminderSelectingSpool == True and spoolModel != None):
-			return flask.jsonify({
-				"result": "reminderSpoolSelection",
-				"spoolName": spoolModel.displayName
-			})
+			infoData = {
+				"toolIndex": toolIndex,
+				"spoolName": spoolModel.displayName if spoolModel else '(no spool selected)',
+			}
+			if spoolModel is not None:
+				if checkForFilamentLength and not self.checkRemainingFilament(toolIndex):
+					result['filamentNotEnough'].append(infoData)
+				result['reminderSpoolSelection'].append(infoData)
+			elif checkForSelectedSpool:
+				result['noSpoolSelected'].append(infoData)
 
 		return flask.jsonify({
-			"result": "startPrint"
+			"result": result
 		})
 
 	#####################################################################################################   SELECT SPOOL
@@ -303,8 +315,20 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		jsonData = request.json
 
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
+		toolIndex = self._getValueFromJSONOrNone("toolIndex", jsonData)
 
-		spoolModel = self._selectSpool(databaseId)
+		if self._printer.is_printing():
+			# changing a spool mid-print? we want to know
+			commitCurrentState = self._getValueFromJSONOrNone("commitCurrentState", jsonData)
+			if commitCurrentState is None:
+				self._logger.warning("select/Spool endpoint called mid-print without commitCurrentState parameter - this shouldn't happen")
+				abort(409)
+
+			if commitCurrentState:
+				self.commitOdometerData()
+				self._logger.info("commitCurrentState == True")
+
+		spoolModel = self._selectSpool(toolIndex, databaseId)
 
 		spoolModelAsDict = None
 		if (spoolModel != None):
@@ -319,7 +343,12 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	def selectSpoolByQRCode(self, databaseId):
 		self._logger.info("API select spool by QR code" + str(databaseId))
 
-		spoolModel = self._selectSpool(databaseId)
+		if self._printer.is_printing():
+			# not doing this mid-print since we can't ask the user what to do
+			abort(409)
+			return
+
+		spoolModel = self._selectSpool(0, databaseId)
 
 		spoolModelAsDict = None
 		if (spoolModel != None):
@@ -445,7 +474,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				# delete old database and init a clean database
 				databaseManager.reCreateDatabase()
 				# reset selected spool
-				self._selectSpool(None)
+				self._resetSelectedSpools()
 
 				importModeText = "fully replaced"
 
@@ -651,13 +680,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		# 	"colors": ["", "#123", "#456"],
 		# 	"labels": ["", "good", "bad"]
 		# }
-		selectedSpoolAsDict = None
-		selectedSpool = self.loadSelectedSpool()
-		if (selectedSpool):
-			selectedSpoolAsDict = Transformer.transformSpoolModelToDict(selectedSpool)
-		else:
-			# spool not found
-			pass
+		selectedSpoolsAsDicts = [
+			(None if selectedSpool is None else Transformer.transformSpoolModelToDict(selectedSpool))
+			for selectedSpool in self.loadSelectedSpools()
+		]
 
 		return flask.jsonify({
 								# "databaseConnectionProblem": self._databaseManager.isConnected() == False,
@@ -665,7 +691,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 								"catalogs": catalogs,
 								"totalItemCount": totalItemCount,
 								"allSpools": allSpoolsAsDict,
-								"selectedSpool": selectedSpoolAsDict
+								"selectedSpools": selectedSpoolsAsDicts
 							})
 
 	def _addAdditionalMaterials(self, databaseMaterials):

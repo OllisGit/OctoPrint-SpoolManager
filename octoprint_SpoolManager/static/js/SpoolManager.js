@@ -313,24 +313,32 @@ $(function() {
         //////////////////////////////////////////////////////////////////////////////////////////////////// SIDEBAR
 
         self.allSpoolsForSidebar = ko.observableArray([]);
-        self.selectedSpoolForSidebar = ko.observable();
-        self.selectedSpoolText = ko.observable();
+        self.selectedSpoolsForSidebar = ko.observableArray([]);
 
-
-        self.selectedSpoolForSidebar.subscribe(function(newSelectedSpool){
-
-            var selectSpoolText = _buildSpoolLabel(newSelectedSpool);
-            self.selectedSpoolText(selectSpoolText)
-
-        });
-
-
-        self.deselectSpoolsForSidebar = function(){
-            self.selectedSpoolForSidebar(null);
-            self.selectSpoolForSidebar(null);
+        self.deselectSpoolForSidebar = function(toolIndex, item){
+            self.selectSpoolForSidebar(toolIndex, null);
         }
 
-        self.loadSpoolsForSidebar = function(){
+        self.loadSpoolsForSidebar = function() {
+            // update filament list length
+            var currentProfileData = self.settingsViewModel.printerProfiles.currentProfileData(),
+                numExtruders = (currentProfileData ? currentProfileData.extruder.count() : 0),
+                currentSelectedSpools = self.selectedSpoolsForSidebar().length,
+                diff = numExtruders - currentSelectedSpools,
+                i, item;
+            if (diff !== 0) {
+                if (diff > 0) {
+                    for (i = 0; i < diff; i++) {
+                        self.selectedSpoolsForSidebar().push(ko.observable(null));
+                    }
+                } else if (diff < 0) {
+                    for (i = 0; i > diff; i--) {
+                        self.selectedSpoolsForSidebar().pop();
+                    }
+                }
+                self.selectedSpoolsForSidebar.valueHasMutated();
+            }
+
             var currentFilterName = "all";
             if (self.pluginSettings!= null){
                  if(self.pluginSettings.hideEmptySpoolsInSidebar() == true) {
@@ -363,25 +371,16 @@ $(function() {
                     }); // transform to SpoolItems with KO.obseravables
                     self.allSpoolsForSidebar(allSpoolItems);
 
-                    var spoolItem = null;
-                    var spoolData = responseData["selectedSpool"];
-                    if (spoolData != null){
-                        spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                    var spoolsData = responseData["selectedSpools"],
+                        slot, spoolData, spoolItem;
+                    for(var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                        slot = self.selectedSpoolsForSidebar()[i];
+                        spoolData = (i < spoolsData.length) ? spoolsData[i] : null;
+                        spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
+                        slot(spoolItem);
                     }
-                    self.selectedSpoolForSidebar(spoolItem)
                 }
             });
-        }
-
-        // helper for create a Label for a Spool (Color-Box, Material, ...)
-        _buildSpoolLabel = function(spoolItem){
-            var spoolLabel = "No Spool selected!";
-            if (spoolItem != null){
-                spoolLabel = '<span class="color-preview" style="background-color: '+spoolItem.color()+';" title="'+spoolItem.colorName()+'"></span>';
-                var remainingInfo = _buildRemainingText(spoolItem);
-                spoolLabel += '<span style="vertical-align:super">'+spoolItem.material()+'-'+spoolItem.displayName()+' '+remainingInfo+'</span>'
-            }
-            return spoolLabel;
         }
 
         _buildRemainingText = function(spoolItem){
@@ -398,28 +397,53 @@ $(function() {
             return remainingInfo;
         }
 
-        self.selectSpoolForSidebar = function(spoolItem){
+        self.getSpoolItemSelectedTool = function(databaseId) {
+            var spoolItem;
+            for (var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                spoolItem = self.selectedSpoolsForSidebar()[i]();
+                if (spoolItem !== null && self.selectedSpoolsForSidebar()[i]().databaseId() === databaseId) {
+                    return i;
+                }
+            }
+            return null;
+        }
+
+        self.selectSpoolForSidebar = function(toolIndex, spoolItem){
+            var commitCurrentState;
+            if (self.printerStateViewModel.isPrinting()) {
+                commitCurrentState = confirm(
+                    'You are changing a spool while printing. SpoolManager will commit the usage so far to the previous spool, unless you wish otherwise.\n\n' +
+                    'Commit the usage of the print so far…\n' +
+                    '"OK": …to the previously selected spool\n' +
+                    '"Abort": …to the new spool'
+                )
+            }
             // api-call
             var databaseId = -1
             if (spoolItem != null){
                 databaseId = spoolItem.databaseId();
+                var alreadyInTool = self.getSpoolItemSelectedTool(databaseId);
+                if (alreadyInTool !== null) {
+                    alert('This spool is already selected for tool ' + alreadyInTool + '!');
+                    return;
+                }
             }
-            self.apiClient.callSelectSpool(databaseId, function(responseData){
+            self.apiClient.callSelectSpool(toolIndex, databaseId, function(responseData){
                 var spoolItem = null;
                 var spoolData = responseData["selectedSpool"];
                 if (spoolData != null){
                     spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                 }
-                self.selectedSpoolForSidebar(spoolItem)
-            });
+                self.selectedSpoolsForSidebar()[toolIndex](spoolItem)
+            }, commitCurrentState);
         }
 
-        self.editSpoolFromSidebar = function(){
-            if (self.selectedSpoolForSidebar() == null){
+        self.editSpoolFromSidebar = function(toolIndex, item){
+            if (item() == null){
                 alert("Something is wrong. No Spool is selected to edit from sidebar!")
             }
 
-            var spoolItem = self.selectedSpoolForSidebar();
+            var spoolItem = item();
             self.showSpoolDialogAction(spoolItem);
         }
 
@@ -507,7 +531,7 @@ $(function() {
         closeDialogHandler = function(shouldTableReload, specialAction, currentSpoolItem){
 
             if (specialAction === "selectSpoolForPrinting"){
-                self.selectSpoolForSidebar(currentSpoolItem);
+                self.selectSpoolForSidebar(0, currentSpoolItem);
             }
 
             if (shouldTableReload == true){
@@ -523,37 +547,74 @@ $(function() {
         const newStartPrintFunction = function confirmSpoolSelectionBeforeStartPrint() {
                 // api-call
                 self.apiClient.allowedToPrint(function(responseData){
-                    var result = responseData.result;
-                    if ("startPrint" == result){
-                        origStartPrintFunction();
-                    } else {
-                        if ("noSpoolSelected" == result){
-                            var check = confirm('Do you want to start the print without a selected spool?');
-                            if (check == true) {
-                                origStartPrintFunction();
-                            }
-                            return;
+                    var result = responseData.result,
+                        check, itemList;
+
+                    if (result.noSpoolSelected.length) {
+                        itemList = [];
+                        for (item of result.noSpoolSelected) {
+                            itemList.push('Tool '+item.toolIndex)
                         }
-//                        Not needed because a length check is only done, if spool was selected
-//                        if ("noSpoolForUsageCheck" == result){
-//                            self.showPopUp("Error", "", "No Spool selected for usage check. Select a spool first");
-//                            return;
-//                        }
-                        if ("filamentNotEnough" == result){
-                            var check = confirm("The selected spool '"+responseData.spoolName+"' does not have enough remaining filament. Do you want to start the print anyway?");
-                            if (check == true) {
-                                origStartPrintFunction();
-                            }
-                            return;
+                        if (itemList.length === 1) {
+                            check = confirm(
+                                'There is no spool selected for ' + itemList[0] + ' despite it being used by this print.\n\n' +
+                                'Do you want to start the print without a selected spool?'
+                            );
+                        } else {
+                            check = confirm(
+                                'There are no spools selected for the following tools despite them being used by this print:\n' +
+                                '- '+ itemList.join('\n- ') + '\n\n' +
+                                'Do you want to start the print without selected spools?'
+                            );
                         }
-                        if ("reminderSpoolSelection" == result){
-                            var question = "Do you want to start the print with the selected spool '"+responseData.spoolName+"'?";
-                            var check = confirm(question);
-                            if (check == true) {
-                                origStartPrintFunction();
-                            }
+                        if (!check) {
+                            return;
                         }
                     }
+
+                    if (result.filamentNotEnough.length) {
+                        itemList = [];
+                        for (item of result.filamentNotEnough) {
+                            itemList.push("'" + item.spoolName + "' (tool "+item.toolIndex+")");
+                        }
+                        if (itemList.length === 1) {
+                            check = confirm(
+                                'The selected spool ' + itemList[0] + ' does not have enough remaining filament.\n\n' +
+                                'Do you want to start the print anyway?'
+                            );
+                        } else {
+                            check = confirm(
+                                'The following selected spools do not have enough remaining filament:\n' +
+                                '- '+ itemList.join('\n- ') + '\n\n' +
+                                'Do you want to start the print anyway?'
+                            );
+                        }
+                        if (!check) {
+                            return;
+                        }
+                    }
+
+                    if (result.reminderSpoolSelection.length) {
+                        itemList = [];
+                        for (item of result.reminderSpoolSelection) {
+                            itemList.push(((result.reminderSpoolSelection.length>1)?("Tool "+item.toolIndex+": "):'')+"'" + item.spoolName + "'");
+                        }
+                        if (itemList.length === 1) {
+                            check = confirm(
+                                'Do you want to start the print with the selected spool ' + itemList[0] + '?'
+                            );
+                        } else {
+                            check = confirm(
+                                "Do you want to start the print with following selected spools?\n" +
+                                '- '+ itemList.join('\n- ')
+                            );
+                        }
+                        if (!check) {
+                            return;
+                        }
+                    }
+
+                    origStartPrintFunction();
                 });
         };
 
@@ -636,6 +697,7 @@ $(function() {
                 OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
                 self.loadSpoolsForSidebar();
             });
+            self.settingsViewModel.printerProfiles.currentProfileData.subscribe(self.loadSpoolsForSidebar);
         }
 
         self.onAfterBinding = function() {
@@ -662,13 +724,13 @@ $(function() {
 
                 self.pluginNotWorking(data.pluginNotWorking);
                 self.isFilamentManagerPluginAvailable(data.isFilamentManagerPluginAvailable);
-
-                var selectedSpoolData = data.selectedSpool;
-                if (selectedSpoolData != null){
-                    var selectedSpoolItem = self.spoolDialog.createSpoolItemForTable(selectedSpoolData);
-                    self.selectedSpoolForSidebar(selectedSpoolItem);
-                } else {
-                    self.selectedSpoolForSidebar(null);
+                var spoolsData = data.selectedSpools,
+                    slot, spoolData, spoolItem;
+                for(var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                    slot = self.selectedSpoolsForSidebar()[i];
+                    spoolData = (i < spoolsData.length) ? spoolsData[i] : null;
+                    spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
+                    slot(spoolItem);
                 }
                 return;
             }
@@ -732,17 +794,26 @@ $(function() {
             if (tabHashCode.includes("#tab_plugin_SpoolManager-spoolId")){
                 var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
                 console.info('Loading spool: '+selectedSpoolId);
+                var alreadyInTool = self.getSpoolItemSelectedTool(parseInt(selectedSpoolId));
+                if (alreadyInTool !== null) {
+                    alert('This spool is already selected for tool ' + alreadyInTool + '!');
+                    return;
+                }
+                if (self.printerStateViewModel.isPrinting()) {
+                    // not doing this while printing
+                    return;
+                }
                 // - Load SpoolItem from Backend
                 // - Open SpoolItem
-                self.apiClient.callSelectSpool(selectedSpoolId, function(responseData){
+                self.apiClient.callSelectSpool(0, selectedSpoolId, function(responseData){
                     //Select the SpoolManager tab
                     $('a[href="#tab_plugin_SpoolManager"]').tab('show')
                     var spoolItem = null;
                     var spoolData = responseData["selectedSpool"];
                     if (spoolData != null){
-                        self.selectedSpoolForSidebar(spoolItem);
                         spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                         spoolItem.selectedFromQRCode(true);
+                        self.selectedSpoolsForSidebar()[0](spoolItem);
                         self.showSpoolDialogAction(spoolItem);
                     }
                 });
