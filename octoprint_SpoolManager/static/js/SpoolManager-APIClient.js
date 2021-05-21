@@ -137,7 +137,7 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////// SELECT Spool-Item
-    this.callSelectSpool = function (toolIndex, databaseId, responseHandler, commitCurrentState){
+    this.callSelectSpool = function (toolIndex, databaseId, commitCurrentSpoolValues, responseHandler){
         if (databaseId == null){
             databaseId = -1;
         }
@@ -145,11 +145,10 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
             databaseId: databaseId,
             toolIndex: toolIndex,
         }
-        if (commitCurrentState !== undefined) {
-            payload.commitCurrentState = commitCurrentState;
+        if (commitCurrentSpoolValues !== undefined) {
+            payload.commitCurrentSpoolValues = commitCurrentSpoolValues;
         }
         $.ajax({
-            //url: API_BASEURL + "plugin/"+PLUGIN_ID+"/loadPrintJobHistory",
             url: this.baseUrl + "plugin/" + this.pluginId + "/selectSpool",
             dataType: "json",
             contentType: "application/json; charset=UTF-8",

@@ -65,6 +65,7 @@ $(function() {
         self.settingsViewModel = parameters[1];
         self.printerStateViewModel = parameters[2];
         self.filesViewModel = parameters[3];
+        self.printerProfilesViewModel = parameters[4];
 
         self.pluginSettings = null;
 
@@ -409,9 +410,9 @@ $(function() {
         }
 
         self.selectSpoolForSidebar = function(toolIndex, spoolItem){
-            var commitCurrentState;
+            var commitCurrentSpoolValues;
             if (self.printerStateViewModel.isPrinting()) {
-                commitCurrentState = confirm(
+                commitCurrentSpoolValues = confirm(
                     'You are changing a spool while printing. SpoolManager will commit the usage so far to the previous spool, unless you wish otherwise.\n\n' +
                     'Commit the usage of the print so far…\n' +
                     '"OK": …to the previously selected spool\n' +
@@ -422,28 +423,45 @@ $(function() {
             var databaseId = -1
             if (spoolItem != null){
                 databaseId = spoolItem.databaseId();
-                var alreadyInTool = self.getSpoolItemSelectedTool(databaseId);
-                if (alreadyInTool !== null) {
-                    alert('This spool is already selected for tool ' + alreadyInTool + '!');
-                    return;
-                }
+                // Why do we need this information
+                // if (toolIndex != -1){
+                //     var alreadyInTool = self.getSpoolItemSelectedTool(databaseId);
+                //     if (alreadyInTool !== null) {
+                //         alert('This spool is already selected for tool ' + alreadyInTool + '!');
+                //         return;
+                //     }
+                // }
             }
-            self.apiClient.callSelectSpool(toolIndex, databaseId, function(responseData){
+            self.apiClient.callSelectSpool(toolIndex, databaseId, commitCurrentSpoolValues, function(responseData){
                 var spoolItem = null;
                 var spoolData = responseData["selectedSpool"];
                 if (spoolData != null){
                     spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+                } else {
+                    return;
                 }
-                self.selectedSpoolsForSidebar()[toolIndex](spoolItem)
-            }, commitCurrentState);
+
+                // remove the spool from the current toolIndex
+                var currentDatabaseId = spoolItem.databaseId();
+                for (var i = 0; i < self.selectedSpoolsForSidebar().length; i++) {
+                    spoolItem = self.selectedSpoolsForSidebar()[i]();
+                    if (spoolItem !== null && spoolItem.databaseId() === currentDatabaseId) {
+                        self.selectedSpoolsForSidebar()[i](null);
+                        break;
+                    }
+                }
+                // assign to new (or same) toolIndex
+                if (toolIndex != -1) {
+                    self.selectedSpoolsForSidebar()[toolIndex](spoolItem)
+                }
+
+            });
         }
 
-        self.editSpoolFromSidebar = function(toolIndex, item){
-            if (item() == null){
+        self.editSpoolFromSidebar = function(toolIndex, spoolItem){
+            if (spoolItem == null){
                 alert("Something is wrong. No Spool is selected to edit from sidebar!")
             }
-
-            var spoolItem = item();
             self.showSpoolDialogAction(spoolItem);
         }
 
@@ -492,6 +510,19 @@ $(function() {
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////// TABLE BEHAVIOR
+
+/* needed for Filter-Search dropdown-menu
+$('.dropdown-menu.keep-open').click(function(e) {
+    e.stopPropagation();
+});
+
+ */
+        self.allMaterials = ko.observableArray([]);
+        self.selectedMaterialsForFilter = ko.observableArray(["ABS", "PC"]);
+        self.allVendors = ko.observableArray([]);
+        self.selectedVendorsForFilter = ko.observableArray(["ABS", "PC"]);
+
+
         self.spoolItemTableHelper = new TableItemHelper(function(tableQuery, observableTableModel, observableTotalItemCount){
             // api-call
             self.apiClient.callLoadSpoolsByQuery(tableQuery, function(responseData){
@@ -504,8 +535,14 @@ $(function() {
 
                 totalItemCount = responseData["totalItemCount"];
                 allSpoolItems = responseData["allSpools"];
-                catalogs = responseData["catalogs"];
-                self.spoolDialog.updateCatalogs(catalogs);
+                var allCatalogs = responseData["catalogs"];
+                // currently not used var labelsCatalog = allCatalogs["labels"];
+                var materialsCatalog = allCatalogs["materials"];
+                var vendorsCatalog = allCatalogs["vendors"];
+                self.allMaterials(materialsCatalog);
+                self.allVendors(vendorsCatalog);
+
+                self.spoolDialog.updateCatalogs(allCatalogs);
                 templateSpoolData = responseData["templateSpool"];
                 self.spoolDialog.updateTemplateSpool(templateSpoolData);
 
@@ -525,13 +562,29 @@ $(function() {
 
 
         self.showSpoolDialogAction = function(selectedSpoolItem) {
+
+            // identify for which toolindex is the current selectedSpoolItem is selected
+            var currentDatabaseId = selectedSpoolItem.databaseId();
+            if (currentDatabaseId) {
+                for (var i = 0; i < self.selectedSpoolsForSidebar().length; i++) {
+                    spoolItem = self.selectedSpoolsForSidebar()[i]();
+                    if (spoolItem !== null && spoolItem.databaseId() === currentDatabaseId) {
+                        selectedSpoolItem.selectedForTool(i);
+                        break;
+                    }
+                }
+            }
             self.spoolDialog.showDialog(selectedSpoolItem, closeDialogHandler);
         };
 
         closeDialogHandler = function(shouldTableReload, specialAction, currentSpoolItem){
 
             if (specialAction === "selectSpoolForPrinting"){
-                self.selectSpoolForSidebar(0, currentSpoolItem);
+                var toolIndex = currentSpoolItem.selectedForTool();
+                if (toolIndex === undefined){
+                    toolIndex = -1;
+                }
+                self.selectSpoolForSidebar(toolIndex, currentSpoolItem);
             }
 
             if (shouldTableReload == true){
@@ -660,7 +713,6 @@ $(function() {
             }
         };
 
-
         self.printerStateViewModel.print = newStartPrintFunction;
 
         //////////////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT HOOKS
@@ -677,7 +729,7 @@ $(function() {
             // Load all Spools
             self.loadSpoolsForSidebar();
             // Edit Dialog Binding
-            self.spoolDialog.initBinding(self.apiClient, self.pluginSettings);
+            self.spoolDialog.initBinding(self.apiClient, self.pluginSettings, self.printerProfilesViewModel);
             // Import Dialog
             self.csvImportDialog.init(self.apiClient);
             // Database connection problem dialog
@@ -790,7 +842,7 @@ $(function() {
             //     console.error("Id"+selectedSpoolId);
             // }
             var tabHashCode = window.location.hash;
-            //we can only contain -spoolId on the very first page
+            // QR-Code-Call: We can only contain -spoolId on the very first page
             if (tabHashCode.includes("#tab_plugin_SpoolManager-spoolId")){
                 var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
                 console.info('Loading spool: '+selectedSpoolId);
@@ -805,7 +857,10 @@ $(function() {
                 }
                 // - Load SpoolItem from Backend
                 // - Open SpoolItem
-                self.apiClient.callSelectSpool(0, selectedSpoolId, function(responseData){
+                // methode signature: toolIndex, databaseId, commitCurrentSpoolValues, responseHandler
+                var commitCurrentSpoolValues = false;
+                var toolIndex = 0
+                self.apiClient.callSelectSpool(0, selectedSpoolId, commitCurrentSpoolValues, function(responseData){
                     //Select the SpoolManager tab
                     $('a[href="#tab_plugin_SpoolManager"]').tab('show')
                     var spoolItem = null;
@@ -834,7 +889,8 @@ $(function() {
             "loginStateViewModel",
             "settingsViewModel",
             "printerStateViewModel",
-            "filesViewModel"
+            "filesViewModel",
+            "printerProfilesViewModel"
         ],
         // Elements to bind to, e.g. #settings_plugin_SpoolManager, #tab_plugin_SpoolManager, ...
         elements: [

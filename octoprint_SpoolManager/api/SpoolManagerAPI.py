@@ -1,6 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+import logging
+
 import octoprint.plugin
 import datetime
 import flask
@@ -220,43 +222,62 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		self._settings.save()
 
 	def _selectSpool(self, toolIndex, databaseId):
+		# three cases
+		#  1. databaseId != -1 toolIndex != -1	select spool for toool 	||
+		#  2. databaseId == -1 toolIndex !=	-1	remove spool from tool	|
+		#  3. databaseId != -1 toolIndex == -1	remove tool from spool 	||
+
+		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
+
 		spoolModel = None
-		if (databaseId != None and databaseId != -1):
+		if (databaseId != -1):
 			spoolModel = self._databaseManager.loadSpool(databaseId)
-			# check if loaded
 			if (spoolModel != None):
 				self._logger.info(
 					"Store selected spool %s for tool %d in settings." %
 					(spoolModel.displayName, toolIndex)
 				)
+				# assign model to selected toolId
+				if (toolIndex != -1):
+					databaseIds = databaseIds + [None] * (toolIndex + 1 - len(databaseIds))  # pad list to the needed length
+					databaseIds = [(None if i == databaseId else i) for i in databaseIds] # remove spool from other tool(s)
+					databaseIds[toolIndex] = databaseId
+				else:
+					# spool present, but no toolId -> remove spool from current toolIndex
+					i = 0
+					while i < len(databaseIds):
+						if (databaseIds[i] == databaseId):
+							databaseIds[i] = None
+							break
+						i += 1
+					pass
 			else:
 				self._logger.warning(
 					"Selected Spool with id %d for tool %d not in database anymore. Maybe deleted in the meantime." %
 					(databaseId, toolIndex)
 				)
-
-		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
-		databaseIds = databaseIds + [None] * (toolIndex + 1 - len(databaseIds))  # pad list to the needed length
-
-		# remove spool from other tool(s)
-		databaseIds = [(None if i == databaseId else i) for i in databaseIds]
-
-		if (spoolModel == None):
-			# No selection
-			self._logger.info("Clear stored selected spool for tool %d in settings." % toolIndex)
-			databaseIds[toolIndex] = None
+				# remove spool from current toolIndex
+				i = 0
+				while i < len(databaseIds):
+					if (databaseIds[i] == databaseId):
+						databaseIds[i] = None
 		else:
-			databaseIds[toolIndex] = databaseId
+			if (toolIndex == -1):
+				self._logger.warn("databaseId and toolId is -1. This should not happen, strange!!!")
+				return None
+
+			# remove current spool from toolIndex
+			if (toolIndex < len(databaseIds)):
+				databaseIds[toolIndex] = None
 
 		self._settings.set([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS], databaseIds)
 		self._settings.save()
 
-		if spoolModel is not None:
-			# only check filament for the spool that was changed, as to not spam the user with warnings
+		# only check filament for the spool that was changed, as to not spam the user with warnings (for a specific toolIndex)
+		if spoolModel is not None and toolIndex != -1:
 			self.checkRemainingFilament(toolIndex)
 
 		return spoolModel
-
 
 	################################################### APIs
 
@@ -319,14 +340,14 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		if self._printer.is_printing():
 			# changing a spool mid-print? we want to know
-			commitCurrentState = self._getValueFromJSONOrNone("commitCurrentState", jsonData)
-			if commitCurrentState is None:
-				self._logger.warning("select/Spool endpoint called mid-print without commitCurrentState parameter - this shouldn't happen")
+			commitCurrentSpoolValues = self._getValueFromJSONOrNone("commitCurrentSpoolValues", jsonData)
+			if commitCurrentSpoolValues is None:
+				self._logger.warning("selectSpool endpoint called mid-print without commitCurrentState parameter - this shouldn't happen")
 				abort(409)
 
-			if commitCurrentState:
+			if commitCurrentSpoolValues:
+				self._logger.info("commitCurrentSpoolValues == True")
 				self.commitOdometerData()
-				self._logger.info("commitCurrentState == True")
 
 		spoolModel = self._selectSpool(toolIndex, databaseId)
 
@@ -366,6 +387,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		if (self._databaseManager.loadSpool(databaseId) is not None):
 			self._logger.info("API generate QR code for Spool")
 
+			# windowLocation = request.args.get("windowlocation")
+
 			from PIL import Image
 			imageFileLocation = self._basefolder + "/static/images/SPMByOlli.png"
 			olliImage = Image.open(imageFileLocation)#.crop((175, 90, 235, 150))
@@ -377,7 +400,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				error_correction=qrcode.constants.ERROR_CORRECT_H
 			)
 
-			qrMaker.add_data(flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, databaseId=databaseId))
+			qrMaker.add_data(flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, _scheme="https", databaseId=databaseId))
 			qrMaker.make(fit=True, )
 
 			fillColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR])

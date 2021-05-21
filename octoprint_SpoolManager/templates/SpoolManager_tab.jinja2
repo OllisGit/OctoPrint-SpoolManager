@@ -42,10 +42,124 @@
                         Show spools:
                         <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('all'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('all') ? 'visible' : 'hidden'}"></i> all</a> |
                         <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideEmptySpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideEmptySpools') ? 'visible' : 'hidden'}"></i> hide empty</a> |
-                        <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideInactiveSpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideInactiveSpools') ? 'visible' : 'hidden'}"></i> hide inactive</a>
+                        <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideInactiveSpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideInactiveSpools') ? 'visible' : 'hidden'}"></i> <h></h>ide inactive</a>
     <!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('onlyFailed'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('onlyFailed') ? 'visible' : 'hidden'}"></i> only failed</a>-->
                     </small>
                 </div>
+<!-- TODO FILTER ROW  ab hier BAUSTELLE !!!!!
+
+        <div class="dropdown pull-right tabdrop">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                <i class="icon-table"></i>
+                <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                ...
+
+
+    <div class="dropdown pull-right tabdrop">
+        <a href="#" data-toggle="dropdown" class="dropdown-toggle">Dropdown Form<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li>
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox">one
+                    </label>
+                </div>
+            </li>
+            <li>
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox">Two
+                    </label>
+                </div>
+            </li>
+        </ul>
+    </div>
+-->
+
+<!--  Filter row
+<div class="pull-right" style="clear: both;">
+Filter:
+    <div class="dropdown pull-right tabdrop">
+        <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material<b class="caret"></b></a>
+            <div class="dropdown-menu keep-open"  style="list-style-type: none;">
+                    <div data-bind="foreach: allMaterials">
+                    <div class="checkbox" >
+                        <label>
+                            <input type="checkbox" > <span data-bind="text: $data"></span>
+                        </label>
+                    </div>
+                    </div>
+
+
+            </div>
+    </div>
+
+</div>
+
+<div class="pull-right" style="clear: both;">
+    <div class="dropdown pull-right tabdrop">
+        Filter:
+        <span>
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                Material
+                <b class="caret"></b>
+            </a>
+            <div class="dropdown-menu" style="width: 220px">
+                <div style="margin-left: 10px;">Material - Filter</div>
+                <ul data-bind="foreach: allMaterials" style="list-style-type: none;">
+                    <li >
+                        <div class="control-group">
+                            <div class="controls">
+                                <label class="checkbox" style="margin-left:0px">
+                                    <input type="checkbox" data-bind="value:$data, checked:$root.selectedMaterialsForFilter"> <span data-bind="text: $data"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                    </li>
+                </ul>
+            </div>
+        </span>
+        <span>
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                |  Vendor
+                <b class="caret"></b>
+            </a>
+            <div class="dropdown-menu" style="width: 220px">
+                <div style="margin-left: 10px;">Vendor - Filter</div>
+                <ul data-bind="foreach: allVendors" style="list-style-type: none;">
+                    <li >
+                        <div class="control-group">
+                            <div class="controls">
+                                <label class="checkbox" style="margin-left:0px">
+                                    <input type="checkbox" data-bind="value:$data, checked:$root.selectedVendorsForFilter"> <span data-bind="text: $data"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                    </li>
+                </ul>
+            </div>
+        </span>
+
+        |&nbsp;&nbsp;&nbsp;
+        <a  href="#">
+            reset all filters
+            <span class="icon-remove"></span>
+        </a>
+
+    </div>
+</div>
+
+
+-->
+
+
+
+
             </div>
         </div>
 

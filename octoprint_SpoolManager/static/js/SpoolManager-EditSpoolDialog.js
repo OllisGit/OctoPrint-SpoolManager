@@ -81,6 +81,7 @@ function SpoolManagerEditSpoolDialog(){
         };
 
         this.selectedFromQRCode = ko.observable(false);
+        this.selectedForTool = ko.observable(0);    // Default Tool 0
         // - list all attributes
         this.version = ko.observable();
         this.isSpoolVisible = ko.observable(false);
@@ -191,6 +192,7 @@ function SpoolManagerEditSpoolDialog(){
         }
 
         this.selectedFromQRCode(updateData.selectedFromQRCode);
+        this.selectedForTool(updateData.selectedForTool);
         this.isEmpty(data == null);
         this.version(updateData.version);
         this.databaseId(updateData.databaseId);
@@ -295,9 +297,9 @@ function SpoolManagerEditSpoolDialog(){
     self.materialViewModel = null;
 
     self.catalogs = null;
+    self.allToolIndices = ko.observableArray([]);
 
-
-//    Option to filter Attributes
+    //    Option to filter Attributes
 //    SpoolItem.prototype.toJSON = function() {
 //        var copy = ko.toJS(this); //easy way to get a clean copy
 //        // delete
@@ -374,10 +376,11 @@ function SpoolManagerEditSpoolDialog(){
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////// PUBLIC
-    this.initBinding = function(apiClient, pluginSettings){
+    this.initBinding = function(apiClient, pluginSettings, printerProfilesViewModel){
 
         self.apiClient = apiClient;
         self.pluginSettings = pluginSettings;
+        self.printerProfilesViewModel = printerProfilesViewModel;
 
         self.spoolDialog = $("#dialog_spool_select");
 //        self.firstUseDatePickerModel = self.componentFactory.createDatePicker("firstUse-date-container");
@@ -536,12 +539,10 @@ function SpoolManagerEditSpoolDialog(){
         self.templateSpool =  new SpoolItem(spoolData, false);
     }
 
-
     this.createSpoolItemForTable = function(spoolData){
         newSpoolItem = new SpoolItem(spoolData, false);
         return newSpoolItem;
     }
-
 
     this.updateCatalogs = function(catalogs){
         self.catalogs = catalogs;
@@ -557,6 +558,12 @@ function SpoolManagerEditSpoolDialog(){
 
     this.showDialog = function(spoolItem, closeDialogHandler){
         self.closeDialogHandler = closeDialogHandler;
+        // get the current tool caunt
+        self.allToolIndices([]);
+        var toolCount = self.printerProfilesViewModel.currentProfileData().extruder.count();
+        for (var toolIndex=0; toolIndex<toolCount; toolIndex++){
+            self.allToolIndices.push(toolIndex);
+        }
 
         // initial coloring
         self._reColorFilamentIcon(self.spoolItemForEditing.color());
@@ -603,7 +610,6 @@ function SpoolManagerEditSpoolDialog(){
         });
 
     };
-
 
     this.copySpoolItem = function(){
         self.isExistingSpool(false);
@@ -662,6 +668,24 @@ function SpoolManagerEditSpoolDialog(){
         self.spoolItemForEditing.isSpoolVisible(false);
         self.spoolDialog.modal('hide');
         self.closeDialogHandler(true, "selectSpoolForPrinting", self.spoolItemForEditing);
+    }
 
+    this.generateQRCodeImageSourceAttribute = function(){
+        //
+        // <img loading="lazy" className="qr-code" alt="QR Code"
+        //      data-bind="attr: {src: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }"
+        //      src="/plugin/SpoolManager/generateQRCode/6"><img loading="lazy" className="qr-code" alt="QR Code"
+        //                                                       data-bind="attr: {src: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }"
+        //                                                       src="/plugin/SpoolManager/generateQRCode/6">
+        // var windowsLocation = window.location.origin;
+        // var windowsLocationEncoded = encodeURIComponent(windowsLocation);
+        // var source = "/plugin/SpoolManager/generateQRCode/" + self.spoolItemForEditing.databaseId() + "?windowlocation="+windowsLocationEncoded;
+        var source = "/plugin/SpoolManager/generateQRCode/" + self.spoolItemForEditing.databaseId();
+        var title = "QR-Code for " + self.spoolItemForEditing.displayName();
+        return {
+            src: source,
+            href: source,
+            title: title
+        }
     }
 }

@@ -256,8 +256,11 @@
                                 <label class="control-label">QR Code</label>
                                 <div class="controls">
                                     <div class="">
-                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">
-                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">
+<!--                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
+<!--                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
+<!--                                        </a>-->
+                                        <a data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()" target="_new">
+                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()">
                                         </a>
                                     </div>
                                </div>
@@ -457,6 +460,12 @@
                                                                                 disable: printerStateViewModel.isPrinting(),
                                                                                 click: spoolDialog.copySpoolItem" >Copy</button>
                         <!-- visible: spoolDialog.spoolItemForEditing.selectedFromQRCode() == true,                        -->
+                        <select class="span2" style="margin-bottom: 0px" data-bind="optionsCaption: 'Choose...',
+                                                                                    value: spoolDialog.spoolItemForEditing.selectedForTool,
+                                                                                    options: spoolDialog.allToolIndices,
+                                                                                    optionsText: function(item) {
+                                                                                                    return 'Tool '+ item
+                                                                                                    }"></select>
                         <button class="btn btn-info" data-bind="click: spoolDialog.selectSpoolItemForPrinting" style="text-align:right">Select for Printing</button>
                         <label class="checkbox">
                                 <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isTemplate" > Mark as template.&nbsp;&nbsp;&nbsp;

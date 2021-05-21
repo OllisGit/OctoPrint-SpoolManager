@@ -17,7 +17,6 @@ If you like it, I would be thankful about a cup of coffee :)
 - OctoPrint 1.5.2:  with Python 3.6.8 and Python 2.7.9
 - OctoPrint 1.4.2:  OPEN
 
-
 ## Included features
 
 ### Basic attributes to be captured:
@@ -46,7 +45,6 @@ If you like it, I would be thankful about a cup of coffee :)
 ## Planning / next features
 - [ ] External Database (IN PROGRESS)
 - [ ] PrintJobHistory integration [PrintJobHistory-Plugin](https://github.com/OllisGit/OctoPrint-PrintJobHistory)
-- [ ] Multi Tool support
 - [ ] Capture Spool-Image
 - [ ] ...more planing details could be found [here](https://github.com/OllisGit/OctoPrint-SpoolManager/projects/1)
 

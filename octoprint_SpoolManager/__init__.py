@@ -403,7 +403,7 @@ class SpoolmanagerPlugin(
 	def _on_file_selectionChanged(self, payload):
 		self.metaDataFilamentLengths = []
 
-		if ("origin" in payload and "path" in payload):
+		if (payload != None and "origin" in payload and "path" in payload):
 			metadata = self._file_manager.get_metadata(payload["origin"], payload["path"])
 			if ("analysis" in metadata):
 				if ("filament" in metadata["analysis"]):
@@ -412,7 +412,7 @@ class SpoolmanagerPlugin(
 						self.metaDataFilamentLengths += [0.0] * (toolIndex + 1 - len(self.metaDataFilamentLengths))
 						self.metaDataFilamentLengths[toolIndex] = toolData["length"]
 
-		self.checkRemainingFilament()
+					self.checkRemainingFilament()
 
 	pass
 	######################################################################################### Hooks and public functions
@@ -506,7 +506,6 @@ class SpoolmanagerPlugin(
 		settings = dict()
 
 		# Not visible
-		settings[SettingsKeys.SETTINGS_KEY_SELECTED_SPOOL_DATABASE_ID] = None
 		settings[SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS] = []
 		settings[SettingsKeys.SETTINGS_KEY_HIDE_EMPTY_SPOOL_IN_SIDEBAR] = False
 		settings[SettingsKeys.SETTINGS_KEY_HIDE_INACTIVE_SPOOL_IN_SIDEBAR] = True
