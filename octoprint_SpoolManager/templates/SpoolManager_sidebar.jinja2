@@ -19,7 +19,7 @@
           </div>
           <div class="spool-label">
              <span data-bind="text: material"></span> - <span  data-bind="text: displayName"></span>
-             <span data-bind="text: $root.remainingText($data)" class="spool-remaining"></span>
+             <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}" class="spool-remaining" title="Remaining weight"></span>
           </div>
           <!-- /ko -->
           <div>
@@ -37,7 +37,7 @@
                             <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
                             <span class="filament-label">
                                 <span><span data-bind="text: $data.material"></span> - <span data-bind="text: $data.displayName">FirstSpool</span></span>
-                                <span data-bind="text: $root.remainingText($data)"></span>
+                                <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}" ></span>
                             </span>
                         </a>
                     </li>

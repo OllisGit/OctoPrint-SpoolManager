@@ -386,17 +386,36 @@ $(function() {
 
         _buildRemainingText = function(spoolItem){
             var remainingInfo = "";
-            if (  spoolItem.remainingWeight() != null && spoolItem.remainingWeight().length != 0
-                && spoolItem.remainingPercentage() != null && spoolItem.remainingPercentage().length != 0){
-                remainingInfo = "("+spoolItem.remainingWeight()+"g / "+spoolItem.remainingPercentage()+"%)";
+            // if (  spoolItem.remainingWeight() != null && spoolItem.remainingWeight().length != 0
+            //     && spoolItem.remainingPercentage() != null && spoolItem.remainingPercentage().length != 0){
+            //     remainingInfo = "("+spoolItem.remainingWeight()+"g / "+spoolItem.remainingPercentage()+"%)";
+            // }
+            if (  spoolItem.remainingWeight() != null && spoolItem.remainingWeight().length != 0){
+                // remainingInfo = "(R: "+spoolItem.remainingWeight()+"g)";
+                remainingInfo = ""+spoolItem.remainingWeight()+"g";
             }
             return remainingInfo
         }
 
         self.remainingText = function(spoolItem){
-            var remainingInfo = _buildRemainingText(spoolItem);
+            var remainingInfo = "("+_buildRemainingText(spoolItem) + ")";
             return remainingInfo;
         }
+
+        // self.remainingTooltipText = function(spoolItem){
+        //     var remainingInfo = "Remaining weight: " + _buildRemainingText(spoolItem);
+        //     return remainingInfo;
+        // }
+
+        self.buildTooltipForSpoolItem = function(spoolItem, textPrefix, attribute){
+            var value = "";
+            if (spoolItem[attribute]() != null){
+                value = spoolItem[attribute]();
+            }
+            var toolTip = textPrefix + value;
+            return toolTip;
+        }
+
 
         self.getSpoolItemSelectedTool = function(databaseId) {
             var spoolItem;
@@ -438,14 +457,16 @@ $(function() {
                 if (spoolData != null){
                     spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
                 } else {
+                    // remove spool from toolIndex
+                    self.selectedSpoolsForSidebar()[toolIndex](null);
                     return;
                 }
 
                 // remove the spool from the current toolIndex
                 var currentDatabaseId = spoolItem.databaseId();
                 for (var i = 0; i < self.selectedSpoolsForSidebar().length; i++) {
-                    spoolItem = self.selectedSpoolsForSidebar()[i]();
-                    if (spoolItem !== null && spoolItem.databaseId() === currentDatabaseId) {
+                    var tmpSpoolItem = self.selectedSpoolsForSidebar()[i]();
+                    if (tmpSpoolItem !== null && tmpSpoolItem.databaseId() === currentDatabaseId) {
                         self.selectedSpoolsForSidebar()[i](null);
                         break;
                     }

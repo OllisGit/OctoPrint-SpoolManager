@@ -276,7 +276,10 @@ Filter:
                         <span style="vertical-align:super" data-bind="text: material"></span>
                     </div></td>
                 <td data-bind="visible: $root.tableAttributeVisibility.lastFirstUse"><span data-bind="text: formatOnlyDate($data, 'lastUse')"></span><br><span data-bind="text: formatOnlyDate($data, 'firstUse')"></span></td>
-                <td data-bind="visible: $root.tableAttributeVisibility.weight" style="text-align: right;"><span data-bind="text: remainingWeight"></span>g<br><span data-bind="text: totalWeight"></span>g</td>
+                <td data-bind="visible: $root.tableAttributeVisibility.weight" style="text-align: right;"><span data-bind="text: totalWeight, attr: {title: $root.buildTooltipForSpoolItem($data, 'Total weight: ', 'totalWeight')}"></span>g<br/>
+{#                                                                                           <span data-bind="text: usedWeight, attr: {title: $root.buildTooltipForSpoolItem($data, 'Used weight: ', 'usedWeight')}"></span>g<br/>#}
+                                                                                           <span data-bind="text: remainingWeight, attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}"></span>g<br>
+                </td>
                 <td data-bind="visible: $root.tableAttributeVisibility.used" style="text-align: right;"><span data-bind="text: usedPercentage"></span>%<br><span data-bind="text: usedLength"></span>mm</td>
                 <td data-bind="visible: $root.tableAttributeVisibility.note"><span data-bind="html: noteHtml, attr: { title: noteText }"></span></td>
               </tr>

@@ -10,7 +10,9 @@ from octoprint.events import Events
 from octoprint.util.comm import MachineCom
 
 from octoprint_SpoolManager.DatabaseManager import DatabaseManager
-from octoprint_SpoolManager.Odometer import FilamentOdometer
+# from octoprint_SpoolManager.Odometer import FilamentOdometer
+from octoprint_SpoolManager.newodometer import NewFilamentOdometer
+
 from octoprint_SpoolManager.api import Transformer
 from octoprint_SpoolManager.api.SpoolManagerAPI import SpoolManagerAPI
 from octoprint_SpoolManager.common import StringUtils
@@ -41,9 +43,12 @@ class SpoolmanagerPlugin(
 
 
 		# OTHER STUFF
-		self._filamentOdometer = None
-		self._filamentOdometer = FilamentOdometer()
+		# self._filamentOdometer = None
+		# self._filamentOdometer = FilamentOdometer()
 		# TODO no idea what this thing is doing in detail self._filamentOdometer.set_g90_extruder(self._settings.getBoolean(["feature", "g90InfluencesExtruder"]))
+
+		self.myFilamentOdometer = NewFilamentOdometer()
+		self.myFilamentOdometer.set_g90_extruder(self._settings.get_boolean(["feature", "g90InfluencesExtruder"]))
 
 		self._filamentManagerPluginImplementation = None
 		self._filamentManagerPluginImplementationState = None
@@ -289,7 +294,8 @@ class SpoolmanagerPlugin(
 
 	def _on_printJobStarted(self):
 		# starting new print
-		self._filamentOdometer.reset()
+		# self._filamentOdometer.reset()
+		self.myFilamentOdometer.reset()
 
 		reloadTable = False
 		selectedSpools = self.loadSelectedSpools()
@@ -319,14 +325,15 @@ class SpoolmanagerPlugin(
 			spoolModel.lastUse = lastUsage
 			# - Used length
 			try:
-				currentExtrusionLenght = self._filamentOdometer.get_extrusion('Tool%d' % toolIndex)
-			except KeyError:
+				allExtrusions = self.myFilamentOdometer.getExtrusionAmount()
+				currentExtrusionLength = allExtrusions[toolIndex]
+			except (KeyError, IndexError) as e:
 				self._logger.info("Tool %d: No filament extruded" % toolIndex)
 				continue
-			self._logger.info("Tool %d: Extruded filament length: %s" % (toolIndex, str(currentExtrusionLenght)))
+			self._logger.info("Tool %d: Extruded filament length: %s" % (toolIndex, str(currentExtrusionLength)))
 			spoolUsedLength = 0.0 if StringUtils.isEmpty(spoolModel.usedLength) == True else spoolModel.usedLength
 			self._logger.info("Tool %d: Current Spool filament length: %s" % (toolIndex, str(spoolUsedLength)))
-			newUsedLength = spoolUsedLength + currentExtrusionLenght
+			newUsedLength = spoolUsedLength + currentExtrusionLength
 			self._logger.info("Tool %d: New Spool filament length: %s" % (toolIndex, str(newUsedLength)))
 			spoolModel.usedLength = newUsedLength
 			# - Used weight
@@ -337,7 +344,7 @@ class SpoolmanagerPlugin(
 					"Tool %d: Could not update spool weight, because diameter or density not set in spool '%s'" % (toolIndex, spoolModel.displayName)
 				)
 			else:
-				usedWeight = self._calculateWeight(currentExtrusionLenght, diameter, density)
+				usedWeight = self._calculateWeight(currentExtrusionLength, diameter, density)
 				spoolUsedWeight = 0.0 if spoolModel.usedWeight == None else spoolModel.usedWeight
 				newUsedWeight = spoolUsedWeight + usedWeight
 				spoolModel.usedWeight = newUsedWeight
@@ -345,7 +352,8 @@ class SpoolmanagerPlugin(
 			self._databaseManager.saveSpool(spoolModel)
 			reload = True
 
-		self._filamentOdometer.reset_extruded_length()
+		# self._filamentOdometer.reset_extruded_length()
+		self.myFilamentOdometer.reset()
 
 		if reload:
 			self._sendDataToClient(dict(
@@ -426,7 +434,8 @@ class SpoolmanagerPlugin(
 	def on_sentGCodeHook(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 
 		# TODO maybe later via a queue
-		self._filamentOdometer.parse(gcode, cmd)
+		# self._filamentOdometer.parse(gcode, cmd)
+		self.myFilamentOdometer.processGCodeLine(cmd)
 		# if self.pauseEnabled and self.check_threshold():
 		# 	self._logger.info("Filament is running out, pausing print")
 		# 	self._printer.pause_print()

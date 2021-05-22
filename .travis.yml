@@ -5,7 +5,7 @@
 script:
 # debug  - echo 'Hello World'
   - export PLUGIN_VERSION=$(cat setup.py | grep 'plugin_version = "*"' | cut -d '"' -f2)
-  - zip -r master.zip * -x 3rdPartySoftware\* testdata\*
+  - zip -r master.zip * -i '\octoprint_*' 'translations' 'README.md' 'requirements.txt' 'setup.py'
 # debug  - ls -al
 
 ## see "Fix travis automatic build and deploy"
