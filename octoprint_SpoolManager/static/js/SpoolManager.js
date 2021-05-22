@@ -670,19 +670,27 @@ $('.dropdown-menu.keep-open').click(function(e) {
 
                     if (result.reminderSpoolSelection.length) {
                         itemList = [];
+                        // for (item of result.reminderSpoolSelection) {
+                        //     itemList.push(((result.reminderSpoolSelection.length>1)?("Tool "+item.toolIndex+": "):'')+"'" + item.spoolName + "'");
+                        // }
+                        // if (itemList.length === 1) {
+                        //     check = confirm(
+                        //         'Do you want to start the print with the selected spool?\n- ' + itemList[0] + '?'
+                        //     );
+                        // } else {
+                        //     check = confirm(
+                        //         "Do you want to start the print with following selected spools?\n" +
+                        //         '- '+ itemList.join('\n- ')
+                        //     );
+                        // }
                         for (item of result.reminderSpoolSelection) {
-                            itemList.push(((result.reminderSpoolSelection.length>1)?("Tool "+item.toolIndex+": "):'')+"'" + item.spoolName + "'");
+                            itemList.push("Tool "+item.toolIndex+": '" + item.spoolName + "'");
                         }
-                        if (itemList.length === 1) {
-                            check = confirm(
-                                'Do you want to start the print with the selected spool ' + itemList[0] + '?'
-                            );
-                        } else {
-                            check = confirm(
-                                "Do you want to start the print with following selected spools?\n" +
-                                '- '+ itemList.join('\n- ')
-                            );
-                        }
+                        check = confirm(
+                            "Do you want to start the print with following selected spools?\n" +
+                            '- '+ itemList.join('\n- ')
+                        );
+
                         if (!check) {
                             return;
                         }

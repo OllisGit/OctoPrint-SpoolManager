@@ -319,11 +319,19 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				"spoolName": spoolModel.displayName if spoolModel else '(no spool selected)',
 			}
 			if spoolModel is not None:
-				if checkForFilamentLength and not self.checkRemainingFilament(toolIndex):
+				if not self.checkRemainingFilament(toolIndex):
 					result['filamentNotEnough'].append(infoData)
 				result['reminderSpoolSelection'].append(infoData)
 			elif checkForSelectedSpool:
 				result['noSpoolSelected'].append(infoData)
+
+		# check if the user want a popup
+		if (checkForFilamentLength == False):
+			result['filamentNotEnough'] = []
+
+		if (reminderSelectingSpool == False):
+			# no popup, because turned off
+			result['reminderSpoolSelection'] = []
 
 		return flask.jsonify({
 			"result": result

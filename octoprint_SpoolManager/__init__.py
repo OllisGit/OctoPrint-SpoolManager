@@ -65,7 +65,14 @@ class SpoolmanagerPlugin(
 
 	################################################################################################### public functions
 
-	def checkRemainingFilament(self, onlyToolIndex=None):
+	def checkRemainingFilament(self, forToolIndex=None):
+		"""
+		Checks if all spools or single spool includes enough filament
+
+		:param forToolIndex check only for the provided toolIndex
+		:return: 'true' if filament is enough, 'false' if not
+		"""
+
 		shouldWarn = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH])
 		if not shouldWarn:
 			return True
@@ -78,7 +85,7 @@ class SpoolmanagerPlugin(
 		result = True
 
 		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
-			if onlyToolIndex is not None and onlyToolIndex != toolIndex:
+			if forToolIndex is not None and forToolIndex != toolIndex:
 				continue
 			selectedSpool = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
 
@@ -353,7 +360,7 @@ class SpoolmanagerPlugin(
 			reload = True
 
 		# self._filamentOdometer.reset_extruded_length()
-		self.myFilamentOdometer.reset()
+		# self.myFilamentOdometer.reset()
 
 		if reload:
 			self._sendDataToClient(dict(
@@ -423,6 +430,50 @@ class SpoolmanagerPlugin(
 					self.checkRemainingFilament()
 
 	pass
+
+	######################################################################################### PUBLIC IMPLEMENTATION API
+	def api_getSelectionSpoolInformations(self):
+		"""
+		Returns the current extruded filament for each tool
+		:param string path:
+		:return: array of spoolData-object ....
+		"""
+		spoolModels = self.loadSelectedSpools()
+		result = []
+		toolIndex = 0
+		while toolIndex < len(spoolModels):
+			spoolModel = spoolModels[toolIndex]
+			spoolData = None
+			if (spoolModel != None):
+				spoolData = {
+					"toolIndex": toolIndex,
+					"databaseId": spoolModel.databaseId,
+					"spoolName": spoolModel.displayName,
+					"vendor": spoolModel.vendor,
+					"material": spoolModel.material,
+					"diameter": spoolModel.diameter,
+					"density": spoolModel.density,
+					"colorName": spoolModel.colorName,
+					"color": spoolModel.color,
+					"cost": spoolModel.cost,
+					"weight": spoolModel.cost
+				}
+			result.append(spoolData)
+
+			toolIndex += 1
+		return result
+
+	def api_getExtrusionAmount(self):
+		"""
+		Returns the current extruded filament for each tool
+		:param string path:
+		:return: array of ....
+		"""
+		return self.myFilamentOdometer.getExtrusionAmount()
+		pass
+
+
+
 	######################################################################################### Hooks and public functions
 
 	def on_after_startup(self):
@@ -486,7 +537,6 @@ class SpoolmanagerPlugin(
 		# if (testResult != None):
 		# 	# TODO Send to client
 		# 	pass
-
 
 
 	# to allow the frontend to trigger an update
@@ -620,15 +670,15 @@ class SpoolmanagerPlugin(
 		)
 
 
-	def message_on_connect(self, comm, script_type, script_name, *args, **kwargs):
-		print(script_name)
-		if not script_type == "gcode" or not script_name == "afterPrinterConnected":
-			return None
-
-		prefix = None
-		postfix = "M117 OctoPrint connected"
-		variables = dict(myvariable="Hi! I'm a variable!")
-		return prefix, postfix, variables
+	# def message_on_connect(self, comm, script_type, script_name, *args, **kwargs):
+	# 	print(script_name)
+	# 	if not script_type == "gcode" or not script_name == "afterPrinterConnected":
+	# 		return None
+	#
+	# 	prefix = None
+	# 	postfix = "M117 OctoPrint connected"
+	# 	variables = dict(myvariable="Hi! I'm a variable!")
+	# 	return prefix, postfix, variables
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
@@ -643,7 +693,7 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.on_sentGCodeHook,
-		"octoprint.comm.protocol.scripts": __plugin_implementation__.message_on_connect
+		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.on_sentGCodeHook
+		# "octoprint.comm.protocol.scripts": __plugin_implementation__.message_on_connect
 	}
 
