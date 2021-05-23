@@ -158,6 +158,23 @@ class SpoolmanagerPlugin(
 
 		return result
 
+	def set_temp_offsets(self, toolIndex, spoolModel):
+		toolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		bedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		enclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
+		offset_dict = dict()
+		if (toolOffsetEnabled == True and spoolModel != None):
+			# toolIndex should be tool0
+			offset_dict["tool"+str(toolIndex)] = spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0
+
+		if (bedOffsetEnabled == True and spoolModel != None):
+			offset_dict["bed"] = spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0
+
+		if (enclosureOffsetEnabled == True and spoolModel != None):
+			offset_dict["chamber"] = spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
+
+		self._printer.set_temperature_offset(offset_dict)
 
 	################################################################################################## private functions
 
@@ -310,8 +327,7 @@ class SpoolmanagerPlugin(
 		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
 			spoolModel = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
 
-			# TODO TEMPOFFSET Update Temperature Offsets
-			self.set_temp_offsets(spoolModel)
+			self.set_temp_offsets(toolIndex, spoolModel)
 
 			if (spoolModel != None):
 				if (StringUtils.isEmpty(spoolModel.firstUse) == True):
@@ -479,16 +495,6 @@ class SpoolmanagerPlugin(
 		pass
 
 
-
-	# TODO TEMPOFFSET Cleanup
-	# def _on_printer_connected(self, payload):
-	# 	try:
-	# 		self.set_temp_offsets(self.loadSelectedSpool())
-	# 	except Exception as e:
-	# 		self._sendMessageToClient("warning", "Temperature offsets failed to set!", str(e))
-	#
-	# pass
-
 	######################################################################################### Hooks and public functions
 
 	def on_after_startup(self):
@@ -574,7 +580,12 @@ class SpoolmanagerPlugin(
 			self._printer.set_temperature_offset(offset_dict)
 
 		# Update Temperature Offsets
-		self.set_temp_offsets(self.loadSelectedSpool())
+		selectedSpools = self.loadSelectedSpools()
+
+		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+			selectedSpool = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
+			if (selectedSpool != None):
+				self.set_temp_offsets(toolIndex, selectedSpool)
 
 		#
 		# databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
@@ -720,27 +731,6 @@ class SpoolmanagerPlugin(
 				pip="https://github.com/OllisGit/OctoPrint-SpoolManager/releases/latest/download/master.zip"
 			)
 		)
-
-	def set_temp_offsets(self, spoolModel):
-		toolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
-		bedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
-		enclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
-
-		offset_dict = dict()
-		if (toolOffsetEnabled == True and spoolModel != None):
-			#TODO support multiple tools - what to do with bed and enclosure if that's the case :|
-			#for tool in spoolModel:
-			#	offset_dict["tool%s" % tool["tool"]] = tool["spool"]["tool_offset"] if tool["spool"] is not None else 0
-			offset_dict["tool0"] = spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0
-
-		if (bedOffsetEnabled == True and spoolModel != None):
-			offset_dict["bed"] = spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0
-
-		if (enclosureOffsetEnabled == True and spoolModel != None):
-			offset_dict["chamber"] = spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
-
-		self._printer.set_temperature_offset(offset_dict)
-
 
 	# def message_on_connect(self, comm, script_type, script_name, *args, **kwargs):
 	# 	print(script_name)

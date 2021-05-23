@@ -222,6 +222,9 @@ function SpoolManagerEditSpoolDialog(){
         this.temperature(updateData.temperature);
         this.bedTemperature(updateData.bedTemperature);
         this.enclosureTemperature(updateData.enclosureTemperature);
+        this.offsetTemperature(updateData.offsetTemperature);
+        this.offsetBedTemperature(updateData.offsetBedTemperature);
+        this.offsetEnclosureTemperature(updateData.offsetEnclosureTemperature);
         this.totalWeight(updateData.totalWeight);
         this.spoolWeight(updateData.spoolWeight);
         this.remainingWeight(updateData.remainingWeight);

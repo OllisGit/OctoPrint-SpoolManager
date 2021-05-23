@@ -320,6 +320,9 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			infoData = {
 				"toolIndex": toolIndex,
 				"spoolName": spoolModel.displayName if spoolModel else '(no spool selected)',
+				"toolOffset": spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0,
+				"bedOffset": spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0,
+				"enclosureOffset": spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
 			}
 			if spoolModel is not None:
 				if not self.checkRemainingFilament(toolIndex):
@@ -336,21 +339,11 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# no popup, because turned off
 			result['reminderSpoolSelection'] = []
 
-		# TODO TEMPOFFSET in popup
-		# if (reminderSelectingSpool == True and spoolModel != None):
-		# 	return flask.jsonify({
-		# 		"result": "reminderSpoolSelection",
-		# 		"spoolName": spoolModel.displayName,
-		# 		"toolOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED]),
-		# 		"toolOffset": spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0,
-		# 		"bedOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED]),
-		# 		"bedOffset": spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0,
-		# 		"enclosureOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED]),
-		# 		"enclosureOffset": spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
-		# 	})
-
 		return flask.jsonify({
-			"result": result
+			"result": result,
+			"toolOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED]),
+			"bedOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED]),
+			"enclosureOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED]),
 		})
 
 	#####################################################################################################   SELECT SPOOL
@@ -380,7 +373,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			spoolModelAsDict = Transformer.transformSpoolModelToDict(spoolModel)
 
 		try:
-			self.set_temp_offsets(spoolModel)
+			self.set_temp_offsets(toolIndex, spoolModel)
 		except Exception as e:
 			self._sendMessageToClient("warning", "Temperature offsets failed to set!", str(e))
 

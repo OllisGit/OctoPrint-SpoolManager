@@ -5,10 +5,10 @@
     <div class="tabbable"> <!-- Only required for left/right tabs -->
         <ul class="nav nav-tabs" id="spoolmanger-settings-tab">
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
+            <li><a href="#tab-spool-Temperature" data-toggle="tab">Temperature</a></li>
             <li><a href="#tab-spool-QR-Code" data-toggle="tab">QR - Code</a></li>
             <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
             <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
-            <li><a href="#tab-spool-Temperature" data-toggle="tab">Temperature</a></li>
             <li><a href="#tab-spool-Debugging" data-toggle="tab">Debugging</a></li>
         </ul>
         <div class="tab-content">
@@ -94,6 +94,30 @@ FPE;	2.16
                 </div>
 -->
 
+            </div>
+
+            <!-- TEMPERATURE - TAB -->
+            <div class="tab-pane" id="tab-spool-Temperature">
+                <div class="control-group">
+                    <h4>Temperature Offsets</h4>
+                    <div>
+                        Setting these will replace the current offset value on the temperature tab with the value set in the temperature field of the selected spool.
+                    </div>
+                    <br>
+
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.toolOffsetEnabled" > Update Tool Offset with the spool Tool Temperature value
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.bedOffsetEnabled" > Update Bed Offset with the spool Bed Temperature value
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.enclosureOffsetEnabled" > Update Enclosure Offset with the spool Enclosure Temperature value
+                        </label>
+                        <span class="help-inline">HINT: You will need to reselect a spool or reconnect the printer for changes from this page to take effect.</span>
+                    </div>
+                </div>
             </div>
 
             <!-- QR - Code - TAB -->
@@ -215,6 +239,7 @@ FPE;	2.16
 
 
             </div>
+
             <!-- STORAGE - TAB -->
             <div class="tab-pane" id="tab-spool-Storage">
                 <div class="control-group">
@@ -349,30 +374,6 @@ FPE;	2.16
                     <font color="orange"><b>Databasescheme doesn't match with required scheme version. Please do an <a target="newTab" href="https://github.com/OllisGit/OctoPrint-SpoolManager/wiki/Roadmap-to-an-external-Database">update</a>!</b></font>
                 </div>
                 -->
-            </div>
-
-            <!-- TEMPERATURE - TAB -->
-            <div class="tab-pane" id="tab-spool-Temperature">
-                <div class="control-group">
-                    <h4>Temperature Offsets</h4>
-                    <div>
-                        Setting these will replace the current offset value on the temperature tab with the value set in the temperature field of the selected spool.
-                    </div>
-                    <br>
-
-                    <div class="controls">
-                        <label class="checkbox">
-                            <input type="checkbox" data-bind="checked: pluginSettings.toolOffsetEnabled" > Update Tool Offset with the spool Tool Temperature value
-                        </label>
-                        <label class="checkbox">
-                            <input type="checkbox" data-bind="checked: pluginSettings.bedOffsetEnabled" > Update Bed Offset with the spool Bed Temperature value
-                        </label>
-                        <label class="checkbox">
-                            <input type="checkbox" data-bind="checked: pluginSettings.enclosureOffsetEnabled" > Update Enclosure Offset with the spool Enclosure Temperature value
-                        </label>
-                        <span class="help-inline">HINT: You will need to reselect a spool or reconnect the printer for changes from this page to take effect.</span>
-                    </div>
-                </div>
             </div>
 
             <!-- DEBUGGING - TAB -->

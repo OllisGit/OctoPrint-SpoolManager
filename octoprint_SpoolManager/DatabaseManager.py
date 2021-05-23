@@ -181,6 +181,24 @@ class DatabaseManager(object):
 		# - offsetBedTemperature = IntegerField(null=True)  # since V6
 		# - offsetEnclosureTemperature = IntegerField(null=True)  # since V6
 
+		connection = sqlite3.connect(self._databaseSettings.fileLocation)
+		cursor = connection.cursor()
+
+		sql = """
+		PRAGMA foreign_keys=off;
+		BEGIN TRANSACTION;
+
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetBedTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetEnclosureTemperature' INTEGER;
+
+			UPDATE 'spo_pluginmetadatamodel' SET value=6 WHERE key='databaseSchemeVersion';
+		COMMIT;
+		PRAGMA foreign_keys=on;
+		"""
+		cursor.executescript(sql)
+		connection.close()
+
 		self._logger.info("  try to calculate remaining weight.")
 		#  Calculate the remaining weight for all current spools
 		with self._database.atomic() as transaction:  # Opens new transaction.
@@ -201,30 +219,11 @@ class DatabaseManager(object):
 				# new transaction will begin automatically after the call
 				# to rollback().
 				transaction.rollback()
-				self._logger.exception("Could not upgrade database scheme from 6 To 6:" + str(e))
+				self._logger.exception("Could not calculate remainingWeight during scheme update from 5 To 6:" + str(e))
 
 				return
 			pass
-		# Do alter-stuff if needed
 
-		connection = sqlite3.connect(self._databaseSettings.fileLocation)
-		cursor = connection.cursor()
-
-		sql = """
-		PRAGMA foreign_keys=off;
-		BEGIN TRANSACTION;
-
-			ALTER TABLE 'spo_spoolmodel' ADD 'offsetTemperature' INTEGER;
-			ALTER TABLE 'spo_spoolmodel' ADD 'offsetBedTemperature' INTEGER;
-			ALTER TABLE 'spo_spoolmodel' ADD 'offsetEnclosureTemperature' INTEGER;
-
-			UPDATE 'spo_pluginmetadatamodel' SET value=6 WHERE key='databaseSchemeVersion';
-		COMMIT;
-		PRAGMA foreign_keys=on;
-		"""
-		cursor.executescript(sql)
-
-		connection.close()
 
 		self._logger.info(" Successfully 5 -> 6")
 		pass
