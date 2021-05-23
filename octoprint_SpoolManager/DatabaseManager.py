@@ -181,8 +181,6 @@ class DatabaseManager(object):
 		# - offsetBedTemperature = IntegerField(null=True)  # since V6
 		# - offsetEnclosureTemperature = IntegerField(null=True)  # since V6
 
-
-
 		self._logger.info("  try to calculate remaining weight.")
 		#  Calculate the remaining weight for all current spools
 		with self._database.atomic() as transaction:  # Opens new transaction.

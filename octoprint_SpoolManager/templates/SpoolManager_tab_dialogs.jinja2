@@ -228,7 +228,7 @@
                             </div>
 
                             <div class="control-group no-bottom-gap">
-                                <label class="control-label">Temperature<sup>4</sup> Tool</label>
+                                <label class="control-label">Best Temperature<sup>4</sup> Tool</label>
                                 <div class="row controls">
                                     <div class="input-append">
                                         <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
@@ -247,6 +247,31 @@
                                 <div class="controls">
                                     <div class="input-append">
                                         <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.enclosureTemperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="control-group no-bottom-gap">
+                                <label class="control-label">Offset Tool<sup>5</sup></label>
+                                <div class="row controls">
+                                    <div class="input-append">
+                                        <input type="number" step="1" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.offsetTemperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
+
+                                    <span>&nbsp;Offset Bed<sup>5</sup></span>
+                                    <div class="input-append">
+                                        <input type="number" step="1" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.offsetBedTemperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="control-group ">
+                                <label class="control-label">Offset Enclosure<sup>5</sup></label>
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="number" step="1" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.offsetEnclosureTemperature" />
                                         <span class="add-on">°C</span>
                                     </div>
                                 </div>
@@ -284,6 +309,7 @@
                                     <div><sup>2</sup><small>Needed for filament usage prediction</small></div>
                                     <div><sup>3</sup><small>See <a href="https://bitfab.io/blog/3d-printing-materials-densities/" target="newTab">https://bitfab.io/blog/3d-printing-materials-densities/ (without warranty)</a></small></div>
                                     <div><sup>4</sup><small>Not send to the printer</small></div>
+                                    <div><sup>5</sup><small>Temperature offset enabled via Plugin Settings -> temperature tab</small></div>
                                  </label>
                             </div>
 

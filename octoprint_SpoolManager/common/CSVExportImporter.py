@@ -22,6 +22,9 @@ COLUMN_FLOWRATECOMPENSATION = "Flow rate compensation [%]"
 COLUMN_TEMPERATURE = "Temperature [C]"
 COLUMN_TEMPERATURE_BED = "Bed Temperature [C]"
 COLUMN_TEMPERATURE_ENCLOSURE = "Enclosure Temperature [C]"
+COLUMN_OFFSET_TEMPERATURE = "Offset Temperature [C]"
+COLUMN_OFFSET_TEMPERATURE_BED = "Offset Bed Temperature [C]"
+COLUMN_OFFSET_TEMPERATURE_ENCLOSURE = "Offset Enclosure Temperature [C]"
 COLUMN_TOTAL_WEIGHT = "Total weight [g]"
 COLUMN_SPOOL_WEIGHT = "Spool weight [g]"
 COLUMN_USED_WEIGHT = "Used weight [g]"
@@ -151,6 +154,12 @@ class NumberCSVFormattorParser:
 			fieldValue = int(fieldValue)
 		if ("enclosureTemperature" == fieldName):
 			fieldValue = int(fieldValue)
+		if ("offsetTemperature" == fieldName):
+			fieldValue = int(fieldValue)
+		if ("offsetBedTemperature" == fieldName):
+			fieldValue = int(fieldValue)
+		if ("offsetEnclosureTemperature" == fieldName):
+			fieldValue = int(fieldValue)
 		if ("totalWeight" == fieldName):
 			fieldValue = float(fieldValue)
 		if ("spoolWeight" == fieldName):
@@ -181,6 +190,9 @@ ALL_COLUMNS_SORTED = [
 	COLUMN_TEMPERATURE,
 	COLUMN_TEMPERATURE_BED,
 	COLUMN_TEMPERATURE_ENCLOSURE,
+	COLUMN_OFFSET_TEMPERATURE,
+	COLUMN_OFFSET_TEMPERATURE_BED,
+	COLUMN_OFFSET_TEMPERATURE_ENCLOSURE,
 	COLUMN_TOTAL_WEIGHT,
 	COLUMN_SPOOL_WEIGHT,
 	COLUMN_USED_WEIGHT,
@@ -209,6 +221,9 @@ ALL_COLUMNS = {
 	COLUMN_TEMPERATURE: CSVColumn("temperature", COLUMN_TEMPERATURE, "", NumberCSVFormattorParser()),
 	COLUMN_TEMPERATURE_BED: CSVColumn("bedTemperature", COLUMN_TEMPERATURE_BED, "", NumberCSVFormattorParser()),
 	COLUMN_TEMPERATURE_ENCLOSURE: CSVColumn("enclosureTemperature", COLUMN_TEMPERATURE_ENCLOSURE, "", NumberCSVFormattorParser()),
+	COLUMN_OFFSET_TEMPERATURE: CSVColumn("offsetTemperature", COLUMN_OFFSET_TEMPERATURE, "", NumberCSVFormattorParser()),
+	COLUMN_OFFSET_TEMPERATURE_BED: CSVColumn("offsetBedTemperature", COLUMN_OFFSET_TEMPERATURE_BED, "", NumberCSVFormattorParser()),
+	COLUMN_OFFSET_TEMPERATURE_ENCLOSURE: CSVColumn("offsetEnclosureTemperature", COLUMN_OFFSET_TEMPERATURE_ENCLOSURE, "", NumberCSVFormattorParser()),
 	COLUMN_TOTAL_WEIGHT: CSVColumn("totalWeight", COLUMN_TOTAL_WEIGHT, "", NumberCSVFormattorParser()),
 	COLUMN_SPOOL_WEIGHT: CSVColumn("spoolWeight", COLUMN_SPOOL_WEIGHT, "", NumberCSVFormattorParser()),
 	COLUMN_USED_WEIGHT: CSVColumn("usedWeight", COLUMN_USED_WEIGHT, "", NumberCSVFormattorParser()),

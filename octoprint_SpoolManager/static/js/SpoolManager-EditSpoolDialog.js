@@ -99,6 +99,9 @@ function SpoolManagerEditSpoolDialog(){
         this.temperature = ko.observable();
         this.bedTemperature = ko.observable();
         this.enclosureTemperature = ko.observable();
+        this.offsetTemperature = ko.observable();
+        this.offsetBedTemperature = ko.observable();
+        this.offsetEnclosureTemperature = ko.observable();
         this.colorName = ko.observable();
         this.color = ko.observable();
         this.totalWeight = ko.observable();

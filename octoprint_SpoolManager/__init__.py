@@ -301,6 +301,7 @@ class SpoolmanagerPlugin(
 
 	def _on_printJobStarted(self):
 		# starting new print
+
 		# self._filamentOdometer.reset()
 		self.myFilamentOdometer.reset()
 
@@ -308,6 +309,10 @@ class SpoolmanagerPlugin(
 		selectedSpools = self.loadSelectedSpools()
 		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
 			spoolModel = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
+
+			# TODO TEMPOFFSET Update Temperature Offsets
+			self.set_temp_offsets(spoolModel)
+
 			if (spoolModel != None):
 				if (StringUtils.isEmpty(spoolModel.firstUse) == True):
 					firstUse = datetime.now()
@@ -431,6 +436,7 @@ class SpoolmanagerPlugin(
 
 	pass
 
+
 	######################################################################################### PUBLIC IMPLEMENTATION API
 	def api_getSelectedSpoolInformations(self):
 		"""
@@ -473,6 +479,15 @@ class SpoolmanagerPlugin(
 		pass
 
 
+
+	# TODO TEMPOFFSET Cleanup
+	# def _on_printer_connected(self, payload):
+	# 	try:
+	# 		self.set_temp_offsets(self.loadSelectedSpool())
+	# 	except Exception as e:
+	# 		self._sendMessageToClient("warning", "Temperature offsets failed to set!", str(e))
+	#
+	# pass
 
 	######################################################################################### Hooks and public functions
 
@@ -517,6 +532,9 @@ class SpoolmanagerPlugin(
 			self.alreadyCanceled = True
 			self._on_printJobFinished("canceled", payload)
 
+		elif (Events.CONNECTED == event):
+			self._on_printer_connected(payload)
+
 		if (Events.FILE_SELECTED == event or
 			Events.FILE_DESELECTED == event or
 			Events.UPDATED_FILES == event):
@@ -527,8 +545,37 @@ class SpoolmanagerPlugin(
 
 
 	def on_settings_save(self, data):
+		# Enable cleaning up any offsets that are turned off
+		oldToolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		oldBedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		oldEnclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
 		# # default save function
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+
+		# Clean up any offsets that are turned off
+		newToolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		newBedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		newEnclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
+		offsetCleanup = False
+		offset_dict = dict()
+		if newToolOffsetEnabled == False and oldToolOffsetEnabled == True:
+			offsetCleanup = True
+			offset_dict["tool0"] = 0
+		if newBedOffsetEnabled == False and oldBedOffsetEnabled == True:
+			offsetCleanup = True
+			offset_dict["bed"] = 0
+		if newEnclosureOffsetEnabled == False and oldEnclosureOffsetEnabled == True:
+			offsetCleanup = True
+			offset_dict["chamber"] = 0
+
+		if offsetCleanup :
+			self._printer.set_temperature_offset(offset_dict)
+
+		# Update Temperature Offsets
+		self.set_temp_offsets(self.loadSelectedSpool())
+
 		#
 		# databaseSettings = self._buildDatabaseSettingsFromPluginSettings()
 		#
@@ -583,6 +630,11 @@ class SpoolmanagerPlugin(
 
 		## Export / Import
 		settings[SettingsKeys.SETTINGS_KEY_IMPORT_CSV_MODE] = SettingsKeys.KEY_IMPORTCSV_MODE_APPEND
+
+		## Temperature
+		settings[SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED] = False
+		settings[SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED] = False
+		settings[SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED] = False
 
 		## Debugging
 		settings[SettingsKeys.SETTINGS_KEY_SQL_LOGGING_ENABLED] = False
@@ -668,6 +720,26 @@ class SpoolmanagerPlugin(
 				pip="https://github.com/OllisGit/OctoPrint-SpoolManager/releases/latest/download/master.zip"
 			)
 		)
+
+	def set_temp_offsets(self, spoolModel):
+		toolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		bedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		enclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
+		offset_dict = dict()
+		if (toolOffsetEnabled == True and spoolModel != None):
+			#TODO support multiple tools - what to do with bed and enclosure if that's the case :|
+			#for tool in spoolModel:
+			#	offset_dict["tool%s" % tool["tool"]] = tool["spool"]["tool_offset"] if tool["spool"] is not None else 0
+			offset_dict["tool0"] = spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0
+
+		if (bedOffsetEnabled == True and spoolModel != None):
+			offset_dict["bed"] = spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0
+
+		if (enclosureOffsetEnabled == True and spoolModel != None):
+			offset_dict["chamber"] = spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
+
+		self._printer.set_temperature_offset(offset_dict)
 
 
 	# def message_on_connect(self, comm, script_type, script_name, *args, **kwargs):

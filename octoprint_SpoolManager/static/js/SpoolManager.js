@@ -693,6 +693,18 @@ $('.dropdown-menu.keep-open').click(function(e) {
 
                         if (!check) {
                             return;
+// TODO TEMPOFFSET in popup
+// =======
+//                         if ("reminderSpoolSelection" == result){
+//                             var question = "Do you want to start the print with the selected spool '"+responseData.spoolName+"'?\n";
+//                             if (responseData.toolOffsetEnabled) question += "\n- Tool Offset:  "+responseData.toolOffset+'\u00B0';
+//                             if (responseData.bedOffsetEnabled) question += "\n- Bed Offset:  "+responseData.bedOffset+'\u00B0';
+//                             if (responseData.enclosureOffsetEnabled) question += "\n- Enclosure Offset:  "+responseData.enclosureOffset+'\u00B0';
+//                             var check = confirm(question);
+//                             if (check == true) {
+//                                 origStartPrintFunction();
+//                             }
+// >>>>>>> 22975dd29db72687ca4cf3f816b0d3b1250d20b9
                         }
                     }
 

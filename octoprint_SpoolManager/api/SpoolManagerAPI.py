@@ -55,6 +55,9 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModel.temperature = self._toIntFromJSONOrNone("temperature", jsonData)
 		spoolModel.bedTemperature = self._toIntFromJSONOrNone("bedTemperature", jsonData)
 		spoolModel.enclosureTemperature = self._toIntFromJSONOrNone("enclosureTemperature", jsonData)
+		spoolModel.offsetTemperature = self._toIntFromJSONOrNone("offsetTemperature", jsonData)
+		spoolModel.offsetBedTemperature = self._toIntFromJSONOrNone("offsetBedTemperature", jsonData)
+		spoolModel.offsetEnclosureTemperature = self._toIntFromJSONOrNone("offsetEnclosureTemperature", jsonData)
 		spoolModel.totalWeight = self._toFloatFromJSONOrNone("totalWeight", jsonData)
 		spoolModel.spoolWeight = self._toFloatFromJSONOrNone("spoolWeight", jsonData)
 		spoolModel.remainingWeight = self._toFloatFromJSONOrNone("remainingWeight", jsonData)
@@ -333,6 +336,19 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# no popup, because turned off
 			result['reminderSpoolSelection'] = []
 
+		# TODO TEMPOFFSET in popup
+		# if (reminderSelectingSpool == True and spoolModel != None):
+		# 	return flask.jsonify({
+		# 		"result": "reminderSpoolSelection",
+		# 		"spoolName": spoolModel.displayName,
+		# 		"toolOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED]),
+		# 		"toolOffset": spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0,
+		# 		"bedOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED]),
+		# 		"bedOffset": spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0,
+		# 		"enclosureOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED]),
+		# 		"enclosureOffset": spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
+		# 	})
+
 		return flask.jsonify({
 			"result": result
 		})
@@ -362,6 +378,11 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModelAsDict = None
 		if (spoolModel != None):
 			spoolModelAsDict = Transformer.transformSpoolModelToDict(spoolModel)
+
+		try:
+			self.set_temp_offsets(spoolModel)
+		except Exception as e:
+			self._sendMessageToClient("warning", "Temperature offsets failed to set!", str(e))
 
 		return flask.jsonify({
 								"selectedSpool": spoolModelAsDict
