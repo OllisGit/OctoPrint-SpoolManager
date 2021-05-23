@@ -744,6 +744,35 @@ $('.dropdown-menu.keep-open').click(function(e) {
 
         self.printerStateViewModel.print = newStartPrintFunction;
 
+        //////////////////////////////////////////////////////////////////////////////////////// PUBLIC VIEWMODEL - APIs
+        // e.g. for CostEstaminator-Plugin
+        self.api_getSelectedSpoolInformations = function(){
+            var result = [];
+            var spoolItem;
+            for (var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                var spoolData = null;
+                spoolItem = self.selectedSpoolsForSidebar()[i]();
+                if (spoolItem !== null) {
+                    spoolData = {
+                        "toolIndex": i,
+                        "databaseId": spoolItem.databaseId(),
+                        "spoolName": spoolItem.displayName(),
+                        "vendor": spoolItem.vendor(),
+                        "material": spoolItem.material(),
+                        "diameter": spoolItem.diameter(),
+                        "density": spoolItem.density(),
+                        "colorName": spoolItem.colorName(),
+                        "color": spoolItem.color(),
+                        "cost": spoolItem.cost(),
+                        "weight": spoolItem.totalWeight()
+                    }
+                }
+                result.push(spoolData);
+            }
+            return result;
+        }
+
+
         //////////////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT HOOKS
         self.onBeforeBinding = function() {
             // assign current pluginSettings

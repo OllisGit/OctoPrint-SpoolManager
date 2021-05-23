@@ -73,3 +73,7 @@ class SpoolModel(BaseModel):
 	temperature = IntegerField(null=True)
 	bedTemperature = IntegerField(null=True) # since V3
 	enclosureTemperature = IntegerField(null=True) # since V3, V4 renamed from encloser to enclosure
+	# Offset Temperature
+	offsetTemperature = IntegerField(null=True) # since V6
+	offsetBedTemperature = IntegerField(null=True) # since V6
+	offsetEnclosureTemperature = IntegerField(null=True) # since V6

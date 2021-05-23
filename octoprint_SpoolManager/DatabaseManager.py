@@ -21,7 +21,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 
 FORCE_CREATE_TABLES = False
 
-CURRENT_DATABASE_SCHEME_VERSION = 5
+CURRENT_DATABASE_SCHEME_VERSION = 6
 
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
@@ -165,7 +165,7 @@ class DatabaseManager(object):
 
 	def _upgradeDatabase(self,currentDatabaseSchemeVersion, targetDatabaseSchemeVersion):
 
-		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5]
+		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5, self._upgradeFrom5To6]
 
 		for migrationMethodIndex in range(currentDatabaseSchemeVersion -1, targetDatabaseSchemeVersion -1):
 			self._logger.info("Database migration from '" + str(migrationMethodIndex + 1) + "' to '" + str(migrationMethodIndex + 2) + "'")
@@ -173,6 +173,63 @@ class DatabaseManager(object):
 			pass
 		pass
 
+	def _upgradeFrom5To6(self):
+		self._logger.info(" Starting 5 -> 6")
+		# What is changed:
+		# - Recalculate remaining weight
+		# - offsetTemperature = IntegerField(null=True)  # since V6
+		# - offsetBedTemperature = IntegerField(null=True)  # since V6
+		# - offsetEnclosureTemperature = IntegerField(null=True)  # since V6
+
+
+
+		self._logger.info("  try to calculate remaining weight.")
+		#  Calculate the remaining weight for all current spools
+		with self._database.atomic() as transaction:  # Opens new transaction.
+			try:
+				allSpoolModels = self.loadAllSpoolsByQuery(None)
+				if (allSpoolModels != None):
+					for spoolModel in allSpoolModels:
+						totalWeight = spoolModel.totalWeight
+						usedWeight = spoolModel.usedWeight
+						remainingWeight = Transformer.calculateRemainingWeight(usedWeight, totalWeight)
+						if (remainingWeight != None):
+							spoolModel.remainingWeight = remainingWeight
+							spoolModel.save()
+				# do expicit commit
+				transaction.commit()
+			except Exception as e:
+				# Because this block of code is wrapped with "atomic", a
+				# new transaction will begin automatically after the call
+				# to rollback().
+				transaction.rollback()
+				self._logger.exception("Could not upgrade database scheme from 6 To 6:" + str(e))
+
+				return
+			pass
+		# Do alter-stuff if needed
+
+		connection = sqlite3.connect(self._databaseSettings.fileLocation)
+		cursor = connection.cursor()
+
+		sql = """
+		PRAGMA foreign_keys=off;
+		BEGIN TRANSACTION;
+
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetBedTemperature' INTEGER;
+			ALTER TABLE 'spo_spoolmodel' ADD 'offsetEnclosureTemperature' INTEGER;
+
+			UPDATE 'spo_pluginmetadatamodel' SET value=6 WHERE key='databaseSchemeVersion';
+		COMMIT;
+		PRAGMA foreign_keys=on;
+		"""
+		cursor.executescript(sql)
+
+		connection.close()
+
+		self._logger.info(" Successfully 5 -> 6")
+		pass
 
 	def _upgradeFrom4To5(self):
 		self._logger.info(" Starting 4 -> 5")
@@ -238,8 +295,6 @@ class DatabaseManager(object):
 		cursor.executescript(sql)
 
 		connection.close()
-
-
 
 	def _upgradeFrom3To4(self):
 		self._logger.info(" Starting 3 -> 4")
@@ -372,7 +427,6 @@ class DatabaseManager(object):
 	def _upgradeFrom1To2(self):
 		self._logger.info(" Starting 1 -> 2")
 		# What is changed:
-		# - SpoolModel: Add Column colorName
 		# - SpoolModel: Add Column remainingWeight (needed fro filtering, sorting)
 		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
@@ -381,7 +435,6 @@ class DatabaseManager(object):
 		PRAGMA foreign_keys=off;
 		BEGIN TRANSACTION;
 
-			ALTER TABLE 'spo_spoolmodel' ADD 'colorName' VARCHAR(255);
 			ALTER TABLE 'spo_spoolmodel' ADD 'remainingWeight' REAL;
 
 			UPDATE 'spo_pluginmetadatamodel' SET value=2 WHERE key='databaseSchemeVersion';

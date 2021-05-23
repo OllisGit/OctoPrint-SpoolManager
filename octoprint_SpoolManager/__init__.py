@@ -432,7 +432,7 @@ class SpoolmanagerPlugin(
 	pass
 
 	######################################################################################### PUBLIC IMPLEMENTATION API
-	def api_getSelectionSpoolInformations(self):
+	def api_getSelectedSpoolInformations(self):
 		"""
 		Returns the current extruded filament for each tool
 		:param string path:
@@ -456,7 +456,7 @@ class SpoolmanagerPlugin(
 					"colorName": spoolModel.colorName,
 					"color": spoolModel.color,
 					"cost": spoolModel.cost,
-					"weight": spoolModel.cost
+					"weight": spoolModel.weight
 				}
 			result.append(spoolData)
 

@@ -35,5 +35,9 @@ class SettingsKeys():
 	SETTINGS_KEY_DATABASE_USER = "databaseUser"
 	SETTINGS_KEY_DATABASE_PASSWORD = "databasePassword"
 
+	SETTINGS_KEY_TOOL_OFFSET_ENABLED = "toolOffsetEnabled"
+	SETTINGS_KEY_BED_OFFSET_ENABLED = "bedOffsetEnabled"
+	SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED = "enclosureOffsetEnabled"
+
 	## Debugging
 	SETTINGS_KEY_SQL_LOGGING_ENABLED = "sqlLoggingEnabled"
