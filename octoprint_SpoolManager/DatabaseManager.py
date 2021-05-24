@@ -224,44 +224,62 @@ class DatabaseManager(object):
 				return
 			pass
 
-
 		self._logger.info(" Successfully 5 -> 6")
 		pass
 
 	def _upgradeFrom4To5(self):
 		self._logger.info(" Starting 4 -> 5")
 		# What is changed:
-		# SpoolModel (needed, because lats script created a new table and altering was already done
+		# SpoolModel (needed, because last script created a new table and altering was already done
 		# - materialCharacteristic = CharField(null=True, index=True) # strong, soft,... # since V4: new
 		# - material = CharField(null=True, index=True)	# since V4: added index
 		# - vendor = CharField(null=True, index=True) # since V4: added index
 		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
 
-		sql = """
-		PRAGMA foreign_keys=off;
-		BEGIN TRANSACTION;
+		self._executeSQLQuietly(cursor, "ALTER TABLE 'spo_spoolmodel' ADD 'updated' DATETIME")
+		self._executeSQLQuietly(cursor, "ALTER TABLE 'spo_spoolmodel' ADD 'originator' CHAR(60)")
+		self._executeSQLQuietly(cursor, "ALTER TABLE 'spo_spoolmodel' ADD 'materialCharacteristic' VARCHAR(255)")
+		self._executeSQLQuietly(cursor, "ALTER TABLE 'spo_spoolmodel' ADD 'isActive' INTEGER")
+		self._executeSQLQuietly(cursor, "UPDATE 'spo_spoolmodel' SET isActive=1")
+		self._executeSQLQuietly(cursor, "CREATE INDEX spoolmodel_materialCharacteristic ON spo_spoolmodel (materialCharacteristic)")
+		self._executeSQLQuietly(cursor, "CREATE INDEX spoolmodel_material ON spo_spoolmodel (material)")
+		self._executeSQLQuietly(cursor, "CREATE INDEX spoolmodel_vendor ON spo_spoolmodel (vendor)")
 
-			ALTER TABLE 'spo_spoolmodel' ADD 'updated' DATETIME;
-			ALTER TABLE 'spo_spoolmodel' ADD 'originator' CHAR(60);
-			ALTER TABLE 'spo_spoolmodel' ADD 'materialCharacteristic' VARCHAR(255);
-			ALTER TABLE 'spo_spoolmodel' ADD 'isActive' INTEGER;
-			UPDATE 'spo_spoolmodel' SET isActive=1;
+		self._executeSQLQuietly(cursor, "UPDATE 'spo_pluginmetadatamodel' SET value=5 WHERE key='databaseSchemeVersion'")
 
-			CREATE INDEX spoolmodel_materialCharacteristic ON spo_spoolmodel (materialCharacteristic);
-			CREATE INDEX spoolmodel_material ON spo_spoolmodel (material);
-			CREATE INDEX spoolmodel_vendor ON spo_spoolmodel (vendor);
-
-			UPDATE 'spo_pluginmetadatamodel' SET value=5 WHERE key='databaseSchemeVersion';
-		COMMIT;
-		PRAGMA foreign_keys=on;
-		"""
-		cursor.executescript(sql)
+		# sql = """
+		# PRAGMA foreign_keys=off;
+		# BEGIN TRANSACTION;
+		#
+		# 	ALTER TABLE 'spo_spoolmodel' ADD 'updated' DATETIME;
+		# 	ALTER TABLE 'spo_spoolmodel' ADD 'originator' CHAR(60);
+		# 	ALTER TABLE 'spo_spoolmodel' ADD 'materialCharacteristic' VARCHAR(255);
+		# 	ALTER TABLE 'spo_spoolmodel' ADD 'isActive' INTEGER;
+		# 	UPDATE 'spo_spoolmodel' SET isActive=1;
+		#
+		# 	CREATE INDEX spoolmodel_materialCharacteristic ON spo_spoolmodel (materialCharacteristic);
+		# 	CREATE INDEX spoolmodel_material ON spo_spoolmodel (material);
+		# 	CREATE INDEX spoolmodel_vendor ON spo_spoolmodel (vendor);
+		#
+		# 	UPDATE 'spo_pluginmetadatamodel' SET value=5 WHERE key='databaseSchemeVersion';
+		# COMMIT;
+		# PRAGMA foreign_keys=on;
+		# """
+		# cursor.executescript(sql)
 
 		connection.close()
 
 		self._logger.info(" Successfully 4 -> 5")
 		pass
+
+	def _executeSQLQuietly(self, cursor, sqlStatement):
+		try:
+			cursor.execute(sqlStatement)
+		except Exception as e:
+			self._logger.error(sqlStatement)
+			self._logger.exception(e)
+
 
 	def _upgradeFrom4To5_HACK(self, sqlStatement):
 
@@ -311,6 +329,7 @@ class DatabaseManager(object):
 		connection = sqlite3.connect(self._databaseSettings.fileLocation)
 		cursor = connection.cursor()
 
+		# SCHROTT!!!!! zuerst 'ALTER' und dann eine neue Tabelle erstellen ohne die ALTER-Spalten, SUPER !!!!
 		sql = """
 		PRAGMA foreign_keys=off;
 		BEGIN TRANSACTION;
@@ -445,7 +464,6 @@ class DatabaseManager(object):
 		#  Calculate the remaining weight for all current spools
 		with self._database.atomic() as transaction:  # Opens new transaction.
 			try:
-
 				allSpoolModels = self.loadAllSpoolsByQuery(None)
 				if (allSpoolModels != None):
 					for spoolModel in allSpoolModels:
@@ -630,7 +648,16 @@ class DatabaseManager(object):
 			self._logger.info("Starting database backup")
 			now = datetime.datetime.now()
 			currentDate = now.strftime("%Y%m%d-%H%M")
-			backupDatabaseFilePath = self._databaseSettings.fileLocation[0:-3] + "-backup-"+currentDate+".db"
+			currentSchemeVersion = "unknown"
+			try:
+				currentSchemeVersion = PluginMetaDataModel.get(
+					PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION)
+				if (currentSchemeVersion != None):
+					currentSchemeVersion = str(currentSchemeVersion.value)
+			except Exception as e:
+				self._logger.exception("Could not read databasescheme version:" + str(e))
+
+			backupDatabaseFilePath = self._databaseSettings.fileLocation[0:-3] + "-backup-V" + currentSchemeVersion + "-" +currentDate+".db"
 			# backupDatabaseFileName = "spoolmanager-backup-"+currentDate+".db"
 			# backupDatabaseFilePath = os.path.join(backupFolder, backupDatabaseFileName)
 			if not os.path.exists(backupDatabaseFilePath):
@@ -771,7 +798,7 @@ class DatabaseManager(object):
 
 	def loadSpool(self, databaseId, withReusedConnection=False):
 		def databaseCallMethode():
-			return SpoolModel.get_by_id(databaseId)
+			return SpoolModel.get_or_none(databaseId)
 
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadSpool")
 

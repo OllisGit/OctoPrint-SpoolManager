@@ -537,9 +537,6 @@ class SpoolmanagerPlugin(
 			self.alreadyCanceled = True
 			self._on_printJobFinished("canceled", payload)
 
-		elif (Events.CONNECTED == event):
-			self._on_printer_connected(payload)
-
 		if (Events.FILE_SELECTED == event or
 			Events.FILE_DESELECTED == event or
 			Events.UPDATED_FILES == event):
