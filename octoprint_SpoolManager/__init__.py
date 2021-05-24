@@ -186,7 +186,6 @@ class SpoolmanagerPlugin(
 
 	def _sendMessageToClient(self, type, title, message):
 		self._logger.warning("SendToClient: " + type + "#" + title + "#" + message)
-		title = "SPM:" + title
 		self._sendDataToClient(dict(action="showPopUp",
 									type=type,
 									title= title,

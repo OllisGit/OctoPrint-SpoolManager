@@ -155,16 +155,14 @@
                     </label>
                 </div>
             </div>
-
-
-
-
         </div>
+
         <div class="modal-body hack-flowbreak"  >
             <form  class="form-horizontal" id="spool-form" >
-                <div class="row" >
+                <input type="hidden" data-bind="value: spoolDialog.spoolItemForEditing.version" />
+                <div class="row-fluid" >
 <!-- LEFT COLUMN -->
-                        <input type="hidden" data-bind="value: spoolDialog.spoolItemForEditing.version" />
+
                         <div class="span6" >
                             <div class="control-group">
                                 <label class="control-label">Displayname <sup>1</sup></label>
@@ -228,7 +226,7 @@
                             </div>
 
                             <div class="control-group no-bottom-gap">
-                                <label class="control-label">Best Temperature<sup>4</sup> Tool/Bed</label>
+                                <label class="control-label">Tool/Bed<sup>4</sup></label>
                                 <div class="row controls">
                                     <div class="input-append">
                                         <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
@@ -444,7 +442,7 @@
 
 
                                 <div class="row">
-                                    <div class="span6 text-center">
+                                    <div class="span12 text-center">
                                         <div class="" style="margin-top:10px">
                                             <div class="">
 <!--                                                <div class="spool-note-editor-container">-->

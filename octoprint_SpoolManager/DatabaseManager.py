@@ -642,7 +642,7 @@ class DatabaseManager(object):
 		else:
 			self._logger.info("No database backup needed, because there is no databasefile '"+str(self._databaseSettings.fileLocation)+"'")
 
-	def reCreateDatabase(self, databaseSettings):
+	def reCreateDatabase(self, databaseSettings = None):
 		self._currentErrorMessageDict = None
 		self._logger.info("ReCreating Database")
 

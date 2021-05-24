@@ -82,13 +82,35 @@ $(function() {
 
 
         ////////////////////////////////////////////////////////////////////////////////////////////////HELPER FUNCTION
+
+        loadSettingsFromBrowserStore = function(){
+            // TODO maybe in a separate js-file
+            // load all settings from browser storage
+            if (!Modernizr.localstorage) {
+                // damn!!!
+                return false;
+            }
+            // Table visibility
+            self.initTableVisibilities();
+
+            var storageKey = "spoolmanager.table.selectedPageSize";
+            if (localStorage[storageKey] == null){
+                localStorage[storageKey] = "25"; // default page size
+            } else {
+                self.spoolItemTableHelper.selectedPageSize(localStorage[storageKey]);
+            }
+            self.spoolItemTableHelper.selectedPageSize.subscribe(function(newValue){
+                localStorage[storageKey] = newValue;
+            });
+        }
+
         // Typs: error
         self.showPopUp = function(popupType, popupTitle, message){
             var title = popupType.toUpperCase() + ": " + popupTitle;
             var popupId = (title+message).replace(/([^a-z0-9]+)/gi, '-');
             if($("."+popupId).length <1) {
                 new PNotify({
-                    title: title,
+                    title: "SPM:" + title,
                     text: message,
                     type: popupType,
                     hide: false,
@@ -96,7 +118,6 @@ $(function() {
                 });
             }
         };
-
 
 
         // found here: https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript?rq=1
@@ -646,10 +667,22 @@ $('.dropdown-menu.keep-open').click(function(e) {
                         }
                     }
 
+                    buildSpoolLabel = function(item){
+                        var label =  item.toolIndex+": '" + item.material + " - " + item.spoolName;
+
+                        if (item.remainingWeight != null && typeof item.remainingWeight === 'number'){
+                            label = label + " ("+item.remainingWeight.toFixed(2)  +"g)";
+                        }
+                        label = label + "'";
+                        return label;
+                    }
+
                     if (result.filamentNotEnough.length) {
                         itemList = [];
                         for (item of result.filamentNotEnough) {
-                            itemList.push("'" + item.spoolName + "' (tool "+item.toolIndex+")");
+                            var spoolLabel = buildSpoolLabel(item);
+                            // itemList.push("'" + item.spoolName + "' (tool "+item.toolIndex+")");
+                            itemList.push(spoolLabel);
                         }
                         if (itemList.length === 1) {
                             check = confirm(
@@ -685,7 +718,7 @@ $('.dropdown-menu.keep-open').click(function(e) {
                         // }
                         // build message for each tool
                         for (item of result.reminderSpoolSelection) {
-                            var toolMessage = item.toolIndex+": '" + item.spoolName + "'";
+                            var toolMessage = buildSpoolLabel(item);
                             if (responseData.toolOffsetEnabled) toolMessage += "\n--  Tool Offset:  "+item.toolOffset+'\u00B0';
                             if (responseData.bedOffsetEnabled) toolMessage += "\n--  Bed Offset:  "+item.bedOffset+'\u00B0';
                             if (responseData.enclosureOffsetEnabled) toolMessage += "\n--  Enclosure Offset:  "+item.enclosureOffset+'\u00B0';
@@ -693,7 +726,7 @@ $('.dropdown-menu.keep-open').click(function(e) {
                         }
                         check = confirm(
                             "Do you want to start the print with following selected spools?\n" +
-                            '- '+ itemList.join('\n- ')
+                            "- "+ itemList.join("\n- ")
                         );
 
                         if (!check) {
@@ -782,8 +815,10 @@ $('.dropdown-menu.keep-open').click(function(e) {
         self.onBeforeBinding = function() {
             // assign current pluginSettings
             self.pluginSettings = self.settingsViewModel.settings.plugins[PLUGIN_ID];
-            // Table visibility
-            self. initTableVisibilities();
+
+            // load browser stored settings (includs TabelVisibility and pageSize, ...)
+            loadSettingsFromBrowserStore();
+
             // resetSettings-Stuff
              new ResetSettingsUtilV3(self.pluginSettings).assignResetSettingsFeature(PLUGIN_ID, function(data){
                 // no additional reset function needed in V2

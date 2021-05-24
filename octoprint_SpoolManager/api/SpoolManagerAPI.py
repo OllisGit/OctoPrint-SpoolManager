@@ -320,6 +320,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			infoData = {
 				"toolIndex": toolIndex,
 				"spoolName": spoolModel.displayName if spoolModel else '(no spool selected)',
+				"material": spoolModel.material if spoolModel else '',
+				"remainingWeight": spoolModel.remainingWeight if spoolModel else '',
 				"toolOffset": spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0,
 				"bedOffset": spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0,
 				"enclosureOffset": spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
@@ -534,6 +536,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				if (remainingWeight != None):
 					spool.remainingWeight = remainingWeight
 					# spool.save()
+
+				spool.isActive = True
 
 				databaseManager.saveSpool(spool)
 			pass

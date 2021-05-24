@@ -9,6 +9,7 @@ from octoprint_SpoolManager.common import StringUtils
 from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 
 FORMAT_DATETIME = "%d.%m.%Y %H:%M"
+FORMAT_DATE = "%d.%m.%Y"
 
 COLUMN_DISPLAY_NAME = "Spool Name"
 COLUMN_COLOR_NAME = "Color Name"
@@ -115,7 +116,7 @@ class DateTimeCSVFormattorParser:
 			setattr(printJobModel, fieldName, fieldDateTime)
 			pass
 		else:
-			fieldDateTime = datetime.datetime.fromtimestamp(float(fieldValue))
+			fieldDateTime = datetime.datetime.strptime(fieldValue, FORMAT_DATE)
 			setattr(printJobModel, fieldName, fieldDateTime)
 			pass
 		pass
@@ -327,7 +328,7 @@ def parseCSV(csvFile4Import, updateParsingStatus, errorCollection, logger, delet
 						errorCollection.append("Mandatory column is missing! <br/><b>'" + "".join(mandatoryFieldMissing) + "'</b><br/>")
 						break
 				else:
-					printJobModel = SpoolModel()
+					spoolModel = SpoolModel()
 					# parse line with header defined order
 					columnIndex = 0
 					for columnValue in row:
@@ -342,13 +343,13 @@ def parseCSV(csvFile4Import, updateParsingStatus, errorCollection, logger, delet
 										errorCollection.append("["+str(lineNumber)+"] Mandatory value for column '" + columnName + "' is missing!")
 										pass
 								else:
-									csvColumn.parseAndAssignFieldValue(columnValue, printJobModel, errorCollection, lineNumber)
+									csvColumn.parseAndAssignFieldValue(columnValue, spoolModel, errorCollection, lineNumber)
 								pass
 						columnIndex += 1
 					if (len(errorCollection) != 0):
 						logger.error("Reading error line '" + str(lineNumber) + "' in Column '" + column + "' ")
 					else:
-						result.append(printJobModel)
+						result.append(spoolModel)
 			pass
 	except Exception as e:
 		errorMessage = "CSV Parsing error. Line:'" + str(lineNumber) + "' Error:'" + str(e) + "' File:'" + csvFile4Import + "'"
