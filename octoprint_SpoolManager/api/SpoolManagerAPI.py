@@ -322,10 +322,11 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				"spoolName": spoolModel.displayName if spoolModel else '(no spool selected)',
 				"material": spoolModel.material if spoolModel else '',
 				"remainingWeight": spoolModel.remainingWeight if spoolModel else '',
-				"toolOffset": spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0,
-				"bedOffset": spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0,
-				"enclosureOffset": spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
+				"toolOffset": spoolModel.offsetTemperature if spoolModel else '',
+				"bedOffset": spoolModel.offsetBedTemperature if spoolModel else '',
+				"enclosureOffset": spoolModel.offsetEnclosureTemperature if spoolModel else ''
 			}
+
 			if spoolModel is not None:
 				if not self.checkRemainingFilament(toolIndex):
 					result['filamentNotEnough'].append(infoData)
