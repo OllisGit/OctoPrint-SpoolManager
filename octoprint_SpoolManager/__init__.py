@@ -477,7 +477,7 @@ class SpoolmanagerPlugin(
 					"colorName": spoolModel.colorName,
 					"color": spoolModel.color,
 					"cost": spoolModel.cost,
-					"weight": spoolModel.weight
+					"weight": spoolModel.totalWeight
 				}
 			result.append(spoolData)
 

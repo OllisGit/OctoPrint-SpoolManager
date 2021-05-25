@@ -15,7 +15,6 @@ If you like it, I would be thankful about a cup of coffee :)
 
 ## Tested with:
 - OctoPrint 1.5.2:  with Python 3.6.8 and Python 2.7.9
-- OctoPrint 1.4.2:  OPEN
 
 ## Included features
 
