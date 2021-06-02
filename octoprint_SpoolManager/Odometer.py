@@ -47,7 +47,7 @@ class FilamentOdometer(object):
 		if gcode is None:
 			return
 
-		if gcode == "G1" or gcode == "G0":  # move
+		if gcode in ("G0", "G1", "G2", "G3"):  # move
 			e = self._get_float(cmd, self.regexE)
 			if e is not None:
 				if (e > 0.0):
