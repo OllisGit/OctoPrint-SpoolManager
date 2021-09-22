@@ -9,9 +9,6 @@
     height: 100px;
 }
 
-#sidebar_plugin_SpoolManager {
-    overflow: visible;
-}
 #selectedSpools > div {
     display: flex;
     align-items: baseline;
