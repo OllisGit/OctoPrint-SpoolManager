@@ -674,6 +674,7 @@ class SpoolmanagerPlugin(
 	def get_template_configs(self):
 		return [
 			dict(type="tab", name="Spools"),
+			dict(type="sidebar", name="Spool Manager", template_header="SpoolManager_sidebar_header.jinja2"),
 			dict(type="settings", custom_bindings=True, name="Spool Manager")
 		]
 

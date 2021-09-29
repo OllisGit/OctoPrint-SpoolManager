@@ -1,0 +1,17 @@
+<div class="settings-trigger accordion-heading-button btn-group" data-bind="visible: $root.selectedSpoolsVisible">
+    <!-- I don't know how to make knockout work -->
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" title="Choose a spool">
+        <span class="fas fa-tape"></span>
+    </a>
+    <ul class="dropdown-menu" data-bind="foreach: $parent.allSpoolsForSidebar">
+        <li>
+            <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data, $parentContext.$index())">
+                <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
+                <span class="filament-label">
+                    <span><span data-bind="text: $data.material"></span> - <span data-bind="text: $data.displayName">FirstSpool</span></span>
+                    <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}" ></span>
+                </span>
+            </a>
+        </li>
+    </ul>
+</div>

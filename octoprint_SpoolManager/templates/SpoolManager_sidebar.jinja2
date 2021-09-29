@@ -28,21 +28,6 @@
                 <button class="btn btn-mini" data-bind="click: $parent.editSpoolFromSidebar.bind($data, $index())" title="Edit Spool"><span class="icon-edit"></span></button>
                 <button class="btn btn-mini" data-bind="click: $parent.deselectSpoolForSidebar.bind($data, $index())" title="Deselect Spool"><span class="icon-remove"></span></button>
                 <!-- /ko -->
-
-                <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-
-                <ul class="dropdown-menu dropdown-menu-right" data-bind="foreach: $parent.allSpoolsForSidebar">
-                    <li>
-                        <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data, $parentContext.$index())">
-                            <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
-                            <span class="filament-label">
-                                <span><span data-bind="text: $data.material"></span> - <span data-bind="text: $data.displayName">FirstSpool</span></span>
-                                <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}" ></span>
-                            </span>
-                        </a>
-                    </li>
-                </ul>
-
             </div>
           </div>
       </div>
