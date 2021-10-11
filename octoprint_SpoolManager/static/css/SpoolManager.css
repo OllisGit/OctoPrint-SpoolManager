@@ -9,7 +9,7 @@
     height: 100px;
 }
 
-#sidebar_plugin_SpoolManager {
+#sidebar_plugin_SpoolManager.collapse.in {
     overflow: visible;
 }
 #selectedSpools > div {
