@@ -28,7 +28,10 @@
                       data-bind="style: {'background-color': color}, attr: { title: colorName }"></span>
             </div>
             <div class="spool-label">
-                <span data-bind="text: material"></span> - <span data-bind="text: displayName"></span>
+                <!-- ko if: material -->
+                <span data-bind="text: material"></span> -
+                <!-- /ko -->
+                <span data-bind="text: displayName"></span>
                 <!-- ko if: vendor -->
                 (<span data-bind="text: vendor"></span>)
                 <!-- /ko -->
