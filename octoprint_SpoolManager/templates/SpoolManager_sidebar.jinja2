@@ -1,4 +1,6 @@
-<div id="sidebar_spool_select" class="control-group">
+{% include "SpoolManager_sidebar_dialogs.jinja2" %}
+
+<div id="sidebar_spool_select">
 <!--   TODO support for multiple spools for multiple tools -->
 
     <div id="selectedSpools" data-bind="foreach: selectedSpoolsForSidebar">
@@ -12,6 +14,11 @@
           <div class="spool-label">
              No spool selected
           </div>
+          <div>
+             <div class="btn-group">
+                <button class="btn btn-mini" data-bind="click: $parent.sidebarOpenSelectSpoolDialog.bind($data, $index())" title="Change Spool"><span class="icon-refresh"></span></button>
+             </div>
+          </div>
           <!-- /ko -->
           <!-- ko if: $data -->
           <div>
@@ -21,43 +28,14 @@
              <span data-bind="text: material"></span> - <span  data-bind="text: displayName"></span>
              <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}" class="spool-remaining" title="Remaining weight"></span>
           </div>
-          <!-- /ko -->
           <div>
               <div class="btn-group">
-                <!-- ko if: $data -->
                 <button class="btn btn-mini" data-bind="click: $parent.editSpoolFromSidebar.bind($data, $index())" title="Edit Spool"><span class="icon-edit"></span></button>
                 <button class="btn btn-mini" data-bind="click: $parent.deselectSpoolForSidebar.bind($data, $index())" title="Deselect Spool"><span class="icon-remove"></span></button>
-                <!-- /ko -->
-
-                <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-
-                <ul class="dropdown-menu dropdown-menu-right" data-bind="foreach: $parent.allSpoolsForSidebar">
-                    <li>
-                        <a href="#" data-bind="click: $root.selectSpoolForSidebar.bind($data, $parentContext.$index())">
-                            <span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }"></span>
-                            <span class="filament-label">
-                                <span><span data-bind="text: $data.material"></span> - <span data-bind="text: $data.displayName">FirstSpool</span></span>
-                                <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}" ></span>
-                            </span>
-                        </a>
-                    </li>
-                </ul>
-
+                <button class="btn btn-mini" data-bind="click: $parent.sidebarOpenSelectSpoolDialog.bind($data, $index())" title="Change Spool"><span class="icon-refresh"></span></button>
             </div>
           </div>
+          <!-- /ko -->
       </div>
     </div>
-    <nobr>
-<!--  Not needed autorelaod implemented      <a href="#" data-bind="click: loadSpoolsForSidebar" title="Reload spools entries"><span class="icon-refresh"></span></a>-->
-        <div>
-            <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideEmptySpoolsInSidebar" > Hide empty spools</span>
-            <span ><input style="vertical-align:text-bottom" type="checkbox" data-bind="checked: pluginSettings.hideInactiveSpoolsInSidebar" > Hide inactive spools</span>
-        </div>
-    </nobr>
-
-  <div>
-    <small>Order: last used.</small>
-  </div>
-
-
 </div>

@@ -68,6 +68,7 @@ $(function() {
         self.printerProfilesViewModel = parameters[4];
 
         self.pluginSettings = null;
+        self.sidebarSelectSpoolDialog = undefined;
 
         self.apiClient = new SpoolManagerAPIClient(PLUGIN_ID, BASEURL);
         self.spoolDialog = new SpoolManagerEditSpoolDialog();
@@ -339,6 +340,24 @@ $(function() {
 
         self.deselectSpoolForSidebar = function(toolIndex, item){
             self.selectSpoolForSidebar(toolIndex, null);
+        }
+
+        self.onStartup = function () {
+            self.sidebarSelectSpoolDialog = $("#sidebar_select_spool_dialog");
+            self.sidebarSelectSpoolModalToolIndex = ko.observable(null)
+            self.sidebarSelectSpoolDialog.on("shown", function () {
+                console.log("onShown");
+            })
+        }
+
+        self.sidebarSelectSpoolFromDialog = function (spoolItem) {
+            self.sidebarSelectSpoolDialog.modal("hide");
+            self.selectSpoolForSidebar(self.sidebarSelectSpoolModalToolIndex(), spoolItem);
+        }
+
+        self.sidebarOpenSelectSpoolDialog = function(toolIndex, item){
+            self.sidebarSelectSpoolModalToolIndex(toolIndex);
+            self.sidebarSelectSpoolDialog.modal("show");
         }
 
         self.loadSpoolsForSidebar = function() {
@@ -995,7 +1014,8 @@ $('.dropdown-menu.keep-open').click(function(e) {
             document.getElementById("settings_spoolmanager"),
             document.getElementById("tab_spoolOverview"),
             document.getElementById("modal-dialogs-spoolManager"),
-            document.getElementById("sidebar_spool_select")
+            document.getElementById("sidebar_spool_select"),
+            document.getElementById("sidebar_select_spool_dialog")
         ]
     });
 });

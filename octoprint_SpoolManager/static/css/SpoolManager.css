@@ -1,4 +1,31 @@
+#sidebar_select_spool_dialog .scroll-wrapper {
+    margin-top: 1em;
+}
 
+#sidebar_select_spool_dialog .entry:first-child {
+    border-top: 1px solid #ddd;
+}
+
+#sidebar_select_spool_dialog .filter {
+    display: flex;
+}
+
+#sidebar_select_spool_dialog .filter > *:nth-last-child(1) {
+    margin-left: 1.5em;
+}
+
+#sidebar_select_spool_dialog .entry {
+    padding: 5px;
+    line-height: 20px;
+    border-bottom: 1px solid #ddd;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#sidebar_select_spool_dialog .entry:hover {
+    background-color: #f5f5f5
+}
 
 .control-group.no-bottom-gap {
     margin-bottom:3px

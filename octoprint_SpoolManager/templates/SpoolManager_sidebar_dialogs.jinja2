@@ -1,0 +1,39 @@
+<div id="sidebar_select_spool_dialog" class="modal hide fade-in">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Select Spool</h3>
+    </div>
+    <div class="modal-body">
+        <p>Please select the spool for tool <span data-bind="text: sidebarSelectSpoolModalToolIndex()"></span></p>
+        <div class="filter">
+            <label>
+                <input style="vertical-align:baseline" type="checkbox"
+                       data-bind="checked: pluginSettings.hideEmptySpoolsInSidebar">
+                Hide empty spools
+            </label>
+            <label>
+                <input style="vertical-align:baseline" type="checkbox"
+                       data-bind="checked: pluginSettings.hideInactiveSpoolsInSidebar">
+                Hide inactive spools
+            </label>
+        </div>
+        <div class="scroll-wrapper"
+             data-bind="foreach: allSpoolsForSidebar()"
+        >
+            <div class="entry clickable" data-bind="click: $root.sidebarSelectSpoolFromDialog.bind($data)">
+                <span class="color-preview"
+                      data-bind="style: {'background-color': color}, attr: { title: colorName }">
+                </span>
+                <div class="spool-label">
+                    <span data-bind="text: material"></span> - <span data-bind="text: displayName"></span>
+                    <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}"
+                          class="spool-remaining" title="Remaining weight">
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Cancel</a>
+    </div>
+</div>
