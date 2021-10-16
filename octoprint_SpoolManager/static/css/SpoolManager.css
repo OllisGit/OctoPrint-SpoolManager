@@ -55,6 +55,7 @@
     margin-right: 0;
     vertical-align: middle;
     margin-top: -3px;
+    cursor: auto;
 }
 #selectedSpools > div > div > .btn-group {
     vertical-align: middle;
