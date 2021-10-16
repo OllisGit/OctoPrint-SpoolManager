@@ -40,7 +40,7 @@
     display: flex;
     align-items: baseline;
     min-height: 1.8em;
-    margin-bottom: 5px;
+    margin-top: 5px;
 }
 #selectedSpools > div > * {
     flex-grow: 0;
