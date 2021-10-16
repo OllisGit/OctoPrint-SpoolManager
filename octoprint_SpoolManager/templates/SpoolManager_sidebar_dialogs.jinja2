@@ -26,6 +26,9 @@
                 </span>
                 <div class="spool-label">
                     <span data-bind="text: material"></span> - <span data-bind="text: displayName"></span>
+                    <!-- ko if: vendor -->
+                    (<span data-bind="text: vendor"></span>)
+                    <!-- /ko -->
                     <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}"
                           class="spool-remaining" title="Remaining weight">
                     </span>
