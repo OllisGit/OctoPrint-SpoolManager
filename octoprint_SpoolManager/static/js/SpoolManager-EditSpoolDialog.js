@@ -1,4 +1,43 @@
- "use strict";
+"use strict";
+ // START: TESTZONE
+$(function() {
+
+});
+
+
+    function machwas(myObj){
+//        $("#configFields").addClass('open');
+        //debugger
+        //$("#openConfigFields").dropdown();
+
+    }
+/*
+    var specifiedElement = document.getElementById('configFieldsDropDown');
+
+    document.addEventListener('click', function(event) {
+        var isClickInside = specifiedElement.contains(event.target);
+        if (isClickInside) {
+          console.log('You clicked inside')
+        }
+        else {
+//          debugger
+          console.log('You clicked outside');
+
+
+          if (event.target.id == "openConfigFields" &&  $("#configFields").hasClass("open") == false){
+            $("#configFields").addClass('open');
+          } else
+
+
+          if (event.target.id != "openConfigFields" ||
+              (event.target.id == "openConfigFields" && $("#configFields").hasClass("open"))){
+              $("#configFields").removeClass('open');
+          }
+        }
+    });
+*/
+ // END: TESTZONE
+
 function SpoolManagerEditSpoolDialog() {
 
     var self = this;
