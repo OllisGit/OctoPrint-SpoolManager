@@ -89,27 +89,27 @@
                     <span data-bind="visible: spoolDialog.isExistingSpool() == false"><h2>NEW </h2></span>
                     <span><h2 data-bind="text: spoolDialog.spoolItemForEditing.displayName"></h2></span>
                 </div>
-                <!--&lt;!&ndash;                <div class="span1"><i class="fa fa-exclamation-circle" style="font-size:18px;color:red"></i></div>&ndash;&gt;-->
-                <!--                <div class="span1"><span data-bind="css: {'icon-ok-sign' : printJobForEditing().printStatusResult() == 'success', 'icon-exclamation-sign' : printJobForEditing().printStatusResult() != 'success'}, style: { color: printJobForEditing().printStatusResult() == 'success' ? 'green' : 'red' }"></span></div>-->
+<!--&lt;!&ndash;                <div class="span1"><i class="fa fa-exclamation-circle" style="font-size:18px;color:red"></i></div>&ndash;&gt;-->
+<!--                <div class="span1"><span data-bind="css: {'icon-ok-sign' : printJobForEditing().printStatusResult() == 'success', 'icon-exclamation-sign' : printJobForEditing().printStatusResult() != 'success'}, style: { color: printJobForEditing().printStatusResult() == 'success' ? 'green' : 'red' }"></span></div>-->
 
-                <!--                <div class="span3"><b>Start</b> <span data-bind="value: printJobForEditing().printStartDateTimeFormatted" /></div>-->
-                <!--                <div class="span3"><b>Height</b> <span data-bind="value: printJobForEditing().printedHeight" /></div>-->
-                <!--                <div class="span2"></div>-->
-                <!--                <div class="span3"></div>-->
-                <!--            </div>-->
-                <!--            <div class="row">-->
-                <!--                <div class="span1"></div>-->
-                <!--                <div class="span3"><b>End</b> <span data-bind="value: printJobForEditing().printEndDateTimeFormatted" /></div>-->
-                <!--                <div class="span3"><b>Layer</b> <span data-bind="value: printJobForEditing().printedLayers" /></div>-->
-                <!--                <div class="span2"></div>-->
-                <!--                <div class="span3"></div>-->
-                <!--            </div>-->
-                <!--            <div class="row">-->
-                <!--                <div class="span1"></div>-->
-                <!--                <div class="span3"><b>Duration</b> <span data-bind="value: printJobForEditing().durationFormatted" /></div>-->
-                <!--                <div class="span3"></div>-->
-                <!--                <div class="span2"></div>-->
-                <!--                <div class="span3"></div>-->
+<!--                <div class="span3"><b>Start</b> <span data-bind="value: printJobForEditing().printStartDateTimeFormatted" /></div>-->
+<!--                <div class="span3"><b>Height</b> <span data-bind="value: printJobForEditing().printedHeight" /></div>-->
+<!--                <div class="span2"></div>-->
+<!--                <div class="span3"></div>-->
+<!--            </div>-->
+<!--            <div class="row">-->
+<!--                <div class="span1"></div>-->
+<!--                <div class="span3"><b>End</b> <span data-bind="value: printJobForEditing().printEndDateTimeFormatted" /></div>-->
+<!--                <div class="span3"><b>Layer</b> <span data-bind="value: printJobForEditing().printedLayers" /></div>-->
+<!--                <div class="span2"></div>-->
+<!--                <div class="span3"></div>-->
+<!--            </div>-->
+<!--            <div class="row">-->
+<!--                <div class="span1"></div>-->
+<!--                <div class="span3"><b>Duration</b> <span data-bind="value: printJobForEditing().durationFormatted" /></div>-->
+<!--                <div class="span3"></div>-->
+<!--                <div class="span2"></div>-->
+<!--                <div class="span3"></div>-->
 
 
                 <div class="span1">
@@ -305,9 +305,9 @@
                             <label class="control-label">QR Code</label>
                             <div class="controls">
                                 <div class="">
-<!--                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
-                                    <!--                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
-                                    <!--                                        </a>-->
+<!--                                <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
+<!--                                    <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
+<!--                                </a>-->
                                     <a data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()"
                                        target="_new">
                                         <img loading="lazy" class="qr-code" alt="QR Code"
@@ -317,18 +317,18 @@
                            </div>
                         </div>
 
-                        <!-- QR-Code scanner
-                                                    <div class="control-group">
-                                                        <label class="control-label">QR/Bar-Code</label>
-                                                        <div class="controls">
-                                                            <div class="input-append">
-                                                                <input class="span2" type="text" class="input-large" data-bind="value: spoolDialog.spoolItemForEditing.code" />
+<!-- QR-Code scanner
+                        <div class="control-group">
+                            <label class="control-label">QR/Bar-Code</label>
+                            <div class="controls">
+                                <div class="input-append">
+                                    <input class="span2" type="text" class="input-large" data-bind="value: spoolDialog.spoolItemForEditing.code" />
 
-                                                                    <button class="btn" type="button">Capture</button>
-                                                            </div>
-                                                       </div>
-                                                    </div>
-                        -->
+                                        <button class="btn" type="button">Capture</button>
+                                </div>
+                           </div>
+                        </div>
+-->
                         <div class="control-group" style="margin-bottom: -20px;">
                             <label class="">
                                 <div><sup>1</sup><small>Mandatory field</small></div>
@@ -342,7 +342,7 @@
                         </div>
 
                     </div>
-                    <!-- RIGHT COLUMN -->
+<!-- RIGHT COLUMN -->
                     <div class="span6">
                         <div class="">
                             <div class="row">
@@ -543,14 +543,14 @@
                                 </div>
                             </div>
 
-                            <!-- Image scanner -->
-                            <!--<div class="control-group">-->
-                            <!--                                <div class="row">-->
-                            <!--                                    <div class="span6 text-center">-->
-                            <!--                                         <img   src="http://localhost:5000/plugin/PrintJobHistory/static/images/janbex.png" alt=""/>-->
-                            <!--                                    </div>-->
-                            <!--                                </div>-->
-                            <!--</div>-->
+<!-- Image scanner -->
+<!--                        <div class="control-group">-->
+<!--                            <div class="row">-->
+<!--                                <div class="span6 text-center">-->
+<!--                                    <img   src="http://localhost:5000/plugin/PrintJobHistory/static/images/janbex.png" alt=""/>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
 
 
                         </div>
