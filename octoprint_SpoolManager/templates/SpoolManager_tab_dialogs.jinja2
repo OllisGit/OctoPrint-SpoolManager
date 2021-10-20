@@ -1,34 +1,27 @@
 {% import 'SpoolManager_tab_macros.jinja2' as forms %}
 
 
-<span id="modal-dialogs-spoolManager" style="display:none">
+<span id="modal-dialogs-spoolManager" style="display:none" >
 
     <!--###############################################################  CSV Import Status-Dialog -->
     <div id="dialog_spoolManager_csvImportStatus" class="modal hide fade">
         <div class="modal-header">
-            <h3 class="modal-title">CSV Import-Status <i class="fa fa-spinner fa-spin"
-                                                         data-bind="visible: csvImportDialog.importInProgress"></i></h3>
+            <h3 class="modal-title">CSV Import-Status <i class="fa fa-spinner fa-spin" data-bind="visible: csvImportDialog.importInProgress"></i></h3>
         </div>
         <div class="modal-body">
             <div>Status: <b data-bind="text: csvImportDialog.importStatus"></b></div>
-            <div data-bind="visible:csvImportDialog.currentLineNumber">Parsing/Importing line: <b
-                    data-bind="text: csvImportDialog.currentLineNumber"></b></div>
+            <div data-bind="visible:csvImportDialog.currentLineNumber">Parsing/Importing line: <b data-bind="text: csvImportDialog.currentLineNumber"></b></div>
             <br/>
-            <div data-bind="visible:csvImportDialog.successMessages"><b
-                    data-bind="html: csvImportDialog.successMessages"></b></div>
+            <div data-bind="visible:csvImportDialog.successMessages"><b data-bind="html: csvImportDialog.successMessages"></b></div>
             <br/>
-            <div data-bind="visible:csvImportDialog.errorMessages"><b style="color:red"
-                                                                      data-bind="html: csvImportDialog.errorMessages"></b></div>
+            <div data-bind="visible:csvImportDialog.errorMessages"><b style="color:red" data-bind="html: csvImportDialog.errorMessages"></b></div>
             <br/>
-            <div data-bind="visible:csvImportDialog.backupFilePath">Backup Database: <b
-                    data-bind="html: csvImportDialog.backupFilePath"></b></div>
+            <div data-bind="visible:csvImportDialog.backupFilePath">Backup Database: <b data-bind="html: csvImportDialog.backupFilePath"></b></div>
         </div>
         <div class="modal-footer">
             <div class="control-group">
                 <div class="controls">
-                    <button class="btn "
-                            data-bind="disable: csvImportDialog.importInProgress, click: csvImportDialog.closeDialog"
-                            style="text-align:right">Close</button>
+                    <button class="btn "  data-bind="disable: csvImportDialog.importInProgress, click: csvImportDialog.closeDialog" style="text-align:right">Close</button>
                 </div>
             </div>
         </div>
@@ -38,15 +31,14 @@
     <!--###############################################################  Spool EDIT Dialog -->
     <div id="dialog_spool_select" class="modal fade large">
         <div class="modal-header">
-            <h4 class="modal-title"></h4>
+            <h4 class="modal-title" ></h4>
             <div class="row">
                 <div class="span1">
                     <span>
 <!--                        <img class="inlineSVG" src="plugin/SpoolManager/static/images/spool_blue.svg" />-->
-<svg enable-background="new 0 0 512 512" height="64px" width="64px" version="1.1" viewBox="0 0 512 512"
-     xml:space="preserve"
-     xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg enable-background="new 0 0 512 512" height="64px" width="64px" version="1.1" viewBox="0 0 512 512"  xml:space="preserve"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
     <g id="svg-spool">
         <rect fill="#282828" height="288" width="418" x="54" y="121"/>
         <rect fill="#FFFFFF" height="113" width="5" x="54" y="216"/>
@@ -79,8 +71,7 @@
         <rect fill="#0049BC" height="374" width="14" x="389" y="81"/>
         <rect fill="#0071BC" height="374" width="14" x="403" y="81"/>
         <rect fill="#0049BC" height="374" width="14" x="417" y="81"/>
-        <path d="M120,81C120,4.17,237.184-58,382-58" fill="none" stroke="#0071BC" stroke-miterlimit="10"
-              stroke-width="9"/>
+        <path d="M120,81C120,4.17,237.184-58,382-58" fill="none" stroke="#0071BC" stroke-miterlimit="10" stroke-width="9"/>
     </g>
 </svg>
                     </span>
@@ -160,238 +151,214 @@
 
                 <div class="span1">
                     <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isActive"> Active&nbsp;&nbsp;&nbsp;
+                        <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isActive" > Active&nbsp;&nbsp;&nbsp;
                     </label>
                 </div>
             </div>
         </div>
 
-        <div class="modal-body hack-flowbreak">
-            <form class="form-horizontal" id="spool-form">
-                <input type="hidden" data-bind="value: spoolDialog.spoolItemForEditing.version"/>
-                <div class="row-fluid">
+        <div class="modal-body hack-flowbreak"  >
+            <form  class="form-horizontal" id="spool-form" >
+                <input type="hidden" data-bind="value: spoolDialog.spoolItemForEditing.version" />
+                <div class="row-fluid" >
 <!-- LEFT COLUMN -->
 
-                    <div class="span6">
-                        <div class="control-group">
-                            <label class="control-label">Displayname <sup>1</sup></label>
-                            <div class="controls">
-                                <input data-bind="textInput: spoolDialog.spoolItemForEditing.displayName"
-                                       type="text" class="input-large"/>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label">Color</label>
-                            <div class="row controls">
-                                <input data-bind="textInput: spoolDialog.spoolItemForEditing.colorName" type="text"
-                                       class="input-small"/><input id="filament-color-picker" type="text"
-                                                                   name="border-color"
-                                                                   class="pick-a-color form-control input-mini">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label">Vendor</label>
-                            <div class="controls">
-                                <select id="spool-vendor-select" class="input-large"
-                                        data-bind="options: spoolDialog.spoolItemForEditing.allVendors, value: spoolDialog.spoolItemForEditing.vendor">
-                                  <option></option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="control-group no-bottom-gap">
-                            <label class="control-label">Material</label>
-                            <div class="controls">
-                                <select id="spool-material-select" class="input-large"
-                                        data-bind="options: spoolDialog.spoolItemForEditing.allMaterials, value: spoolDialog.spoolItemForEditing.material">
-                                  <option></option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="control-group no-bottom-gap">
-                            <label class="control-label">Density <sup>2,3</sup></label>
-                            <div class="controls">
-                                <div class="input-append">
-                                    <input type="number" step="0.01" min="0" class="input-small text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.density"/>
-                                    <span class="add-on">g/cm³</span>
+                        <div class="span6" >
+                            <div class="control-group">
+                                <label class="control-label">Displayname <sup>1</sup></label>
+                                <div class="controls">
+                                    <input data-bind="textInput: spoolDialog.spoolItemForEditing.displayName"  type="text" class="input-large"  />
                                 </div>
                             </div>
-                        </div>
-                        <div class="control-group ">
-                            <label class="control-label">Diameter <sup>2</sup></label>
-                            <div class="controls">
-                                <div class="input-append">
-                                    <input type="number" step="0.01" min="0" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.diameter"/>
-                                    <span class="add-on">mm</span>
-                                </div>
-                                <div class="input-prepend input-append">
-                                    <span class="add-on">±</span>
-                                    <input type="number" step="0.01" min="0" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.diameterTolerance"/>
-                                    <span class="add-on">mm</span>
+                            <div class="control-group">
+                                <label class="control-label">Color</label>
+                                <div class="row controls">
+                                    <input data-bind="textInput: spoolDialog.spoolItemForEditing.colorName"  type="text" class="input-small"  /><input id="filament-color-picker" type="text" name="border-color" class="pick-a-color form-control input-mini">
                                 </div>
                             </div>
-                        </div>
-                        <div class="control-group no-bottom-gap">
-                            <label class="control-label">Flow Rate Compensation<sup>4</sup></label>
-                            <div class="controls">
-                                <div class="input-append">
-                                    <input type="number" step="1" min="0" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.flowRateCompensation"/>
-                                    <span class="add-on">%</span>
+                            <div class="control-group">
+                                <label class="control-label">Vendor</label>
+                                <div class="controls">
+                                    <select id="spool-vendor-select" class="input-large" data-bind="options: spoolDialog.spoolItemForEditing.allVendors, value: spoolDialog.spoolItemForEditing.vendor">
+                                      <option></option>
+                                    </select>
                                 </div>
                             </div>
-                        </div>
+                            <div class="control-group no-bottom-gap">
+                                <label class="control-label">Material</label>
+                                <div class="controls">
+                                    <select id="spool-material-select" class="input-large" data-bind="options: spoolDialog.spoolItemForEditing.allMaterials, value: spoolDialog.spoolItemForEditing.material">
+                                      <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="control-group no-bottom-gap">
+                                <label class="control-label">Density <sup>2,3</sup></label>
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="number" step="0.01" min="0" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.density" />
+                                        <span class="add-on">g/cm³</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="control-group ">
+                                <label class="control-label">Diameter <sup>2</sup></label>
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="number" step="0.01" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.diameter" />
+                                        <span class="add-on">mm</span>
+                                    </div>
+                                    <div class="input-prepend input-append">
+                                        <span class="add-on">±</span>
+                                        <input type="number" step="0.01" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.diameterTolerance" />
+                                        <span class="add-on">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="control-group no-bottom-gap">
+                                <label class="control-label">Flow Rate Compensation<sup>4</sup></label>
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.flowRateCompensation" />
+                                        <span class="add-on">%</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div class="control-group no-bottom-gap">
-                            <label class="control-label">Tool/Bed<sup>4</sup></label>
-                            <div class="row controls">
-                                <div class="input-append">
-                                    <input type="number" step="1" min="0" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.temperature"/>
-                                    <span class="add-on">°C</span>
+                            <div class="control-group no-bottom-gap">
+                                <label class="control-label">Tool/Bed<sup>4</sup></label>
+                                <div class="row controls">
+                                    <div class="input-append">
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.temperature" />
+                                        <span class="add-on">°C</span>
 {#                                    </div>#}
 {##}
 {#                                    <span>&nbsp;Bed</span>#}
 {#                                    <div class="input-append">#}
-                                    <input type="number" step="1" min="0" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.bedTemperature"/>
-                                    <span class="add-on">°C</span>
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.bedTemperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="control-group ">
-                            <label class="control-label">Enclosure</label>
-                            <div class="controls">
-                                <div class="input-append">
-                                    <input type="number" step="1" min="0" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.enclosureTemperature"/>
-                                    <span class="add-on">°C</span>
+                            <div class="control-group ">
+                                <label class="control-label">Enclosure</label>
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.enclosureTemperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="control-group no-bottom-gap">
-                            <label class="control-label">Offset Tool/Bed<sup>5</sup></label>
-                            <div class="row controls">
-                                <div class="input-append">
-                                    <input type="number" step="1" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.offsetTemperature"/>
-                                    <span class="add-on">°C</span>
+                            <div class="control-group no-bottom-gap">
+                                <label class="control-label">Offset Tool/Bed<sup>5</sup></label>
+                                <div class="row controls">
+                                    <div class="input-append">
+                                        <input type="number" step="1" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.offsetTemperature" />
+                                        <span class="add-on">°C</span>
 {#                                    </div>#}
 {##}
 {#                                    <span>&nbsp;Offset Bed<sup>5</sup></span>#}
 {#                                    <div class="input-append">#}
-                                    <input type="number" step="1" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.offsetBedTemperature"/>
-                                    <span class="add-on">°C</span>
+                                        <input type="number" step="1" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.offsetBedTemperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="control-group ">
-                            <label class="control-label">Offset Enclosure<sup>5</sup></label>
-                            <div class="controls">
-                                <div class="input-append">
-                                    <input type="number" step="1" class="input-mini text-right"
-                                           data-bind="value: spoolDialog.spoolItemForEditing.offsetEnclosureTemperature"/>
-                                    <span class="add-on">°C</span>
+                            <div class="control-group ">
+                                <label class="control-label">Offset Enclosure<sup>5</sup></label>
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="number" step="1" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.offsetEnclosureTemperature" />
+                                        <span class="add-on">°C</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                         <div class="control-group"
-                              data-bind="visible: spoolDialog.isExistingSpool() && pluginSettings.qrCodeEnabled()">
-                            <label class="control-label">QR Code</label>
-                            <div class="controls">
-                                <div class="">
-<!--                                <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
-<!--                                    <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
-<!--                                </a>-->
-                                    <a data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()"
-                                       target="_new">
-                                        <img loading="lazy" class="qr-code" alt="QR Code"
-                                             data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()">
-                                    </a>
-                                </div>
-                           </div>
-                        </div>
+                             <div class="control-group" data-bind="visible: spoolDialog.isExistingSpool() && pluginSettings.qrCodeEnabled()">
+                                <label class="control-label">QR Code</label>
+                                <div class="controls">
+                                    <div class="">
+<!--                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
+<!--                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
+<!--                                        </a>-->
+                                        <a data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()" target="_new">
+                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()">
+                                        </a>
+                                    </div>
+                               </div>
+                            </div>
 
 <!-- QR-Code scanner
-                        <div class="control-group">
-                            <label class="control-label">QR/Bar-Code</label>
-                            <div class="controls">
-                                <div class="input-append">
-                                    <input class="span2" type="text" class="input-large" data-bind="value: spoolDialog.spoolItemForEditing.code" />
+                            <div class="control-group">
+                                <label class="control-label">QR/Bar-Code</label>
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input class="span2" type="text" class="input-large" data-bind="value: spoolDialog.spoolItemForEditing.code" />
 
-                                        <button class="btn" type="button">Capture</button>
-                                </div>
-                           </div>
-                        </div>
+                                            <button class="btn" type="button">Capture</button>
+                                    </div>
+                               </div>
+                            </div>
 -->
-                        <div class="control-group" style="margin-bottom: -20px;">
-                            <label class="">
-                                <div><sup>1</sup><small>Mandatory field</small></div>
-                                <div><sup>2</sup><small>Needed for filament usage prediction</small></div>
-                                <div><sup>3</sup><small>See <a
-                                        href="https://bitfab.io/blog/3d-printing-materials-densities/"
-                                        target="newTab">https://bitfab.io/blog/3d-printing-materials-densities/ (without warranty)</a></small></div>
-                                <div><sup>4</sup><small>Not send to the printer</small></div>
-                                <div><sup>5</sup><small>Temperature offset enabled via Plugin Settings -> temperature tab</small></div>
-                             </label>
+                            <div class="control-group" style="margin-bottom: -20px;">
+                                <label class="">
+                                    <div><sup>1</sup><small>Mandatory field</small></div>
+                                    <div><sup>2</sup><small>Needed for filament usage prediction</small></div>
+                                    <div><sup>3</sup><small>See <a href="https://bitfab.io/blog/3d-printing-materials-densities/" target="newTab">https://bitfab.io/blog/3d-printing-materials-densities/ (without warranty)</a></small></div>
+                                    <div><sup>4</sup><small>Not send to the printer</small></div>
+                                    <div><sup>5</sup><small>Temperature offset enabled via Plugin Settings -> temperature tab</small></div>
+                                 </label>
+                            </div>
+
                         </div>
-
-                    </div>
 <!-- RIGHT COLUMN -->
-                    <div class="span6">
-                        <div class="">
-                            <div class="row">
-                                <div class="control-group  no-bottom-gap">
-                                    <label class="control-label">Last use</label>
-                                    <div class="controls" style="display:flex">
-                                        {{ forms.datetimepicker('lastUse-date-picker', 'spoolDialog.spoolItemForEditing.lastUse') }}
+                        <div class="span6" >
+                            <div class="">
+                                <div class="row">
+                                    <div class="control-group  no-bottom-gap">
+                                        <label class="control-label">Last use</label>
+                                        <div class="controls" style="display:flex">
+                                            {{ forms.datetimepicker('lastUse-date-picker', 'spoolDialog.spoolItemForEditing.lastUse') }}
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="control-group">
-                                    <label class="control-label">First use</label>
-                                    <div class="controls">
-                                        {{ forms.datetimepicker('firstUse-date-picker', 'spoolDialog.spoolItemForEditing.firstUse') }}
+                                    <div class="control-group">
+                                        <label class="control-label">First use</label>
+                                        <div class="controls">
+                                            {{ forms.datetimepicker('firstUse-date-picker', 'spoolDialog.spoolItemForEditing.firstUse') }}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="control-group no-bottom-gap">
-                                    <label class="control-label">Purchased on</label>
-                                    <div class="controls">
-                                        {{ forms.datetimepicker('purchasedOn-date-picker', 'spoolDialog.spoolItemForEditing.purchasedOn') }}
+                                    <div class="control-group no-bottom-gap">
+                                        <label class="control-label">Purchased on</label>
+                                        <div class="controls">
+                                            {{ forms.datetimepicker('purchasedOn-date-picker', 'spoolDialog.spoolItemForEditing.purchasedOn') }}
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="control-group no-bottom-gap">
-                                    <label class="control-label">Purchased from</label>
-                                    <div class="controls">
-                                        <input type="text" class="input-xlarge text-left"
-                                               data-bind="value: spoolDialog.spoolItemForEditing.purchasedFrom"/>
+                                    <div class="control-group no-bottom-gap">
+                                        <label class="control-label">Purchased from</label>
+                                        <div class="controls">
+                                            <input type="text" class="input-xlarge text-left" data-bind="value: spoolDialog.spoolItemForEditing.purchasedFrom"/>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="control-group ">
-                                    <label class="control-label">Cost</label>
-                                    <div class="controls">
-                                        <div class="input-append">
-                                            <input type="number" step="0.01" min="0" class="input-small text-right"
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.cost"/>
-                                            <span class="add-on"
-                                                  data-bind="text: pluginSettings.currencySymbol">€</span>
+                                    <div class="control-group ">
+                                        <label class="control-label">Cost</label>
+                                        <div class="controls">
+                                            <div class="input-append">
+                                                <input type="number" step="0.01" min="0" class="input-small text-right" data-bind="value: spoolDialog.spoolItemForEditing.cost"/>
+                                                <span class="add-on" data-bind="text: pluginSettings.currencySymbol" >€</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Labels TODO FIXME
-                            <div class="row">
-                                <div class="span6 text-center">
-                                    <select id="spool-labels-select" multiple="true" data-bind="options: spoolDialog.spoolItemForEditing.allLabels, selectedOptions: spoolDialog.spoolItemForEditing.labels">
-                                    </select>
+                                <!-- Labels TODO FIXME
+                                <div class="row">
+                                    <div class="span6 text-center">
+                                        <select id="spool-labels-select" multiple="true" data-bind="options: spoolDialog.spoolItemForEditing.allLabels, selectedOptions: spoolDialog.spoolItemForEditing.labels">
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            -->
+                                -->
 
                             <div class="custom-divider"></div>
                             <div>
@@ -531,30 +498,31 @@
                             </div>
 
 
-                            <div class="row">
-                                <div class="span12 text-center">
-                                    <div class="" style="margin-top:10px">
-                                        <div class="">
+
+                                <div class="row">
+                                    <div class="span12 text-center">
+                                        <div class="" style="margin-top:10px">
+                                            <div class="">
 <!--                                                <div class="spool-note-editor-container">-->
-                                                <div id="spool-note-editor" style="min-height:120px;"></div>
-                                            <!--                                                </div>-->
+                                                    <div id="spool-note-editor" style="min-height:120px;"></div>
+<!--                                                </div>-->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
 <!-- Image scanner -->
-<!--                        <div class="control-group">-->
-<!--                            <div class="row">-->
-<!--                                <div class="span6 text-center">-->
-<!--                                    <img   src="http://localhost:5000/plugin/PrintJobHistory/static/images/janbex.png" alt=""/>-->
+<!--<div class="control-group">-->
+<!--                                <div class="row">-->
+<!--                                    <div class="span6 text-center">-->
+<!--                                         <img   src="http://localhost:5000/plugin/PrintJobHistory/static/images/janbex.png" alt=""/>-->
+<!--                                    </div>-->
 <!--                                </div>-->
-<!--                            </div>-->
-<!--                        </div>-->
+<!--</div>-->
 
 
+                            </div>
                         </div>
-                    </div>
 
                 </div>
             </form>
@@ -566,13 +534,13 @@
 
                         <button type="button" class="btn btn-danger" data-bind="visible: spoolDialog.isExistingSpool,
                                                                                 disable: printerStateViewModel.isPrinting(),
-                                                                                click: spoolDialog.deleteSpoolItem">Delete</button>
+                                                                                click: spoolDialog.deleteSpoolItem" >Delete</button>
                         <div data-bind="visible: printerStateViewModel.isPrinting()">
                             <small>Deletion during printing is not possible</small>
                         </div>
                         <button type="button" class="btn btn-warning" data-bind="visible: spoolDialog.isExistingSpool,
                                                                                 disable: printerStateViewModel.isPrinting(),
-                                                                                click: spoolDialog.copySpoolItem">Copy</button>
+                                                                                click: spoolDialog.copySpoolItem" >Copy</button>
                         <!-- visible: spoolDialog.spoolItemForEditing.selectedFromQRCode() == true,                        -->
                         <select class="span2" style="margin-bottom: 0px" data-bind="optionsCaption: 'Choose...',
                                                                                     value: spoolDialog.spoolItemForEditing.selectedForTool,
@@ -580,36 +548,26 @@
                                                                                     optionsText: function(item) {
                                                                                                     return 'Tool '+ item
                                                                                                     }"></select>
-                        <button class="btn btn-info" data-bind="click: spoolDialog.selectSpoolItemForPrinting"
-                                style="text-align:right">Select for Printing</button>
+                        <button class="btn btn-info" data-bind="click: spoolDialog.selectSpoolItemForPrinting" style="text-align:right">Select for Printing</button>
                         <label class="checkbox">
-                                <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isTemplate"> Mark as template.&nbsp;&nbsp;&nbsp;
+                                <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isTemplate" > Mark as template.&nbsp;&nbsp;&nbsp;
 
                                 <span data-bind="visible: spoolDialog.templateSpool != null && spoolDialog.templateSpool.isEmpty() == false">Current
                                     <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate() == false">
-                                        <span class="color-preview"
-                                              data-bind="style: {'background-color': spoolDialog.templateSpool.color}"
-                                              style="margin-bottom:-4px;"></span>
-                                        <span style="margin-bottom:30px"><span
-                                                data-bind="text: spoolDialog.templateSpool.material">PETG</span> - <span
-                                                data-bind="text: spoolDialog.templateSpool.displayName">Gute Spule ich schau mal was laueft</span> </span>
+                                        <span class="color-preview" data-bind="style: {'background-color': spoolDialog.templateSpool.color}" style="margin-bottom:-4px;"></span>
+                                        <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.templateSpool.material">PETG</span> - <span data-bind="text: spoolDialog.templateSpool.displayName">Gute Spule ich schau mal was laueft</span> </span>
                                     </span>
                                     <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate">
-                                        <span class="color-preview"
-                                              data-bind="style: {'background-color': spoolDialog.spoolItemForEditing.color}"
-                                              style="margin-bottom:-4px;"></span>
-                                        <span style="margin-bottom:30px"><span
-                                                data-bind="text: spoolDialog.spoolItemForEditing.material">PETG</span> - <span
-                                                data-bind="text: spoolDialog.spoolItemForEditing.displayName">Gute Spule ich schau mal was laueft</span> </span>
+                                        <span class="color-preview" data-bind="style: {'background-color': spoolDialog.spoolItemForEditing.color}" style="margin-bottom:-4px;"></span>
+                                        <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.spoolItemForEditing.material">PETG</span> - <span data-bind="text: spoolDialog.spoolItemForEditing.displayName">Gute Spule ich schau mal was laueft</span> </span>
                                     </span>
                                 </span>
                         </label>
                     </span>
                     <span class="span4 text-right">
 <!--                        data-bind="click: spoolDialog.closeSpoolItemDialog"-->
-                        <button class="btn " data-dismiss="modal" style="text-align:right">Close</button>
-                        <button class="btn btn-primary" data-bind="click: spoolDialog.saveSpoolItem"
-                                style="text-align:right">Save</button>
+                        <button class="btn "  data-dismiss="modal"  style="text-align:right">Close</button>
+                        <button class="btn btn-primary" data-bind="click: spoolDialog.saveSpoolItem" style="text-align:right">Save</button>
                     </span>
                 </div>
             </div>
@@ -617,12 +575,12 @@
     </div>
 
 
+
     <!--###############################################################  DatabaseConnectionProblem-Dialog -->
     <!-- ChangePrintStatus View - Dialog -->
     <div id="dialog_spoolManager_databaseConnectionProblem" class="modal hide fade">
         <div class="modal-header">
-            <h2 class="modal-title">SpoolManager<br/> <span
-                    data-bind="text: databaseConnectionProblemDialog.dialogTitle"></span></h2>
+            <h2 class="modal-title" >SpoolManager<br/> <span data-bind="text: databaseConnectionProblemDialog.dialogTitle"></span></h2>
         </div>
         <div class="modal-body">
             <div class="container-fluid">
@@ -640,8 +598,7 @@
             <div class="control-group">
                 <div class="controls">
 <!--                   data-bind="click: printJobEditDialog.closePrintStatusDialog"  -->
-                    <button class="btn btn-warning" data-bind="click: databaseConnectionProblemDialog.closeDialog"
-                            style="text-align:right">Confirm</button>
+                    <button class="btn btn-warning"   data-bind="click: databaseConnectionProblemDialog.closeDialog"  style="text-align:right">Confirm</button>
                 </div>
             </div>
         </div>
