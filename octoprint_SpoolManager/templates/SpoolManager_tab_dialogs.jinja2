@@ -396,7 +396,7 @@
                             <div class="custom-divider"></div>
                             <div>
                                 <div class="control-group no-bottom-gap">
-                                    <label for="driven-scope" class="control-label">Automatically calculate: </label>
+                                    <label for="driven-scope" class="control-label">Auto calculate: </label>
                                     <div class="controls">
                                         <select id="driven-scope" class="input-large"
                                                 data-bind="options: spoolDialog.spoolItemForEditing.drivenScopeOptions,
@@ -408,6 +408,12 @@
                                     </div>
                                 </div>
                                 <h4>Filament Amount <small>(Without Spool)</small></h4>
+                                <p data-bind="visible: !spoolDialog.areDensityAndDiameterValid()"><small class="text-error">
+                                    For automatic g to mm conversions, please enter <b>Density</b> and <b>Diameter</b>!
+                                </small></p>
+                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT" class="text-info">
+                                    <b>Auto calculate</b> prevents editing.
+                                </small>
                                 <div class="control-group no-bottom-gap">
                                     <label for="total-weight" class="control-label">Initial <sup>2</sup></label>
                                     <div class="controls">
@@ -473,6 +479,9 @@
 
                             <div>
                                 <h4>Spool Weight <small>(Without Filament)</small></h4>
+                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.SPOOL" class="text-info">
+                                    <b>Auto calculate</b> prevents editing.
+                                </small>
                                 <div class="control-group no-bottom-gap">
                                     <label for="spool-weight" class="control-label">Empty Spool Weight</label>
                                     <div class="controls">
@@ -489,6 +498,9 @@
 
                             <div>
                                 <h4>Combined Weight <small>(Spool + Filament)</small></h4>
+                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.COMBINED" class="text-info">
+                                    <b>Auto calculate</b> prevents editing.
+                                </small>
                                 <div class="control-group no-bottom-gap">
                                     <label class="control-label">Initial</label>
                                     <div class="controls">
@@ -501,6 +513,9 @@
                                         </span>
                                     </div>
                                 </div>
+                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.SPOOL" class="text-info">
+                                    <b>Auto calculate</b> prevents editing.
+                                </small>
                                 <div class="control-group">
                                     <label class="control-label">Remaining</label>
                                     <div class="controls">
