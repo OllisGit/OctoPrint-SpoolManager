@@ -393,52 +393,77 @@
                             </div>
                             -->
 
-
+                            <div class="custom-divider"></div>
                             <div>
-                                <h3>Filament <span style="font-size:0.7em; font-weight:normal;">(Without Empty Spool Weight)</span></h3>
+                                <div class="control-group no-bottom-gap">
+                                    <label for="driven-scope" class="control-label">Automatically calculate: </label>
+                                    <div class="controls">
+                                        <select id="driven-scope" class="input-large"
+                                                data-bind="options: spoolDialog.spoolItemForEditing.drivenScopeOptions,
+                                                           value: spoolDialog.spoolItemForEditing.drivenScope,
+                                                           optionsText: 'text',
+                                                           optionsValue: 'value'">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <h4>Filament Amount <small>(Without Spool)</small></h4>
                                 <div class="control-group no-bottom-gap">
                                     <label for="total-weight" class="control-label">Initial <sup>2</sup></label>
                                     <div class="controls">
                                         <div class="input-append">
-                                            <input id="total-weight" type="number" step="1" min="0" class="input-mini text-right"
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.totalWeight"/>
+                                            <input id="total-weight" type="number" step="0.1" min="0"
+                                                   class="input-mini text-right"
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.totalWeight,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
                                             <span class="add-on">g</span>
                                         </div>
                                          <div class="input-append">
                                             <input type="number" step="1" min="0" class="input-small text-right"
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.totalLength"/>
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.totalLength,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
                                             <span class="add-on">mm</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="control-group no-bottom-gap">
-                                    <label for="usedWeight" class="control-label">Used</label>
+                                    <label for="usedWeight" class="control-label">Used <small
+                                            data-bind="visible: !isNaN(spoolDialog.spoolItemForEditing.usedPercentage())">(<span
+                                            data-bind="text: spoolDialog.spoolItemForEditing.usedPercentage"></span>%)</small></label>
                                     <div class="controls">
                                         <div class="input-append">
-                                            <input id="usedWeight" type="number" step="0.01" min="0" class="input-mini text-right"
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.usedWeight"/>
+                                            <input id="usedWeight" type="number" step="0.1" min="0"
+                                                   class="input-mini text-right"
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.usedWeight,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
                                             <span class="add-on">g</span>
                                         </div>
                                         <span class="input-append">
                                             <input type="number" step="1" min="0" class="input-small text-right"
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.usedLength"/>
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.usedLength,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
                                             <span class="add-on">mm</span>
                                         </span>
                                     </div>
                                 </div>
                                 <div class="control-group">
-                                    <label for="remainingWeight" class="control-label">Remaining</label>
+                                    <label for="remainingWeight" class="control-label">Remaining <small
+                                            data-bind="visible: !isNaN(spoolDialog.spoolItemForEditing.remainingPercentage())">(<span
+                                            data-bind="text: spoolDialog.spoolItemForEditing.remainingPercentage"></span>%)</small></label>
                                     <div class="controls">
                                         <span class="input-append">
-                                            <input id="remainingWeight" type="number" step="0.01" min="0" class="input-mini text-right"
+                                            <input id="remainingWeight" type="number" step="0.1" min="0"
+                                                   class="input-mini text-right"
                                                    disabled
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.remainingWeight"/>
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.remainingWeight,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
                                             <span class="add-on">g</span>
                                         </span>
                                         <span class="input-append">
                                             <input type="number" step="1" min="0" disabled
                                                    class="input-small text-right"
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.remainingLength"/>
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.remainingLength,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
                                             <span class="add-on">mm</span>
                                         </span>
 
@@ -447,14 +472,15 @@
                             </div>
 
                             <div>
-                                <h3>Spool <span style="font-size:0.7em; font-weight:normal;">(Without Filament Weight)</span></h3>
+                                <h4>Spool Weight <small>(Without Filament)</small></h4>
                                 <div class="control-group no-bottom-gap">
                                     <label for="spool-weight" class="control-label">Empty Spool Weight</label>
                                     <div class="controls">
                                         <div class="input-append">
-                                            <input id="spool-weight" type="number" step="1" min="0"
+                                            <input id="spool-weight" type="number" step="0.1" min="0"
                                                    class="input-mini text-right"
-                                                   data-bind="value: spoolDialog.spoolItemForEditing.spoolWeight"/>
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.spoolWeight,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.SPOOL"/>
                                             <span class="add-on">g</span>
                                         </div>
                                     </div>
@@ -462,15 +488,14 @@
                             </div>
 
                             <div>
-                                <h3>Combined Weight <span style="font-size:0.7em; font-weight:normal;">(Spool + Filament)</span></h3>
+                                <h4>Combined Weight <small>(Spool + Filament)</small></h4>
                                 <div class="control-group no-bottom-gap">
                                     <label class="control-label">Initial</label>
                                     <div class="controls">
                                         <span class="input-append">
-                                            <input type="number" step="0.01" min="0" class="input-mini text-right"
-                                                   disabled
-{#                                                   Todo add data binding#}
-{#                                                   data-bind="value: spoolDialog.spoolItemForEditing.remainingWeight"#}
+                                            <input type="number" step="0.1" min="0" class="input-mini text-right"
+                                                   data-bind="value: spoolDialog.spoolItemForEditing.totalCombinedWeight,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.COMBINED"
                                             />
                                             <span class="add-on">g</span>
                                         </span>
@@ -480,10 +505,9 @@
                                     <label class="control-label">Remaining</label>
                                     <div class="controls">
                                         <span class="input-append">
-                                            <input type="number" step="0.01" min="0" class="input-mini text-right"
-                                                   disabled
-{#                                                   Todo add data binding#}
-{#                                                   data-bind="value: spoolDialog.spoolItemForEditing.remainingWeight"#}
+                                            <input type="number" step="0.1" min="0" class="input-mini text-right"
+                                                    data-bind="value: spoolDialog.spoolItemForEditing.remainingCombinedWeight,
+                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() !== spoolDialog.scopeValues.FILAMENT"
                                             />
                                             <span class="add-on">g</span>
                                         </span>

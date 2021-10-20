@@ -1,4 +1,9 @@
-
+.custom-divider {
+    border-top: solid 1px;
+    height: 1px;
+    margin-bottom: 1.5em;
+    opacity: 0.3;
+}
 
 .control-group.no-bottom-gap {
     margin-bottom:3px

@@ -1,69 +1,48 @@
-// START: TESTZONE
-$(function () {
-
-});
-
-
-function machwas(myObj) {
-//        $("#configFields").addClass('open');
-    //debugger
-    //$("#openConfigFields").dropdown();
-
-}
-
-/*
-    var specifiedElement = document.getElementById('configFieldsDropDown');
-
-    document.addEventListener('click', function(event) {
-        var isClickInside = specifiedElement.contains(event.target);
-        if (isClickInside) {
-          console.log('You clicked inside')
-        }
-        else {
-//          debugger
-          console.log('You clicked outside');
-
-
-          if (event.target.id == "openConfigFields" &&  $("#configFields").hasClass("open") == false){
-            $("#configFields").addClass('open');
-          } else
-
-
-          if (event.target.id != "openConfigFields" ||
-              (event.target.id == "openConfigFields" && $("#configFields").hasClass("open"))){
-              $("#configFields").removeClass('open');
-          }
-        }
-    });
-*/
-
-// END: TESTZONE
-
+ "use strict";
 function SpoolManagerEditSpoolDialog() {
 
     var self = this;
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////// ITEM MODEL
+    // ITEM MODEL
     var DEFAULT_COLOR = "#ff0000";
     var densityMap = {
-        PLA:	1.24,
-        PLA_plus:	1.24,
-        ABS:	1.04,
-        PETG:	1.27,
-        NYLON:	1.52,
-        TPU:	1.21,
-        PC:	    1.3,
-        Wood:	1.28,
-        Carbon:	1.3,
-        PC_ABS:	1.19,
-        HIPS:	1.03,
-        PVA:	1.23,
-        ASA:	1.05,
-        PP:	    0.9,
-        POM:	1.4,
-        PMMA:	1.18,
-        FPE:	2.16
+        PLA: 1.24,
+        PLA_plus: 1.24,
+        ABS: 1.04,
+        PETG: 1.27,
+        NYLON: 1.52,
+        TPU: 1.21,
+        PC: 1.3,
+        Wood: 1.28,
+        Carbon: 1.3,
+        PC_ABS: 1.19,
+        HIPS: 1.03,
+        PVA: 1.23,
+        ASA: 1.05,
+        PP: 0.9,
+        POM: 1.4,
+        PMMA: 1.18,
+        FPE: 2.16
     };
+
+    self.unitValues = {
+        WEIGHT: "weight",
+        LENGTH: "length"
+    };
+    self.stateValues = {
+        INITIAL: "initial",
+        USED: "used",
+        REMAINING: "remaining"
+    };
+    self.scopeValues = {
+        FILAMENT: "filament",
+        SPOOL: "spool",
+        COMBINED: "spool+filament"
+    };
+
+    var FILAMENT = self.scopeValues.FILAMENT;
+    var COMBINED = self.scopeValues.COMBINED;
+    var SPOOL = self.scopeValues.SPOOL;
 
     var SpoolItem = function (spoolData, editable) {
         // Init Item
@@ -72,7 +51,7 @@ function SpoolManagerEditSpoolDialog() {
         // if we just use this Item in readonly-mode we need simple ko.observer
 
         // FormatHelperFunction
-        formatOnlyDate = function (data, dateBindingName) {
+        this.formatOnlyDate = function (data, dateBindingName) {
             var dateValue = data[dateBindingName];
             if (dateValue != null && dateValue() != null && dateValue() != "") {
                 dateValue = dateValue();
@@ -132,6 +111,26 @@ function SpoolManagerEditSpoolDialog() {
         this.cost = ko.observable();
         this.costUnit = ko.observable();
 
+        // Non-persistent fields (these exist only in this view model)
+        this.totalCombinedWeight = ko.observable();
+        this.remainingCombinedWeight = ko.observable();
+        this.drivenScope = ko.observable();
+        this.drivenScopeOptions = ko.observableArray([
+            {
+                text: "Filament Weight",
+                value: FILAMENT,
+            },
+            {
+                text: "Empty Spool Weight",
+                value: SPOOL,
+            },
+            {
+                text: "Combined Weight",
+                value: COMBINED,
+            },
+        ]);
+
+
         // Assign default values for editing
         // overwrite and/or add attributes
         var vendorViewModel = self.componentFactory.createSelectWithFilter("spool-vendor-select", $('#spool-form'));
@@ -181,6 +180,7 @@ function SpoolManagerEditSpoolDialog() {
     }
 
     SpoolItem.prototype.update = function (data) {
+        self.autoUpdateEnabled = false;
         var updateData = data || {}
 
         // update latest all catalog
@@ -226,9 +226,9 @@ function SpoolManagerEditSpoolDialog() {
         this.offsetTemperature(updateData.offsetTemperature);
         this.offsetBedTemperature(updateData.offsetBedTemperature);
         this.offsetEnclosureTemperature(updateData.offsetEnclosureTemperature);
-        this.totalWeight(updateData.totalWeight);
-        this.spoolWeight(updateData.spoolWeight);
-        this.remainingWeight(updateData.remainingWeight);
+        this.totalWeight(parseFloat(updateData.totalWeight));
+        this.spoolWeight(parseFloat(updateData.spoolWeight));
+        this.remainingWeight(parseFloat(updateData.remainingWeight));
         this.remainingPercentage(updateData.remainingPercentage);
         this.code(updateData.code);
         this.usedPercentage(updateData.usedPercentage);
@@ -238,7 +238,7 @@ function SpoolManagerEditSpoolDialog() {
         this.usedLengthPercentage(updateData.usedLengthPercentage);
         this.remainingLength(updateData.remainingLength);
         this.remainingLengthPercentage(updateData.remainingLengthPercentage);
-        this.usedWeight(updateData.usedWeight);
+        this.usedWeight(parseFloat(updateData.usedWeight));
 
         this.firstUse(updateData.firstUse);
         this.lastUse(updateData.lastUse);
@@ -252,7 +252,7 @@ function SpoolManagerEditSpoolDialog() {
         // update label selections
         if (updateData.labels != null) {
             this.labels.removeAll();
-            selectedLabels = updateData.labels
+            var selectedLabels = updateData.labels
             if (Array.isArray(updateData.labels) == false) {
                 selectedLabels = JSON.parse(updateData.labels)
             }
@@ -279,10 +279,16 @@ function SpoolManagerEditSpoolDialog() {
                     self.noteEditor.setText("", 'api');
                 }
             } else {
-                deltaFormat = JSON.parse(updateData.noteDeltaFormat);
+                var deltaFormat = JSON.parse(updateData.noteDeltaFormat);
                 self.noteEditor.setContents(deltaFormat, 'api');
             }
         }
+
+        // Calculate derived fields (these exist only in this view model)
+        this.totalCombinedWeight(parseFloat(updateData.totalWeight) + parseFloat(updateData.spoolWeight));
+        this.remainingCombinedWeight(parseFloat(updateData.remainingWeight) + parseFloat(updateData.spoolWeight));
+
+        self.autoUpdateEnabled = true;
     };
 
 
@@ -384,6 +390,7 @@ function SpoolManagerEditSpoolDialog() {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////// PUBLIC
     this.initBinding = function (apiClient, pluginSettings, printerProfilesViewModel) {
+        self.autoUpdateEnabled = false;
 
         self.apiClient = apiClient;
         self.pluginSettings = pluginSettings;
@@ -427,110 +434,251 @@ function SpoolManagerEditSpoolDialog() {
                 self.spoolItemForEditing.colorName(colorName);
             }
         });
-// ----------------- start: weight stuff
-        // update used percentage
-        self.updateRemainingValues = function () {
-            var total = self.spoolItemForEditing.totalWeight();
-            var used = self.spoolItemForEditing.usedWeight();
-            // - remaining weight
-            if (total != null && used != null) {
-                if (isNaN(total) == false && isNaN(used) == false && 0 != total.length && 0 != used.length) {
-                    var remainingWeight = (total - used).toFixed(1);
-                    console.info("calculated remainWeight:" + remainingWeight);
-                    self.spoolItemForEditing.remainingWeight(remainingWeight);
-                } else {
-                    self.spoolItemForEditing.remainingWeight("");
-                }
+
+        // ----------------- start: weight stuff
+
+        var remainingWeightKo = self.spoolItemForEditing.remainingWeight;
+        var totalWeightKo = self.spoolItemForEditing.totalWeight;
+        var usedWeightKo = self.spoolItemForEditing.usedWeight;
+        var remainingCombinedWeightKo = self.spoolItemForEditing.remainingCombinedWeight;
+        var spoolWeightKo = self.spoolItemForEditing.spoolWeight;
+        var totalCombinedWeightKo = self.spoolItemForEditing.totalCombinedWeight;
+        var totalLengthKo = self.spoolItemForEditing.totalLength;
+        var usedLengthKo = self.spoolItemForEditing.usedLength;
+        var remainingLengthKo = self.spoolItemForEditing.remainingLength;
+        var densityKo = self.spoolItemForEditing.density;
+        var diameterKo = self.spoolItemForEditing.diameter;
+        var usedPercentageKo = self.spoolItemForEditing.usedPercentage;
+        var remainingPercentageKo = self.spoolItemForEditing.remainingPercentage;
+        var usedLengthPercentageKo = self.spoolItemForEditing.usedLengthPercentage;
+        var remainingLengthPercentageKo = self.spoolItemForEditing.remainingLengthPercentage;
+        var drivenScopeKo = self.spoolItemForEditing.drivenScope;
+
+        function addition(a, b) {
+            return a + b;
+        }
+
+        function subtraction(a, b) {
+            return a - b;
+        }
+
+        // Subscriptions for auto updates
+
+        totalWeightKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(totalWeightKo);
+            if (drivenScopeKo() === SPOOL) {
+                self.updateSpoolWithScopes();
             } else {
-                self.spoolItemForEditing.remainingWeight("");
+                self.updateCombinedInitialWithScopes();
             }
-            // - remaininig percentage
-            var remainingWeight = self.spoolItemForEditing.remainingWeight();
-            if (total != null && remainingWeight != null) {
-                if (isNaN(total) == false && isNaN(remainingWeight) == false) {
-                    result = Number(remainingWeight / (total / 100)).toFixed(1);
-                    self.spoolItemForEditing.remainingPercentage(result);
-                } else {
-                    self.spoolItemForEditing.remainingPercentage("");
-                }
-            }
-        }
-
-        // update updateUsedPercentage
-        self.updateUsedPercentage = function () {
-            var total = self.spoolItemForEditing.totalWeight();
-            var used = self.spoolItemForEditing.usedWeight();
-            if (total != null && used != null) {
-                if (isNaN(total) == false && isNaN(used) == false) {
-                    result = Number(used / (total / 100)).toFixed(1);
-                    self.spoolItemForEditing.usedPercentage(result);
-                } else {
-                    self.spoolItemForEditing.usedPercentage("");
-                }
-            }
-        }
-
-        self.spoolItemForEditing.totalWeight.subscribe(function (newValue) {
-            self.updateUsedPercentage();
-            self.updateRemainingValues();
+            self.updateFilamentRemainingWithStates();
+            self.doUnitConversion(totalWeightKo, totalLengthKo, self.convertToLength);
+            self.updatePercentages(usedPercentageKo, remainingPercentageKo, totalWeightKo, usedWeightKo);
+            self.resetLocksIf(iAmRootChange);
         });
-        self.spoolItemForEditing.usedWeight.subscribe(function (newValue) {
-            self.updateUsedPercentage();
-            self.updateRemainingValues();
-        });
-// ----------------- end: weight stuff
-// ----------------- start: length stuff
-        // update used percentage
-        self.updateRemainingLengthValues = function () {
-            var total = self.spoolItemForEditing.totalLength();
-            var used = self.spoolItemForEditing.usedLength();
-            // - remaining weight
-            if (total != null && used != null) {
-                if (isNaN(total) == false && isNaN(used) == false && 0 != total.length && 0 != used.length) {
-                    var remainingLength = (total - used).toFixed(0);
-                    console.info("calculated remainLength:" + remainingLength);
-                    self.spoolItemForEditing.remainingLength(remainingLength);
-                } else {
-                    self.spoolItemForEditing.remainingLength("");
-                }
-            } else {
-                self.spoolItemForEditing.remainingLength("");
-            }
-            // - remaininig percentage
-            var remainingLength = self.spoolItemForEditing.remainingLength();
-            if (total != null && remainingLength != null) {
-                if (isNaN(total) == false && isNaN(remainingLength) == false) {
-                    result = Number(remainingLength / (total / 100)).toFixed(0);
-                    self.spoolItemForEditing.remainingLengthPercentage(result);
-                } else {
-                    self.spoolItemForEditing.remainingLengthPercentage("");
-                }
-            }
-        }
 
-        // update updateUsedLengthPercentage
-        self.updateUsedLengthPercentage = function () {
-            var total = self.spoolItemForEditing.totalLength();
-            var used = self.spoolItemForEditing.usedLength();
-            if (total != null && used != null) {
-                if (isNaN(total) == false && isNaN(used) == false) {
-                    result = Number(used / (total / 100)).toFixed(1);
-                    self.spoolItemForEditing.usedLengthPercentage(result);
-                } else {
-                    self.spoolItemForEditing.usedLengthPercentage("");
-                }
-            }
-        }
+        totalLengthKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(totalLengthKo);
+            self.doUnitConversion(totalLengthKo, totalWeightKo, self.convertToWeight);
+            self.updatePercentages(usedLengthPercentageKo, remainingLengthPercentageKo, totalLengthKo, usedLengthKo);
+            self.resetLocksIf(iAmRootChange);
+        });
 
-        self.spoolItemForEditing.totalLength.subscribe(function (newValue) {
-            self.updateUsedLengthPercentage();
-            self.updateRemainingLengthValues();
+        usedWeightKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(usedWeightKo);
+            self.doUnitConversion(usedWeightKo, usedLengthKo, self.convertToLength);
+            self.updateFilamentRemainingWithStates();
+            self.updatePercentages(usedPercentageKo, remainingPercentageKo, totalWeightKo, usedWeightKo);
+            self.resetLocksIf(iAmRootChange);
         });
-        self.spoolItemForEditing.usedLength.subscribe(function (newValue) {
-            self.updateUsedLengthPercentage();
-            self.updateRemainingLengthValues();
+
+        usedLengthKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(usedLengthKo);
+            self.doUnitConversion(usedLengthKo, usedWeightKo, self.convertToWeight);
+            self.updatePercentages(usedLengthPercentageKo, remainingLengthPercentageKo, totalLengthKo, usedLengthKo);
+            self.resetLocksIf(iAmRootChange);
         });
-// ----------------- end: length stuff
+
+        remainingWeightKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(remainingWeightKo);
+            if (drivenScopeKo() === COMBINED) {
+                self.updateCombinedRemainingWithScopes();
+            }
+            self.updateFilamentUsedWithStates();
+            self.doUnitConversion(remainingWeightKo, remainingLengthKo, self.convertToLength);
+            self.updatePercentages(usedPercentageKo, remainingPercentageKo, totalWeightKo, usedWeightKo);
+            self.resetLocksIf(iAmRootChange);
+        });
+
+        remainingLengthKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(remainingLengthKo);
+            self.doUnitConversion(remainingLengthKo, remainingWeightKo, self.convertToWeight);
+            self.updatePercentages(usedLengthPercentageKo, remainingLengthPercentageKo, totalLengthKo, usedLengthKo);
+            self.resetLocksIf(iAmRootChange);
+        });
+
+        densityKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(densityKo);
+            self.convertAllUnits();
+            self.resetLocksIf(iAmRootChange);
+        })
+
+        diameterKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(diameterKo);
+            self.convertAllUnits();
+            self.resetLocksIf(iAmRootChange);
+        })
+
+        spoolWeightKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(spoolWeightKo);
+            if (drivenScopeKo() === FILAMENT) {
+                self.updateFilamentInitialWithScopes();
+            } else if (drivenScopeKo() === COMBINED) {
+                self.updateCombinedInitialWithScopes();
+                self.updateCombinedRemainingWithScopes();
+            }
+            self.resetLocksIf(iAmRootChange);
+        });
+
+        totalCombinedWeightKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(totalCombinedWeightKo);
+            if (drivenScopeKo() === FILAMENT) {
+                self.updateFilamentInitialWithScopes();
+            } else if (drivenScopeKo() === SPOOL) {
+                self.updateSpoolWithScopes();
+            }
+            self.resetLocksIf(iAmRootChange);
+        });
+
+        remainingCombinedWeightKo.subscribe(function (newValue) {
+            var iAmRootChange = self.amIRootChange(remainingCombinedWeightKo);
+            if (drivenScopeKo() === FILAMENT) {
+                self.updateFilamentRemainingWithScopes();
+            }
+            self.resetLocksIf(iAmRootChange);
+        });
+
+        // Update functions
+
+        self.updateFilamentRemainingWithStates = function () {
+            self.safeUpdate(remainingWeightKo, subtraction, [totalWeightKo, usedWeightKo]);
+        };
+
+        self.updateFilamentRemainingWithScopes = function () {
+            self.safeUpdate(remainingWeightKo, subtraction, [remainingCombinedWeightKo, spoolWeightKo]);
+        };
+
+        self.updateFilamentUsedWithStates = function () {
+            self.safeUpdate(usedWeightKo, subtraction, [totalWeightKo, remainingWeightKo]);
+        };
+
+        self.updateFilamentInitialWithScopes = function () {
+            self.safeUpdate(totalWeightKo, subtraction, [totalCombinedWeightKo, spoolWeightKo]);
+        };
+
+        self.updateSpoolWithScopes = function () {
+            self.safeUpdate(spoolWeightKo, subtraction, [totalCombinedWeightKo, totalWeightKo]);
+        };
+
+        self.updateCombinedInitialWithScopes = function () {
+            self.safeUpdate(totalCombinedWeightKo, addition, [totalWeightKo, spoolWeightKo]);
+        };
+
+        self.updateCombinedRemainingWithScopes = function () {
+            self.safeUpdate(remainingCombinedWeightKo, addition, [remainingWeightKo, spoolWeightKo]);
+        };
+
+        self.convertAllUnits = function () {
+            self.doUnitConversion(totalWeightKo, totalLengthKo, self.convertToLength);
+            self.doUnitConversion(totalLengthKo, totalWeightKo, self.convertToWeight);
+            self.doUnitConversion(usedWeightKo, usedLengthKo, self.convertToLength);
+            self.doUnitConversion(usedLengthKo, usedWeightKo, self.convertToWeight);
+            self.doUnitConversion(remainingWeightKo, remainingLengthKo, self.convertToLength);
+            self.doUnitConversion(remainingLengthKo, remainingWeightKo, self.convertToWeight);
+        };
+
+        self.doUnitConversion = function (sourceKo, targetKo, converter) {
+            var source = parseFloat(sourceKo());
+            if (isNaN(source) || !self.areDensityAndDiameterValid() || !self.getLock(targetKo)) {
+                return;
+            }
+            self.getLock(sourceKo);
+            targetKo(converter(source, parseFloat(densityKo()), parseFloat(diameterKo())));
+        };
+
+        self.updatePercentages = function (usedPercentageKo, remainPercentageKo, totalKo, usedKo) {
+            var total = parseFloat(totalKo());
+            var used = parseFloat(usedKo());
+            if (isNaN(total) || total <= 0
+                || isNaN(used) || used < 0 || used > total) {
+                usedPercentageKo(NaN);
+                remainPercentageKo(NaN);
+                return;
+            }
+            var usedPercentage = roundTo(
+                100 * used / total,
+                0
+            );
+            usedPercentageKo(usedPercentage);
+            remainPercentageKo(100 - usedPercentage);
+        };
+
+        self.safeUpdate = function (targetKo, calcFn, calcFnArguments) {
+            if (!self.getLock(targetKo)) {
+                return;
+            }
+
+            function getValueOrZero(x) {
+                return parseFloat(x()) || 0;
+            }
+
+            targetKo(roundTo(
+                calcFn.apply(null, calcFnArguments.map(getValueOrZero)),
+                1
+            ));
+        };
+
+        // helper functions
+
+        self.areDensityAndDiameterValid = function () {
+            var diameter = parseFloat(diameterKo());
+            var density = parseFloat(densityKo());
+            return (!isNaN(diameter) && diameter > 0
+                && !isNaN(density) && density > 0);
+        };
+
+        self.convertToLength = function (weight, density, diameter) {
+            var volume = weight / (density *  Math.pow(10, -3)); // [mm^3] = [g] / ( [g/cm^3] * 10^-3 )
+            var area = (Math.PI / 4) * Math.pow(diameter, 2); // [mm^2] = pi/4 * [mm]^2
+            return roundTo(volume / area, 0); // [mm] = [mm^3] / [mm^2}
+        };
+
+        self.convertToWeight = function (length, density, diameter) {
+            var area = (Math.PI / 4) * Math.pow(diameter, 2); // [mm^2] = pi/4 * [mm]^2
+            var volume = area * length; // [mm^3] = [mm^2] * [mm]
+            return roundTo(volume * density * Math.pow(10, -3), 1); // [g] = [mm^3] * [g/cm^3] * 10^3
+        };
+
+        // lock mechanism to prevent infinite update loops
+
+        self.locksOfInProgressUpdate = [];
+        self.getLock = function (updatableEntity) {
+            if (!self.autoUpdateEnabled || self.locksOfInProgressUpdate.includes(updatableEntity)) {
+                return false;
+            }
+            self.locksOfInProgressUpdate.push(updatableEntity);
+            return true;
+        };
+        self.resetLocksIf = function (condition) {
+            if (condition) {
+                self.locksOfInProgressUpdate = [];
+            }
+        };
+        self.amIRootChange = function (source) {
+            return self.locksOfInProgressUpdate.length === 0 && self.getLock(source);
+        };
+
+        // ----------------- end: length stuff
     }
 
     this.afterBinding = function () {
@@ -546,7 +694,7 @@ function SpoolManagerEditSpoolDialog() {
     }
 
     this.createSpoolItemForTable = function (spoolData) {
-        newSpoolItem = new SpoolItem(spoolData, false);
+        var newSpoolItem = new SpoolItem(spoolData, false);
         return newSpoolItem;
     }
 
@@ -563,6 +711,7 @@ function SpoolManagerEditSpoolDialog() {
     }
 
     this.showDialog = function (spoolItem, closeDialogHandler) {
+        self.autoUpdateEnabled = false;
         self.closeDialogHandler = closeDialogHandler;
         // get the current tool caunt
         self.allToolIndices([]);
@@ -577,7 +726,7 @@ function SpoolManagerEditSpoolDialog() {
         if (spoolItem == null) {
             // New Spool
             self.isExistingSpool(false);
-            templateSpoolItemCopy = ko.mapping.toJS(self.templateSpool);
+            var templateSpoolItemCopy = ko.mapping.toJS(self.templateSpool);
             self.spoolItemForEditing.update(templateSpoolItemCopy);
             // reset values for a new spool
             self.spoolItemForEditing.isTemplate(false);
@@ -591,6 +740,8 @@ function SpoolManagerEditSpoolDialog() {
             self.spoolItemForEditing.usedLength(0);
             self.spoolItemForEditing.lastUse(null);
             self.spoolItemForEditing.firstUse(null);
+            self.spoolItemForEditing.remainingCombinedWeight(0);
+            self.spoolItemForEditing.totalCombinedWeight(0);
 //            self.spoolItemForEditing.displayName(null);
 //            self.spoolItemForEditing.displayName(null);
 //            self.spoolItemForEditing.displayName(null);
@@ -598,9 +749,11 @@ function SpoolManagerEditSpoolDialog() {
         } else {
             self.isExistingSpool(true);
             // Make a copy of provided spoolItem
-            spoolItemCopy = ko.mapping.toJS(spoolItem);
+            var spoolItemCopy = ko.mapping.toJS(spoolItem);
             self.spoolItemForEditing.update(spoolItemCopy);
         }
+        self.spoolItemForEditing.drivenScope(COMBINED);
+
         self.spoolItemForEditing.isSpoolVisible(true);
 
         self.spoolDialog.modal({
@@ -616,12 +769,12 @@ function SpoolManagerEditSpoolDialog() {
                     return -($(this).width() / 2);
                 }
             });
-
+        self.autoUpdateEnabled = true;
     };
 
     this.copySpoolItem = function () {
         self.isExistingSpool(false);
-        spoolItemCopy = ko.mapping.toJS(self.spoolItemForEditing);
+        var spoolItemCopy = ko.mapping.toJS(self.spoolItemForEditing);
         self.spoolItemForEditing.update(spoolItemCopy);
         self.spoolItemForEditing.isTemplate(false);
         self.spoolItemForEditing.isActive(true);
@@ -696,4 +849,9 @@ function SpoolManagerEditSpoolDialog() {
             title: title
         }
     }
+}
+
+function roundTo(x, precision) {
+    var increments = Math.pow(10, precision);
+    return Math.round((x + Number.EPSILON) * increments) / increments;
 }
