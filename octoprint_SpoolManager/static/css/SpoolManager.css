@@ -1,3 +1,29 @@
+#sidebar_select_spool_dialog .modal-body {
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar_select_spool_dialog .modal-body > *:nth-last-child(n+2) {
+    margin-bottom: 0.5em;
+}
+
+#sidebar_select_spool_dialog .filter {
+    display: flex;
+}
+
+#sidebar_select_spool_dialog .filter > *:nth-last-child(n+2) {
+    margin-right: 1.5em;
+}
+
+#sidebar_select_spool_dialog .table {
+    margin-bottom: 0;
+}
+
+#sidebar_select_spool_dialog .spool-label {
+    display: flex;
+    align-items: center;
+}
+
 .custom-divider {
     border-top: solid 1px;
     height: 1px;
@@ -14,14 +40,11 @@
     height: 100px;
 }
 
-#sidebar_plugin_SpoolManager {
-    overflow: visible;
-}
 #selectedSpools > div {
     display: flex;
     align-items: baseline;
     min-height: 1.8em;
-    margin-bottom: 5px;
+    margin-top: 5px;
 }
 #selectedSpools > div > * {
     flex-grow: 0;
@@ -36,6 +59,7 @@
     margin-right: 0;
     vertical-align: middle;
     margin-top: -3px;
+    cursor: auto;
 }
 #selectedSpools > div > div > .btn-group {
     vertical-align: middle;
