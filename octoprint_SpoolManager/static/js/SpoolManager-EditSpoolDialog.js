@@ -38,11 +38,11 @@ $(function() {
 */
  // END: TESTZONE
 
-function SpoolManagerEditSpoolDialog() {
+function SpoolManagerEditSpoolDialog(){
 
     var self = this;
 
-    // ITEM MODEL
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////// ITEM MODEL
     var DEFAULT_COLOR = "#ff0000";
     var densityMap = {
         PLA:	1.24,
@@ -83,7 +83,7 @@ function SpoolManagerEditSpoolDialog() {
     var COMBINED = self.scopeValues.COMBINED;
     var SPOOL = self.scopeValues.SPOOL;
 
-    var SpoolItem = function (spoolData, editable) {
+    var SpoolItem = function(spoolData, editable) {
         // Init Item
 
         // if we use the Item for Editing we need to initialise the widget-model as well , e.g. Option-Values, Suggestion-List
@@ -92,7 +92,7 @@ function SpoolManagerEditSpoolDialog() {
         // FormatHelperFunction
         this.formatOnlyDate = function (data, dateBindingName) {
             var dateValue = data[dateBindingName];
-            if (dateValue != null && dateValue() != null && dateValue() != "") {
+            if (dateValue != null && dateValue() != null && dateValue() != ""){
                 dateValue = dateValue();
                 var result = dateValue.split(" ")[0];
                 return result
@@ -181,14 +181,14 @@ function SpoolManagerEditSpoolDialog() {
         this.allMaterials = materialViewModel.allOptions;
 
         // Autosuggest for "density"
-        this.material.subscribe(function (newMaterial) {
-            if ($("#dialog_spool_select").is(":visible")) {
-                if (self.spoolItemForEditing.isSpoolVisible() == true) {
+        this.material.subscribe(function(newMaterial){
+            if ($("#dialog_spool_select").is(":visible")){
+                if (self.spoolItemForEditing.isSpoolVisible() == true){
                     var mat = self.spoolItemForEditing.material();
-                    if (mat) {
+                    if (mat){
                         var density = densityMap[mat.toUpperCase()]
-                        if (density) {
-                            self.spoolItemForEditing.density(density);
+                        if (density){
+                           self.spoolItemForEditing.density(density);
                         }
                     }
                 }
@@ -196,7 +196,7 @@ function SpoolManagerEditSpoolDialog() {
         });
 
 
-        if (editable == true) {
+        if (editable == true){
             var colorViewModel = self.componentFactory.createColorPicker("filament-color-picker");
             this.color = colorViewModel.selectedColor;
             this.color(DEFAULT_COLOR);  // needed
@@ -214,6 +214,7 @@ function SpoolManagerEditSpoolDialog() {
         this.allLabels = self.labelsViewModel.allOptions;
 
 
+
         // Fill Item with data
         this.update(spoolData);
     }
@@ -223,7 +224,7 @@ function SpoolManagerEditSpoolDialog() {
         var updateData = data || {}
 
         // update latest all catalog
-        if (self.catalogs != null) {
+        if (self.catalogs != null){
             // labels
             this.allLabels.removeAll();
             ko.utils.arrayPushAll(this.allLabels, self.catalogs.labels);
@@ -251,9 +252,9 @@ function SpoolManagerEditSpoolDialog() {
         this.colorName(updateData.colorName);
         this.color(updateData.color == null ? DEFAULT_COLOR : updateData.color);
 
-        if (this.colorName() == null || this.colorName().length == 0) {
+        if (this.colorName()==null || this.colorName().length == 0){
             var colorName = tinycolor(this.color()).toName();
-            if (colorName != false) {
+            if (colorName != false){
                 this.colorName(colorName);
             }
         }
@@ -289,10 +290,10 @@ function SpoolManagerEditSpoolDialog() {
         this.costUnit(updateData.costUnit);
 
         // update label selections
-        if (updateData.labels != null) {
+        if (updateData.labels != null){
             this.labels.removeAll();
-            var selectedLabels = updateData.labels
-            if (Array.isArray(updateData.labels) == false) {
+            selectedLabels = updateData.labels
+            if (Array.isArray(updateData.labels) == false){
                 selectedLabels = JSON.parse(updateData.labels)
             }
             ko.utils.arrayPushAll(this.labels, selectedLabels);
@@ -302,22 +303,22 @@ function SpoolManagerEditSpoolDialog() {
         // fill Obseravbles
         this.noteText(updateData.noteText);
         this.noteDeltaFormat(updateData.noteDeltaFormat);
-        if (updateData.noteHtml != null) {
+        if (updateData.noteHtml != null){
             this.noteHtml(updateData.noteHtml);
         } else {
             // Fallback text
             this.noteHtml(updateData.noteText);
         }
         // fill editor
-        if (self.noteEditor != null) {
+        if (self.noteEditor != null){
             if (updateData.noteDeltaFormat == null || updateData.noteDeltaFormat.length == 0) {
                 // Fallback is text (if present), not Html
-                if (updateData.noteText != null) {
+                if (updateData.noteText != null){
                     self.noteEditor.setText(updateData.noteText, 'api');
                 } else {
                     self.noteEditor.setText("", 'api');
                 }
-            } else {
+            }else {
                 var deltaFormat = JSON.parse(updateData.noteDeltaFormat);
                 self.noteEditor.setContents(deltaFormat, 'api');
             }
@@ -376,11 +377,11 @@ function SpoolManagerEditSpoolDialog() {
 //      return iso + sign + leadingZero + Math.abs(timezoneOffsetInHours).toString() + ':00';
 //    }
 
-    self.transform2Date = function (dateValue) {
-        if (dateValue == null) {
+    self.transform2Date = function(dateValue){
+        if (dateValue == null){
             return null;
         }
-        if (dateValue instanceof Date) {
+        if (dateValue instanceof Date){
             return dateValue;
         }
         return new Date(dateValue);
@@ -404,31 +405,31 @@ function SpoolManagerEditSpoolDialog() {
 //    }
 
 
-    this._reColorFilamentIcon = function (newColor) {
+    this._reColorFilamentIcon = function(newColor){
         var loopCount = 0;
         var primaryColor = newColor; //"#FF1D25"
         var secondaryColor = tinycolor(primaryColor).darken(12).toString();
         //            console.info(primaryColor);
         //            console.info(secondaryColor);
         var svgIcon = $("#svg-filament")
-        svgIcon.children("rect").each(function (loopIndex) {
-            if (loopIndex % 2 == 0) {
+        svgIcon.children("rect").each(function(loopIndex){
+            if (loopIndex %2 == 0){
                 //Change color of filament
-                $(this).attr("fill", primaryColor);
+                $(this).attr("fill",primaryColor);
 
             } else {
                 //Change color of filament
-                $(this).attr("fill", secondaryColor);
+                $(this).attr("fill",secondaryColor);
             }
             loopCount++;
         });
-        svgIcon.children("path").each(function (loopIndex) {
-            $(this).attr("stroke", primaryColor);
+        svgIcon.children("path").each(function(loopIndex){
+            $(this).attr("stroke",primaryColor);
         });
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////// PUBLIC
-    this.initBinding = function (apiClient, pluginSettings, printerProfilesViewModel) {
+    this.initBinding = function(apiClient, pluginSettings, printerProfilesViewModel){
         self.autoUpdateEnabled = false;
 
         self.apiClient = apiClient;
@@ -447,29 +448,30 @@ function SpoolManagerEditSpoolDialog() {
 //        self.labelsViewModel.selectedOptions.push('FirstLabel','SecondLabel');
 
 
+
         self.noteEditor = new Quill('#spool-note-editor', {
             modules: {
                 toolbar: [
                     ['bold', 'italic', 'underline'],
-                    [{'color': []}, {'background': []}],
-                    [{'list': 'ordered'}, {'list': 'bullet'}],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
                     ['link']
                 ]
             },
             theme: 'snow'
         });
 
-        Quill.prototype.getHtml = function () {
+        Quill.prototype.getHtml = function() {
             return this.container.querySelector('.ql-editor').innerHTML;
         };
 
         // initial coloring
         self._createSpoolItemForEditing();
         self._reColorFilamentIcon(self.spoolItemForEditing.color());
-        self.spoolItemForEditing.color.subscribe(function (newColor) {
+        self.spoolItemForEditing.color.subscribe(function(newColor){
             self._reColorFilamentIcon(newColor);
             var colorName = tinycolor(newColor).toName();
-            if (colorName != false) {
+            if (colorName != false){
                 self.spoolItemForEditing.colorName(colorName);
             }
         });
@@ -720,49 +722,49 @@ function SpoolManagerEditSpoolDialog() {
         // ----------------- end: length stuff
     }
 
-    this.afterBinding = function () {
+    this.afterBinding = function(){
     }
 
-    this._createSpoolItemForEditing = function () {
+    this._createSpoolItemForEditing = function(){
         self.spoolItemForEditing = new SpoolItem(null, true);
         return self.spoolItemForEditing;
     }
 
-    this.createSpoolItemForTemplate = function (spoolData) {
-        self.templateSpool = new SpoolItem(spoolData, false);
+    this.createSpoolItemForTemplate = function(spoolData){
+        self.templateSpool =  new SpoolItem(spoolData, false);
     }
 
-    this.createSpoolItemForTable = function (spoolData) {
+    this.createSpoolItemForTable = function(spoolData){
         var newSpoolItem = new SpoolItem(spoolData, false);
         return newSpoolItem;
     }
 
-    this.updateCatalogs = function (catalogs) {
+    this.updateCatalogs = function(catalogs){
         self.catalogs = catalogs;
     }
 
-    this.updateTemplateSpool = function (templateSpoolData) {
-        if (self.templateSpool == null) {
+    this.updateTemplateSpool = function(templateSpoolData){
+        if (self.templateSpool == null){
             self.createSpoolItemForTemplate(templateSpoolData)
         } else {
             self.templateSpool.update(templateSpoolData);
         }
     }
 
-    this.showDialog = function (spoolItem, closeDialogHandler) {
+    this.showDialog = function(spoolItem, closeDialogHandler){
         self.autoUpdateEnabled = false;
         self.closeDialogHandler = closeDialogHandler;
         // get the current tool caunt
         self.allToolIndices([]);
         var toolCount = self.printerProfilesViewModel.currentProfileData().extruder.count();
-        for (var toolIndex = 0; toolIndex < toolCount; toolIndex++) {
+        for (var toolIndex=0; toolIndex<toolCount; toolIndex++){
             self.allToolIndices.push(toolIndex);
         }
 
         // initial coloring
         self._reColorFilamentIcon(self.spoolItemForEditing.color());
 
-        if (spoolItem == null) {
+        if (spoolItem == null){
             // New Spool
             self.isExistingSpool(false);
             var templateSpoolItemCopy = ko.mapping.toJS(self.templateSpool);
@@ -785,7 +787,7 @@ function SpoolManagerEditSpoolDialog() {
 //            self.spoolItemForEditing.displayName(null);
 //            self.spoolItemForEditing.displayName(null);
 
-        } else {
+        }else{
             self.isExistingSpool(true);
             // Make a copy of provided spoolItem
             var spoolItemCopy = ko.mapping.toJS(spoolItem);
@@ -802,16 +804,14 @@ function SpoolManagerEditSpoolDialog() {
             showClose: false,
             backdrop: "static"
         })
-            .css({
-                width: 'auto',
-                'margin-left': function () {
-                    return -($(this).width() / 2);
-                }
-            });
+        .css({
+            width: 'auto',
+            'margin-left': function() { return -($(this).width() /2); }
+        });
         self.autoUpdateEnabled = true;
     };
 
-    this.copySpoolItem = function () {
+    this.copySpoolItem = function(){
         self.isExistingSpool(false);
         var spoolItemCopy = ko.mapping.toJS(self.spoolItemForEditing);
         self.spoolItemForEditing.update(spoolItemCopy);
@@ -821,11 +821,11 @@ function SpoolManagerEditSpoolDialog() {
         self.spoolItemForEditing.isSpoolVisible(true);
     }
 
-    this.saveSpoolItem = function () {
+    this.saveSpoolItem = function(){
 
         // Input validation
         var displayName = self.spoolItemForEditing.displayName();
-        if (!displayName || displayName.trim().length === 0) {
+        if (!displayName || displayName.trim().length === 0){
             alert("Displayname not entered!");
             return;
         }
@@ -846,17 +846,17 @@ function SpoolManagerEditSpoolDialog() {
 //        self.printJobItemForEdit.noteDeltaFormat(noteDeltaFormat);
 //        self.printJobItemForEdit.noteHtml(noteHtml);
 //
-        self.apiClient.callSaveSpool(self.spoolItemForEditing, function (allPrintJobsResponse) {
+        self.apiClient.callSaveSpool(self.spoolItemForEditing, function(allPrintJobsResponse){
             self.spoolItemForEditing.isSpoolVisible(false);
             self.spoolDialog.modal('hide');
             self.closeDialogHandler(true);
         });
     }
 
-    this.deleteSpoolItem = function () {
+    this.deleteSpoolItem = function(){
         var result = confirm("Do you really want to delete this spool?");
-        if (result == true) {
-            self.apiClient.callDeleteSpool(self.spoolItemForEditing.databaseId(), function (responseData) {
+        if (result == true){
+            self.apiClient.callDeleteSpool(self.spoolItemForEditing.databaseId(), function(responseData) {
                 self.spoolItemForEditing.isSpoolVisible(false);
                 self.spoolDialog.modal('hide');
                 self.closeDialogHandler(true);
@@ -864,13 +864,13 @@ function SpoolManagerEditSpoolDialog() {
         }
     }
 
-    this.selectSpoolItemForPrinting = function () {
+    this.selectSpoolItemForPrinting = function(){
         self.spoolItemForEditing.isSpoolVisible(false);
         self.spoolDialog.modal('hide');
         self.closeDialogHandler(true, "selectSpoolForPrinting", self.spoolItemForEditing);
     }
 
-    this.generateQRCodeImageSourceAttribute = function () {
+    this.generateQRCodeImageSourceAttribute = function(){
         //
         // <img loading="lazy" className="qr-code" alt="QR Code"
         //      data-bind="attr: {src: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }"
