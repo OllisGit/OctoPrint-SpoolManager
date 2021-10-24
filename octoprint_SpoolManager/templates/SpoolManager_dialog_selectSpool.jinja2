@@ -1,11 +1,36 @@
-<div id="sidebar_select_spool_dialog" class="modal hide fade-in">
+
+<!--###############################################################  Spool SELECTION Dialog: id="dialog_spool_selection" -->
+<div id="dialog_spool_selection" class="modal hide fade-in">
     <div class="modal-header">
         <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
         <h3>Select Spool</h3>
     </div>
     <div class="modal-body">
         <div>
-            <p>Please select the spool for tool <span data-bind="text: sidebarSelectSpoolModalToolIndex()"></span></p>
+            <div>Tool <span data-bind="text: sidebarSelectSpoolModalToolIndex()"></span>:&nbsp;&nbsp;
+                <!-- ko if: sidebarSelectSpoolModalSpoolItem() -->
+                    <span class="color-preview" style="margin-bottom: -5px;"
+                          data-bind="style: {'background-color': sidebarSelectSpoolModalSpoolItem().color},
+                                     attr: { title: sidebarSelectSpoolModalSpoolItem().colorName }"></span>
+                    <span>
+                        <!-- ko if: sidebarSelectSpoolModalSpoolItem().material -->
+                        <span data-bind="text: sidebarSelectSpoolModalSpoolItem().material"></span> -
+                        <!-- /ko -->
+                        <span data-bind="text: sidebarSelectSpoolModalSpoolItem().displayName"></span>
+                        <!-- ko if: sidebarSelectSpoolModalSpoolItem().vendor -->
+                        (<span data-bind="text: sidebarSelectSpoolModalSpoolItem().vendor"></span>)
+                        <!-- /ko -->
+                        <span data-bind="text: $root.remainingText(sidebarSelectSpoolModalSpoolItem()),
+                                         attr: {title: $root.buildTooltipForSpoolItem(sidebarSelectSpoolModalSpoolItem(), 'Remaining weight: ', 'remainingWeight')}"
+                              class="spool-remaining" title="Remaining weight"></span>
+                    </span>
+                <!-- /ko -->
+                <!-- ko ifnot: sidebarSelectSpoolModalSpoolItem() -->
+                    <i>No spool selected</i>
+                <!-- /ko -->
+
+            </div>
+            <hr/>
             <div class="filter">
                 <label>
                     <input style="vertical-align:baseline" type="checkbox"

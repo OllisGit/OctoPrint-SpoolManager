@@ -1,0 +1,24 @@
+
+<!--###############################################################  CSV Import Status-Dialog: id=dialog_spoolManager_csvImportStatus -->
+<div id="dialog_spoolManager_csvImportStatus" class="modal hide fade">
+    <div class="modal-header">
+        <h3 class="modal-title">CSV Import-Status <i class="fa fa-spinner fa-spin" data-bind="visible: csvImportDialog.importInProgress"></i></h3>
+    </div>
+    <div class="modal-body">
+        <div>Status: <b data-bind="text: csvImportDialog.importStatus"></b></div>
+        <div data-bind="visible:csvImportDialog.currentLineNumber">Parsing/Importing line: <b data-bind="text: csvImportDialog.currentLineNumber"></b></div>
+        <br/>
+        <div data-bind="visible:csvImportDialog.successMessages"><b data-bind="html: csvImportDialog.successMessages"></b></div>
+        <br/>
+        <div data-bind="visible:csvImportDialog.errorMessages"><b style="color:red" data-bind="html: csvImportDialog.errorMessages"></b></div>
+        <br/>
+        <div data-bind="visible:csvImportDialog.backupFilePath">Backup Database: <b data-bind="html: csvImportDialog.backupFilePath"></b></div>
+    </div>
+    <div class="modal-footer">
+        <div class="control-group">
+            <div class="controls">
+                <button class="btn "  data-bind="disable: csvImportDialog.importInProgress, click: csvImportDialog.closeDialog" style="text-align:right">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

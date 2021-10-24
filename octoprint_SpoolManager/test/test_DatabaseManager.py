@@ -121,16 +121,16 @@ class TestDatabase(unittest.TestCase):
 		self.databaseManager.closeDatabase()
 
 	##################################################################################################   LOAD SINGLE SPOOL
-	def _test_loadSingleSpool(self):
+	def test_loadSingleSpool(self):
 
 		self.databaseManager.initDatabase(self.sqliteDatabaseSettings, self._clientOutput)
-		spool = self.databaseManager.loadSpool(1)
+		spool = self.databaseManager.loadSpool("9")
 		# import time
 		# time.sleep(3)
 		print(spool.displayName)
 
 	##################################################################################################   LOAD ALL SPOOLS
-	def test_loadAllSpools(self):
+	def _test_loadAllSpools(self):
 
 		self.databaseManager.initDatabase(self.sqliteDatabaseSettings, self._clientOutput)
 
@@ -139,7 +139,10 @@ class TestDatabase(unittest.TestCase):
 			"to": 100,
 			"sortColumn": "remaining",
 			"sortOrder": "asc",
-			"filterName": "all"
+			"filterName": "all",
+			"materialFilter": "ABS,PLA",
+			"vendorFilter": "all",
+			"colorFilter": "#ff0000;red,#ff0000;keinRot"
 		}
 
 		allSpoolModels = self.databaseManager.loadAllSpoolsByQuery(tableQuery)
@@ -149,7 +152,11 @@ class TestDatabase(unittest.TestCase):
 
 		if (allSpoolModels != None):
 			for spoolModel in allSpoolModels:
-				print("Spool:'"+spoolModel.displayName + "' Weight:'" +str(spoolModel.remainingWeight) + "'")
+				displayName = spoolModel.displayName
+				remainingWeight = str(spoolModel.remainingWeight)
+				color = spoolModel.color + " " + spoolModel.colorName
+				material = spoolModel.material
+				print("Spool:'"+ displayName + "' Color:'" + color + "' Material:'"+material+"'")
 
 	##################################################################################################   SAVE SPOOL
 	def _test_saveSpool(self):

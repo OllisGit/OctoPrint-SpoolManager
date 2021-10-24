@@ -170,6 +170,7 @@ function ComponentFactory(pluginId) {
         var select2 = $(elementSelector).select2({
           dropdownParent: dropDownParent,
           placeholder: "Choose...",
+          allowClear: true,
           tags: true
         });
 

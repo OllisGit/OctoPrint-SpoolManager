@@ -20,12 +20,35 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
     // Sorting
     self.sortColumn = ko.observable(defaultSortColumn);
     self.sortOrder = ko.observable("desc");
-    // Filterinng
+    // Filtering - all, hide empty, hide inactive
     self.filterOptions = ["all", "onlySuccess", "onlyFailed"];
     self.selectedFilterName = ko.observable(defaultFilterName);
+    // Filtering - Material
+    self.allMaterials = ko.observableArray([]);
+    self.showAllMaterialsForFilter = ko.observable(true);
+    self.selectedMaterialsForFilter = ko.observableArray();
+    // Filtering - Vendor
+    self.allVendors = ko.observableArray([]);
+    self.showAllVendorsForFilter = ko.observable(true);
+    self.selectedVendorsForFilter = ko.observableArray();
+    // Filtering - Color
+    self.allColors = ko.observableArray([]);
+    self.showAllColorsForFilter = ko.observable(true);
+    self.selectedColorsForFilter = ko.observableArray();
 
     self.isInitialLoadDone = false;
     // ############################################################################################### private functions
+
+
+    self._evalFilter = function(allItems, selectedItems){
+        var filterResult = ["all"];
+        if (allItems.length != selectedItems.length){
+            filterResult = selectedItems;
+        }
+        return filterResult;
+        // return selectedItems;
+    }
+
     self._loadItems = function(){
         var from = Math.max(self.currentPage() * self.pageSize(), 0);
 //        var to = Math.min(from + self.pageSize(), self.totalItemCount());
@@ -33,12 +56,21 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
         if (to == 0){
             to = self.pageSize();
         }
+
+        var materialFilter = self._evalFilter(self.allMaterials(), self.selectedMaterialsForFilter());
+        var vendorFilter = self._evalFilter(self.allVendors(), self.selectedVendorsForFilter());
+        var colorFilter = self._evalFilter(self.allColors(), self.selectedColorsForFilter());
+
         var tableQuery = {
+            "selectedPageSize": self.selectedPageSize(),
             "from": from,
             "to": to,
             "sortColumn": self.sortColumn(),
             "sortOrder": self.sortOrder(),
             "filterName": self.selectedFilterName(),
+            "materialFilter": materialFilter,
+            "vendorFilter": vendorFilter,
+            "colorFilter": colorFilter
         };
         self.loadItemsFunction( tableQuery, self.items, self.totalItemCount );
     }
@@ -54,15 +86,70 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
         } else {
             self.pageSize(newPageSize);
         }
+        // TODO Optimize. provide the defaultpagesize during creation of the helper (default page size)
         self._loadItems()
     });
 
+
+    self.selectedMaterialsForFilter.subscribe(function(newValues) {
+        if (self.selectedMaterialsForFilter().length > 0){
+            self.showAllMaterialsForFilter(true);
+        } else{
+            self.showAllMaterialsForFilter(false);
+        }
+        // TODO Optimize enable after the values where initialy changed
+        self.reloadItems();
+    });
+    self.selectedVendorsForFilter.subscribe(function(newValues) {
+        if (self.selectedVendorsForFilter().length > 0){
+            self.showAllVendorsForFilter(true);
+        } else{
+            self.showAllVendorsForFilter(false);
+        }
+        // TODO Optimize enable after the values where initialy changed
+        self.reloadItems();
+    });
+    self.selectedColorsForFilter.subscribe(function(newValues) {
+        if (self.selectedColorsForFilter().length > 0){
+            self.showAllColorsForFilter(true);
+        } else{
+            self.showAllColorsForFilter(false);
+        }
+
+        if (self.selectedColorsForFilter().length != 0){
+            // TODO Optimize enable after the values where initialy changed
+            self.reloadItems();
+        }
+
+    });
+
+    self._evalFilterLabel = function(allArray, selectionArray){
+        // check if all selected
+        var selectionCount = 0
+        for (let item of allArray) {
+            if (selectionArray.indexOf(item) != -1){
+                selectionCount++;
+            }
+        }
+        var allSelected = selectionCount ==  allArray.length
+        return allSelected == true ? "all" : selectionArray.length;
+    };
 
     // ################################################################################################ public functions
     self.reloadItems = function(){
         self._loadItems();
     }
 
+    self.updateCatalogs = function(catalogs){
+        self.allCatalogs = catalogs;
+        var materialsCatalog = self.allCatalogs["materials"];
+        var vendorsCatalog = self.allCatalogs["vendors"];
+        var colorsCatalog = self.allCatalogs["colors"];
+
+        self.allMaterials(materialsCatalog);
+        self.allVendors(vendorsCatalog);
+        self.allColors(colorsCatalog);
+    }
 
     self.paginatedItems = ko.dependentObservable(function() {
         if (self.items() === undefined) {
@@ -117,7 +204,72 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
         return self.selectedFilterName() == filterName;
     };
 
+    self.doFilterSelectAll = function(data, catalogName){
+        let checked;
+        switch (catalogName) {
+            case "material":
+                checked = self.showAllMaterialsForFilter();
+                if (checked == true) {
+                    self.selectedMaterialsForFilter().length = 0;
+                    ko.utils.arrayPushAll(self.selectedMaterialsForFilter, self.allMaterials());
+                } else {
+                    self.selectedMaterialsForFilter.removeAll();
+                }
+                break;
+            case "vendor":
+                checked = self.showAllVendorsForFilter();
+                if (checked == true) {
+                    self.selectedVendorsForFilter().length = 0;
+                    ko.utils.arrayPushAll(self.selectedVendorsForFilter, self.allVendors());
+                } else {
+                    self.selectedVendorsForFilter.removeAll();
+                }
+                break;
+            case "color":
+                checked = self.showAllColorsForFilter();
+                if (checked == true) {
+                    self.selectedColorsForFilter().length = 0;
+                    // we are using an colorId as a checked attribute, we can just move the color-objects to the selectedArrary
+                    // ko.utils.arrayPushAll(self.spoolItemTableHelper.selectedColorsForFilter, self.spoolItemTableHelper.allColors());
+                    for (let i = 0; i < self.allColors().length; i++) {
+                        let colorObject = self.allColors()[i];
+                        self.selectedColorsForFilter().push(colorObject.colorId);
+                    }
+                    self.selectedColorsForFilter.valueHasMutated();
+                } else {
+                    self.selectedColorsForFilter.removeAll();
+                }
+                break;
+        }
+    }
 
+    self.buildFilterLabel = function(filterLabelName){
+        // spoolItemTableHelper.selectedColorsForFilter().length == spoolItemTableHelper.allColors().length ? 'all' : spoolItemTableHelper.selectedColorsForFilter().length
+        // to detecting all, we can't use the length, because if just the color is changed then length is still true
+        // so we need to compare each value
+        if ("color" == filterLabelName){
+            var selectionArray = self.selectedColorsForFilter(); // array of colorIds [#ffa500;orange, #ffffff;white]
+            var allColorArray = self.allColors(); // array of object with 'colorId=#ffa500;orange','color=#ffa500','colorName="orange"'
+            // check if all colors selected
+            var selectionCount = 0
+            for (let colorItem of allColorArray) {
+                var colorId = colorItem.colorId;
+                if (selectionArray.indexOf(colorId) != -1){
+                    selectionCount++;
+                }
+            }
+            var allColorsSelected = selectionCount ==  allColorArray.length
+            return allColorsSelected == true ? "all" : self.selectedColorsForFilter().length;
+        }
+        if ("material" == filterLabelName){
+            return self._evalFilterLabel(self.allMaterials(), self.selectedMaterialsForFilter());
+        }
+        if ("vendor" == filterLabelName){
+            return self._evalFilterLabel(self.allVendors(), self.selectedVendorsForFilter());
+        }
+
+        return "not defined:" + filterLabelName;
+    }
 
     // ############################################## PAGING
     self.changePage = function(newPage) {

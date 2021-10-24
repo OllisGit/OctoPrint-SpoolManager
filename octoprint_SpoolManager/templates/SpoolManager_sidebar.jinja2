@@ -1,7 +1,4 @@
-{% include "SpoolManager_sidebar_dialogs.jinja2" %}
-
-<div id="sidebar_spool_select">
-    <!--   TODO support for multiple spools for multiple tools -->
+<div id="sidebar_spool_select" class="control-group">
 
     <div id="selectedSpools" data-bind="foreach: selectedSpoolsForSidebar">
         <div>
@@ -12,13 +9,13 @@
             <!-- /ko -->
             <!-- ko ifnot: $data -->
             <div class="spool-label">
-                No spool selected
+                <i>No spool selected</i>
             </div>
             <div>
                 <div class="btn-group">
                     <button class="btn btn-mini"
                             data-bind="click: $parent.sidebarOpenSelectSpoolDialog.bind($data, $index())"
-                            title="Change Spool"><span class="icon-refresh"></span></button>
+                            title="Change Spool">...</button>
                 </div>
             </div>
             <!-- /ko -->
@@ -47,7 +44,7 @@
                             title="Deselect Spool"><span class="icon-remove"></span></button>
                     <button class="btn btn-mini"
                             data-bind="click: $parent.sidebarOpenSelectSpoolDialog.bind($data, $index())"
-                            title="Change Spool"><span class="icon-refresh"></span></button>
+                            title="Change Spool">...</button>
                 </div>
             </div>
             <!-- /ko -->

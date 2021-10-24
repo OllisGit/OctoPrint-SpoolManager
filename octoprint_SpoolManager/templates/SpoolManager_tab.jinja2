@@ -43,123 +43,88 @@
                         <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('all'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('all') ? 'visible' : 'hidden'}"></i> all</a> |
                         <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideEmptySpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideEmptySpools') ? 'visible' : 'hidden'}"></i> hide empty</a> |
                         <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideInactiveSpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideInactiveSpools') ? 'visible' : 'hidden'}"></i> hide inactive</a>
-    <!--                    <a href="#" data-bind="click: function() { printJobHistoryTableHelper.changeFilter('onlyFailed'); }"><i class="icon-ok" data-bind="style: {visibility: printJobHistoryTableHelper.isFilterSelected('onlyFailed') ? 'visible' : 'hidden'}"></i> only failed</a>-->
                     </small>
                 </div>
-<!-- TODO FILTER ROW  ab hier BAUSTELLE !!!!!
-
-        <div class="dropdown pull-right tabdrop">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                <i class="icon-table"></i>
-                <b class="caret"></b>
-            </a>
-            <ul class="dropdown-menu">
-                <li>
-                ...
 
 
-    <div class="dropdown pull-right tabdrop">
-        <a href="#" data-toggle="dropdown" class="dropdown-toggle">Dropdown Form<b class="caret"></b></a>
-        <ul class="dropdown-menu">
-            <li>
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox">one
-                    </label>
+                <div class="pull-right" style="clear: both;">
+                    <small>
+                        Filter:
+                        {# Material - Filter #}
+                        <span class="dropdown  tabdrop">
+{#                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material (<span data-bind="text: spoolItemTableHelper.selectedMaterialsForFilter().length == spoolItemTableHelper.allMaterials().length#}
+{#                                                                                                                        ? 'all' : spoolItemTableHelper.selectedMaterialsForFilter().length" ></span>)#}
+                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material (<span data-bind="text: spoolItemTableHelper.buildFilterLabel('material')" ></span>)
+                            <b class="caret"></b></a>
+                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                                <li>
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" data-bind="checked:spoolItemTableHelper.showAllMaterialsForFilter , click:spoolItemTableHelper.doFilterSelectAll($data, 'material')"><i>select/deselect all</i>
+                                        </label>
+                                    </div>
+                                </li>
+                                <span data-bind="foreach: spoolItemTableHelper.allMaterials">
+                                    <li data-bind="visible: $data != ''">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.spoolItemTableHelper.selectedMaterialsForFilter"><span data-bind="text: $data"></span>
+                                            </label>
+                                        </div>
+                                    </li>
+                                </span>
+                            </ul>
+                        </span>
+                        {# Vendor - Filter #}
+                        <span class="dropdown  tabdrop">
+                            |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Vendor (<span data-bind="text: spoolItemTableHelper.buildFilterLabel('vendor')" ></span>)
+                                <b class="caret"></b></a>
+                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                                <li>
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" data-bind="checked:spoolItemTableHelper.showAllVendorsForFilter , click:spoolItemTableHelper.doFilterSelectAll($data, 'vendor')"><i>select/deselect all</i>
+                                        </label>
+                                    </div>
+                                </li>
+                                <span data-bind="foreach: spoolItemTableHelper.allVendors">
+                                    <li data-bind="visible: $data != ''">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.spoolItemTableHelper.selectedVendorsForFilter"><span data-bind="text: $data"></span>
+                                            </label>
+                                        </div>
+                                    </li>
+                                </span>
+                            </ul>
+                        </span>
+                        {# Color - Filter #}
+                        <span class="dropdown  tabdrop">
+                            |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Color (<span data-bind="text: spoolItemTableHelper.buildFilterLabel('color')" ></span>)
+                                <b class="caret"></b></a>
+
+                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                                <li>
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" data-bind="checked:spoolItemTableHelper.showAllColorsForFilter , click:spoolItemTableHelper.doFilterSelectAll($data, 'color')"><i>select/deselect all</i>
+                                        </label>
+                                    </div>
+                                </li>
+
+                                <span data-bind="foreach: spoolItemTableHelper.allColors">
+                                    <li data-bind="visible: $data.colorCode != ''">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" data-bind="checkedValue: $data.colorId, checked: $parent.spoolItemTableHelper.selectedColorsForFilter"></input><span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }" ></span><span data-bind="text: $data.colorName"></span>
+                                            </label>
+                                        </div>
+                                    </li>
+                                </span>
+                            </ul>
+                        </span>
+                    </small>
                 </div>
-            </li>
-            <li>
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox">Two
-                    </label>
-                </div>
-            </li>
-        </ul>
-    </div>
--->
-
-<!--  Filter row
-<div class="pull-right" style="clear: both;">
-Filter:
-    <div class="dropdown pull-right tabdrop">
-        <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material<b class="caret"></b></a>
-            <div class="dropdown-menu keep-open"  style="list-style-type: none;">
-                    <div data-bind="foreach: allMaterials">
-                    <div class="checkbox" >
-                        <label>
-                            <input type="checkbox" > <span data-bind="text: $data"></span>
-                        </label>
-                    </div>
-                    </div>
-
-
-            </div>
-    </div>
-
-</div>
-
-<div class="pull-right" style="clear: both;">
-    <div class="dropdown pull-right tabdrop">
-        Filter:
-        <span>
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                Material
-                <b class="caret"></b>
-            </a>
-            <div class="dropdown-menu" style="width: 220px">
-                <div style="margin-left: 10px;">Material - Filter</div>
-                <ul data-bind="foreach: allMaterials" style="list-style-type: none;">
-                    <li >
-                        <div class="control-group">
-                            <div class="controls">
-                                <label class="checkbox" style="margin-left:0px">
-                                    <input type="checkbox" data-bind="value:$data, checked:$root.selectedMaterialsForFilter"> <span data-bind="text: $data"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                    </li>
-                </ul>
-            </div>
-        </span>
-        <span>
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                |  Vendor
-                <b class="caret"></b>
-            </a>
-            <div class="dropdown-menu" style="width: 220px">
-                <div style="margin-left: 10px;">Vendor - Filter</div>
-                <ul data-bind="foreach: allVendors" style="list-style-type: none;">
-                    <li >
-                        <div class="control-group">
-                            <div class="controls">
-                                <label class="checkbox" style="margin-left:0px">
-                                    <input type="checkbox" data-bind="value:$data, checked:$root.selectedVendorsForFilter"> <span data-bind="text: $data"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                    </li>
-                </ul>
-            </div>
-        </span>
-
-        |&nbsp;&nbsp;&nbsp;
-        <a  href="#">
-            reset all filters
-            <span class="icon-remove"></span>
-        </a>
-
-    </div>
-</div>
-
-
--->
-
-
-
-
             </div>
         </div>
 
@@ -280,7 +245,8 @@ Filter:
 {#                                                                                           <span data-bind="text: usedWeight, attr: {title: $root.buildTooltipForSpoolItem($data, 'Used weight: ', 'usedWeight')}"></span>g<br/>#}
                                                                                            <span data-bind="text: remainingWeight, attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}"></span>g<br>
                 </td>
-                <td data-bind="visible: $root.tableAttributeVisibility.used" style="text-align: right;"><span data-bind="text: usedPercentage"></span>%<br><span data-bind="text: usedLength"></span>mm</td>
+                <td data-bind="visible: $root.tableAttributeVisibility.used" style="text-align: right;"><span data-bind="text: usedPercentage, attr: {title: $root.buildTooltipForSpoolItem($data, 'Used weight: ', 'usedPercentage')}"></span>%<br>
+                                                                                                        <span data-bind="text: usedLength, attr: {title: $root.buildTooltipForSpoolItem($data, 'Used length: ', 'usedLength')}"></span>mm</td>
                 <td data-bind="visible: $root.tableAttributeVisibility.note"><span data-bind="html: noteHtml, attr: { title: noteText }"></span></td>
               </tr>
             </tbody>

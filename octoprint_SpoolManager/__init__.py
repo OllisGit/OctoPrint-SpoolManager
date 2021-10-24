@@ -70,93 +70,37 @@ class SpoolmanagerPlugin(
 		Checks if all spools or single spool includes enough filament
 
 		:param forToolIndex check only for the provided toolIndex
-		:return: 'true' if filament is enough, 'false' if not
+		:return: see
 		"""
-
 		shouldWarn = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH])
-		if not shouldWarn:
-			return True
 
 		# - check, if spool change in pause-mode
 
 		# - check if new spool fits for current printjob
 		selectedSpools = self.loadSelectedSpools()
 
-		result = True
+		requiredWeightResult = self._evaluateRequiredWeight(selectedSpools, forToolIndex, shouldWarn)
+		# "metaDataMissing": metaDataMissing,
+		# "warnUser": fromPluginSettings,
+		# "attributesMissing": someAttributesMissing,
+		# "notEnough": notEnough,
+		# "detailedSpoolResult": [
+		# 				"toolIndex": toolIndex,
+		# 				"requiredWeight": requiredWeight,
+		# 				"requiredLength": filamentLength,
+		# 				"remainingWeight": remainingWeight,
+		# 				"diameter": diameter,
+		# 				"density": density,
+		# 				"notEnough": notEnough,
+		# 				"spoolSelected": True
+		# ]
 
-		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
-			if forToolIndex is not None and forToolIndex != toolIndex:
-				continue
-			selectedSpool = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
+		# for a single check, don't send the info to the browser
+		if (forToolIndex == None):
+			requiredWeightResult["action"] = "requiredFilamentChanged"
+			self._sendDataToClient(requiredWeightResult)
 
-			if selectedSpool is None:
-				continue
-
-			diameter = selectedSpool.diameter
-			density = selectedSpool.density
-			totalWeight = selectedSpool.totalWeight
-			usedWeight = selectedSpool.usedWeight
-
-			# need attributes present: diameter, density, totalWeight
-			missing_fields = []
-			if diameter is None:
-				missing_fields.append('diameter')
-			if diameter is None:
-				missing_fields.append('density')
-			if totalWeight is None:
-				missing_fields.append('total weight')
-			if usedWeight is None:
-				usedWeight = 0.0
-
-			if missing_fields:
-				self._sendMessageToClient(
-					"warning", "Filament prediction not possible!",
-					"Following fields not set in Spool '%s' (in tool %d): %s" % (selectedSpool.displayName, toolIndex, ', '.join(missing_fields))
-				)
-				result = False
-				continue
-
-			not_a_number_fields = []
-			try:
-				diameter = float(diameter)
-			except ValueError:
-				not_a_number_fields.append('diameter')
-			try:
-				density = float(density)
-			except ValueError:
-				not_a_number_fields.append('density')
-			try:
-				totalWeight = float(totalWeight)
-			except ValueError:
-				not_a_number_fields.append('totalweight')
-			try:
-				usedWeight = float(usedWeight)
-			except ValueError:
-				not_a_number_fields.append('used weight')
-
-			if not_a_number_fields:
-				self._sendMessageToClient(
-					"warning", "Filament prediction not possible!",
-					"One of the needed fields are not a number in Spool '%s' (in tool %d): %s" % (selectedSpool.displayName, toolIndex, ', '.join(not_a_number_fields))
-				)
-				result = False
-				continue
-
-			# Benötigtes Gewicht = gewicht(geplante länge, durchmesser, dichte)
-			requiredWeight = int(self._calculateWeight(filamentLength, diameter, density))
-
-			# Vorhanden Gewicht = Gesamtgewicht - Verbrauchtes Gewicht
-			remainingWeight = totalWeight - usedWeight
-
-			if remainingWeight < requiredWeight:
-				self._sendMessageToClient(
-					"warning", "Filament not enough!",
-				    "Required on tool %d: %dg, available from Spool '%s': '%dg'" % (toolIndex, requiredWeight, selectedSpool.displayName, remainingWeight)
-				)
-				result = False
-				continue
-
-		return result
+		return requiredWeightResult
 
 	def set_temp_offsets(self, toolIndex, spoolModel):
 		toolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
@@ -182,15 +126,12 @@ class SpoolmanagerPlugin(
 		self._plugin_manager.send_plugin_message(self._identifier,
 												 payloadDict)
 
-
-
 	def _sendMessageToClient(self, type, title, message):
 		self._logger.warning("SendToClient: " + type + "#" + title + "#" + message)
 		self._sendDataToClient(dict(action="showPopUp",
 									type=type,
 									title= title,
 									message=message))
-
 
 	def _checkForMissingPluginInfos(self, sendToClient=False):
 
@@ -232,6 +173,141 @@ class SpoolmanagerPlugin(
 
 		return [status, implementation]
 
+	def _readingFilamentMetaData(self):
+		filamentLengthPresentInMeta = False
+		self.metaDataFilamentLengths = []
+		if ("job" in self._printer.get_current_data()):
+			jobData = self._printer.get_current_data()["job"]
+			if ("file" in jobData):
+				fileData = jobData["file"]
+				origin = fileData["origin"]
+				path = fileData["path"]
+				if (origin !=  None and path != None):
+					metadata = self._file_manager.get_metadata(origin, path)
+					if ("analysis" in metadata):
+						if ("filament" in metadata["analysis"]):
+							for toolName, toolData in metadata["analysis"]["filament"].items():
+								toolIndex = int(toolName[4:])
+								self.metaDataFilamentLengths += [0.0] * (toolIndex + 1 - len(self.metaDataFilamentLengths))
+								self.metaDataFilamentLengths[toolIndex] = toolData["length"]
+								filamentLengthPresentInMeta = True
+		return filamentLengthPresentInMeta
+
+	def _evaluateRequiredWeight(self, selectedSpools, forToolIndex=None, warnUser=False):
+
+		self._readingFilamentMetaData()
+		metaDataMissing = len(self.metaDataFilamentLengths) <= 0
+		someAttributesMissing = False
+		overallNotEnough = False
+		requiredWeightResultDict = {
+			"metaDataMissing": metaDataMissing,
+			"warnUser": warnUser,
+			"attributesMissing": someAttributesMissing,
+			"notEnough": overallNotEnough,
+			"detailedSpoolResult": []
+		}
+		if (metaDataMissing == True):
+			return requiredWeightResultDict
+
+		# loop over all tools
+		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+			if forToolIndex is not None and forToolIndex != toolIndex:
+				continue
+			selectedSpool = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
+
+			if (selectedSpool != None):
+				diameter = selectedSpool.diameter
+				density = selectedSpool.density
+				totalWeight = selectedSpool.totalWeight
+				usedWeight = selectedSpool.usedWeight
+
+				# need attributes present: diameter, density, totalWeight
+				missing_fields = []
+				if diameter is None:
+					missing_fields.append('diameter')
+				if density is None:
+					missing_fields.append('density')
+				if totalWeight is None:
+					missing_fields.append('total weight')
+				if usedWeight is None:
+					usedWeight = 0.0
+
+				if missing_fields:
+					if (warnUser == True):
+						self._sendMessageToClient(
+							"warning", "Filament prediction not possible!",
+							"Following fields not set in Spool '%s' (in tool %d): %s" % (selectedSpool.displayName, toolIndex, ', '.join(missing_fields))
+						)
+					someAttributesMissing = True
+				else:
+					not_a_number_fields = []
+					try:
+						diameter = float(diameter)
+					except ValueError:
+						not_a_number_fields.append('diameter')
+					try:
+						density = float(density)
+					except ValueError:
+						not_a_number_fields.append('density')
+					try:
+						totalWeight = float(totalWeight)
+					except ValueError:
+						not_a_number_fields.append('totalweight')
+					try:
+						usedWeight = float(usedWeight)
+					except ValueError:
+						not_a_number_fields.append('used weight')
+
+					if not_a_number_fields:
+						if (warnUser == True):
+							self._sendMessageToClient(
+								"warning", "Filament prediction not possible!",
+								"One of the needed fields are not a number in Spool '%s' (in tool %d): %s" % (selectedSpool.displayName, toolIndex, ', '.join(not_a_number_fields))
+							)
+						someAttributesMissing = True
+					else:
+						# Benötigtes Gewicht = gewicht(geplante länge, durchmesser, dichte)
+						requiredWeight = int(self._calculateWeight(filamentLength, diameter, density))
+
+						# Vorhanden Gewicht = Gesamtgewicht - Verbrauchtes Gewicht
+						remainingWeight = totalWeight - usedWeight
+
+						notEnough = False
+						if remainingWeight < requiredWeight and requiredWeight > 0:
+							if (warnUser == True):
+								self._sendMessageToClient(
+									"warning", "Filament not enough!",
+									"Required on tool %d: %dg, available from Spool '%s': '%dg'" % (toolIndex, requiredWeight, selectedSpool.displayName, remainingWeight)
+								)
+							notEnough = True
+							overallNotEnough = True
+
+						detailedSpoolResultItem = {
+							"toolIndex": toolIndex,
+							"requiredWeight": requiredWeight,
+							"requiredLength": filamentLength,
+							"remainingWeight": remainingWeight,
+							"diameter": diameter,
+							"density": density,
+							"notEnough": notEnough,
+							"spoolSelected": True
+						}
+						requiredWeightResultDict["detailedSpoolResult"].append(detailedSpoolResultItem)
+			else:
+				# No selected spool for this tool-index, just create an simple entry
+				detailedSpoolResultItem = {
+					"toolIndex": toolIndex,
+					"requiredLength": filamentLength,
+					"spoolSelected": False,
+				}
+				requiredWeightResultDict["detailedSpoolResult"].append(detailedSpoolResultItem)
+				pass
+
+		requiredWeightResultDict["attributesMissing"] = someAttributesMissing
+		requiredWeightResultDict["notEnough"] = overallNotEnough
+
+		return requiredWeightResultDict
+
 
 	def _calculateWeight(self, length, diameter, density):
 		radius = diameter / 2.0;
@@ -253,8 +329,6 @@ class SpoolmanagerPlugin(
 		databaseSettings.fileLocation = self._databaseManager.buildDefaultDatabaseFileLocation(databaseSettings.baseFolder)
 
 		return databaseSettings
-
-
 
 	# common states: STATE_CONNECTING("Connecting"), STATE_OPERATIONAL("Operational"),
 	# STATE_STARTING("Startinf..."), STATE_PRINTING("Printing or Sendind"), STATE_CANCELLING("Cancelling"),
@@ -323,6 +397,7 @@ class SpoolmanagerPlugin(
 
 		reloadTable = False
 		selectedSpools = self.loadSelectedSpools()
+		self._readingFilamentMetaData()
 		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
 			spoolModel = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
 
@@ -391,6 +466,13 @@ class SpoolmanagerPlugin(
 	def _on_printJobFinished(self, printStatus, payload):
 		self.commitOdometerData()
 
+		# update remaining data in selected spools after a print
+		selectedSpools = self.loadSelectedSpools()
+		requiredWeightResult = self._evaluateRequiredWeight(selectedSpools, None, False)
+		requiredWeightResult["action"] = "requiredFilamentChanged"
+		self._sendDataToClient(requiredWeightResult)
+
+
 	def _on_clientOpened(self, payload):
 		# start-workaround https://github.com/foosel/OctoPrint/issues/3400
 		import time
@@ -429,26 +511,15 @@ class SpoolmanagerPlugin(
 									isFilamentManagerPluginAvailable = self._filamentManagerPluginImplementation != None,
 									pluginNotWorking = pluginNotWorking
 									))
-
+		# data for the sidebar
+		self.checkRemainingFilament()
 		pass
 
 	def _on_clientClosed(self, payload):
 		self.databaseConnectionProblemConfirmed = False
 
 	def _on_file_selectionChanged(self, payload):
-		self.metaDataFilamentLengths = []
-
-		if (payload != None and "origin" in payload and "path" in payload):
-			metadata = self._file_manager.get_metadata(payload["origin"], payload["path"])
-			if ("analysis" in metadata):
-				if ("filament" in metadata["analysis"]):
-					for toolName, toolData in metadata["analysis"]["filament"].items():
-						toolIndex = int(toolName[4:])
-						self.metaDataFilamentLengths += [0.0] * (toolIndex + 1 - len(self.metaDataFilamentLengths))
-						self.metaDataFilamentLengths[toolIndex] = toolData["length"]
-
-					self.checkRemainingFilament()
-
+		self.checkRemainingFilament()
 	pass
 
 
@@ -526,6 +597,9 @@ class SpoolmanagerPlugin(
 			self.alreadyCanceled = False
 			self._on_printJobStarted()
 
+		elif (Events.PRINT_PAUSED == event):
+			self._on_printJobFinished("paused", payload)
+
 		elif (Events.PRINT_DONE == event):
 			self._on_printJobFinished("success", payload)
 
@@ -577,7 +651,7 @@ class SpoolmanagerPlugin(
 
 		# Update Temperature Offsets
 		selectedSpools = self.loadSelectedSpools()
-
+		self._readingFilamentMetaData()
 		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
 			selectedSpool = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
 			if (selectedSpool != None):

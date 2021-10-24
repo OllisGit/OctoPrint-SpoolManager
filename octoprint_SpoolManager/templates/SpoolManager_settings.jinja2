@@ -185,7 +185,8 @@ FPE;	2.16
                                         <input id="settings-spool-importcsv-upload"
                                                type="file"
                                                name="file"
-                                               data-url="/plugin/SpoolManager/importCSV"
+{#                                               data-url="/plugin/SpoolManager/importCSV"#}
+                                               data-url="{{ url_for("plugin.SpoolManager.importSpoolData") }}"
                                                accept=".csv">
                                     </span>
                                     <span class="add-on" data-bind="text: csvFileUploadName"></span>

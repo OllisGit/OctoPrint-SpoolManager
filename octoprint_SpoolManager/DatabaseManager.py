@@ -12,6 +12,7 @@ from octoprint_SpoolManager.WrappedLoggingHandler import WrappedLoggingHandler
 from peewee import *
 
 from octoprint_SpoolManager.api import Transformer
+from octoprint_SpoolManager.common import StringUtils
 from octoprint_SpoolManager.models.BaseModel import BaseModel
 from octoprint_SpoolManager.models.PluginMetaDataModel import PluginMetaDataModel
 from octoprint_SpoolManager.models.SpoolModel import SpoolModel
@@ -279,7 +280,6 @@ class DatabaseManager(object):
 		except Exception as e:
 			self._logger.error(sqlStatement)
 			self._logger.exception(e)
-
 
 	def _upgradeFrom4To5_HACK(self, sqlStatement):
 
@@ -814,13 +814,72 @@ class DatabaseManager(object):
 			if (tableQuery == None):
 				return SpoolModel.select().order_by(SpoolModel.created.desc())
 
-			offset = int(tableQuery["from"])
-			limit = int(tableQuery["to"])
 			sortColumn = tableQuery["sortColumn"]
 			sortOrder = tableQuery["sortOrder"]
 			filterName = tableQuery["filterName"]
 
-			myQuery = SpoolModel.select().offset(offset).limit(limit)
+			if ("selectedPageSize" in tableQuery and StringUtils.to_native_str(tableQuery["selectedPageSize"]) == "all"):
+				myQuery = SpoolModel.select()
+			else:
+				offset = int(tableQuery["from"])
+				limit = int(tableQuery["to"])
+				myQuery = SpoolModel.select().offset(offset).limit(limit)
+
+			if ("materialFilter" in tableQuery):
+				materialFilter = tableQuery["materialFilter"]
+				vendorFilter = tableQuery["vendorFilter"]
+				colorFilter = tableQuery["colorFilter"]
+
+				# materialFilter
+				# u'ABS,PLA'
+				# u''
+				# u'all'
+				materialFilter = StringUtils.to_native_str(materialFilter)
+				if (materialFilter != "all"):
+					if (StringUtils.isEmpty(colorFilter)):
+						myQuery = myQuery.where( (SpoolModel.material == '') )
+					else:
+						allMaterials = materialFilter.split(",")
+						myQuery = myQuery.where(SpoolModel.material.in_(allMaterials))
+						# for material in allMaterials:
+						# 	myQuery = myQuery.orwhere((SpoolModel.material == material))
+				# vendorFilter
+				# u'MatterMost,TheFactory'
+				# u''
+				# u'all'
+				vendorFilter = StringUtils.to_native_str(vendorFilter)
+				if (vendorFilter != "all"):
+					if (StringUtils.isEmpty(vendorFilter)):
+						myQuery = myQuery.where( (SpoolModel.vendor == '') )
+					else:
+						allVendors = vendorFilter.split(",")
+						myQuery = myQuery.where(SpoolModel.vendor.in_(allVendors))
+						# for vendor in allVendors:
+						# 	myQuery = myQuery.orwhere((SpoolModel.vendor == vendor))
+				# colorFilter
+				# u'#ff0000;red,#ff0000;keinRot,#ff0000;deinRot,#ff0000;meinRot,#ffff00;yellow'
+				# u''
+				# u'all'
+				colorFilter = StringUtils.to_native_str(colorFilter)
+				if (colorFilter != "all" and StringUtils.isNotEmpty(colorFilter)):
+					allColorObjects = colorFilter.split(",")
+					allColors = []
+					allColorNames = []
+					for colorObject in allColorObjects:
+						colorCodeColorName = colorObject.split(";")
+						color = colorCodeColorName[0]
+						colorName = colorCodeColorName[1]
+						allColors.append(color)
+						allColorNames.append(colorName)
+					myQuery = myQuery.where(SpoolModel.color.in_(allColors))
+					myQuery = myQuery.where(SpoolModel.colorName.in_(allColorNames))
+
+					#
+					# 	myQuery = myQuery.orwhere(  (SpoolModel.color == color) & (SpoolModel.colorName == colorName) )
+				pass
+
+			mySqlText = myQuery.sql()
+
 			if (filterName == "hideEmptySpools"):
 				myQuery = myQuery.where( (SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None))
 			if (filterName == "hideInactiveSpools"):
@@ -943,7 +1002,6 @@ class DatabaseManager(object):
 	def loadCatalogMaterials(self, withReusedConnection=False):
 		def databaseCallMethode():
 			result = set()
-			result.add("")
 			myQuery = SpoolModel.select(SpoolModel.material).distinct()
 			for spool in myQuery:
 				value = spool.material
@@ -956,7 +1014,6 @@ class DatabaseManager(object):
 	def loadCatalogLabels(self, tableQuery, withReusedConnection=False):
 		def databaseCallMethode():
 			result = set()
-			result.add("")
 			myQuery = SpoolModel.select(SpoolModel.labels).distinct()
 			for spool in myQuery:
 				value = spool.labels
@@ -967,6 +1024,23 @@ class DatabaseManager(object):
 			return result
 
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogLabels", set())
+
+	def loadCatalogColors(self, withReusedConnection=False):
+		def databaseCallMethode():
+			result = []
+			myQuery = SpoolModel.select(SpoolModel.color, SpoolModel.colorName).distinct()
+			for spool in myQuery:
+				value = spool.color
+				if (value != None):
+					colorInfo = {
+						"colorId": spool.color + ";" + spool.colorName,
+						"color": spool.color,
+						"colorName": spool.colorName
+					}
+					result.append(colorInfo)
+			return result;
+
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogColors", set())
 
 	def deleteSpool(self, databaseId, withReusedConnection=False):
 		def databaseCallMethode():
