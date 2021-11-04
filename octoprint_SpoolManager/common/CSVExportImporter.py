@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import io
 from io import StringIO
 import csv
@@ -16,6 +18,7 @@ COLUMN_COLOR_NAME = "Color Name"
 COLUMN_COLOR_CODE = "Color Code [hex]"
 COLUMN_VENDOR = "Vendor"
 COLUMN_MATERIAL = "Material"
+COLUMN_SERIALNUMBER = "Serialnumber"
 COLUMN_DENSITY = "Density [g/cm3]"
 COLUMN_DIAMETER = "Diameter [mm]"
 COLUMN_DIAMETER_TOLERANCE = "Diameter Tolerance[mm]"
@@ -91,6 +94,11 @@ class DefaultCSVFormattorParser:
 		if ("" == fieldValue or "-" == fieldValue or fieldValue == None):
 			# check if mandatory
 			return
+
+		# TODO custom color-code parser: rules all lowercase and #fff == #ffffff
+		if ("color" == fieldName):
+			fieldValue = fieldValue.lower()
+
 		setattr(printJobModel, fieldName, fieldValue)
 
 class DateTimeCSVFormattorParser:
@@ -184,6 +192,7 @@ ALL_COLUMNS_SORTED = [
 	COLUMN_COLOR_CODE,
 	COLUMN_VENDOR,
 	COLUMN_MATERIAL,
+	COLUMN_SERIALNUMBER,
 	COLUMN_DENSITY,
 	COLUMN_DIAMETER,
 	COLUMN_DIAMETER_TOLERANCE,
@@ -215,6 +224,7 @@ ALL_COLUMNS = {
 	COLUMN_COLOR_CODE: CSVColumn("color", COLUMN_COLOR_CODE, "", DefaultCSVFormattorParser()),
 	COLUMN_VENDOR: CSVColumn("vendor", COLUMN_VENDOR, "", DefaultCSVFormattorParser()),
 	COLUMN_MATERIAL: CSVColumn("material", COLUMN_MATERIAL, "", DefaultCSVFormattorParser()),
+	COLUMN_SERIALNUMBER: CSVColumn("code", COLUMN_SERIALNUMBER, "", DefaultCSVFormattorParser()),
 	COLUMN_DENSITY: CSVColumn("density", COLUMN_DENSITY, "", NumberCSVFormattorParser()),
 	COLUMN_DIAMETER: CSVColumn("diameter", COLUMN_DIAMETER, "", NumberCSVFormattorParser()),
 	COLUMN_DIAMETER_TOLERANCE: CSVColumn("diameterTolerance", COLUMN_DIAMETER_TOLERANCE, "", NumberCSVFormattorParser()),
@@ -291,7 +301,6 @@ mandatoryFieldNames = [
 
 columnOrderInFile = dict()
 
-
 def parseCSV(csvFile4Import, updateParsingStatus, errorCollection, logger, deleteAfterParsing=True):
 
 	result = list()	# List with printJobModels
@@ -363,3 +372,36 @@ def parseCSV(csvFile4Import, updateParsingStatus, errorCollection, logger, delet
 			except Exception:
 				pass
 	return result
+
+######################################################################################################## -> SAMPLE SPOOL
+def createSampleSpoolModel():
+	#DisplayName, Vendor, Material, Color[# code], Diameter [mm], Density [g/cm³], Temperature [°C], TotalWeight [g], UsedWeight [g], UsedLength [mm], FirstUse [dd.mm.yyyy hh:mm], LastUse [dd.mm.yyyy hh:mm], PurchasedFrom, PurchasedOn [dd.mm.yyyy hh:mm], Cost, CostUnit, Labels, NoteText
+
+	s1 = SpoolModel()
+	s1.displayName = "Sample Spool #1"
+	s1.colorName = "raw-red"
+	s1.color = "#FF0000"
+	s1.vendor = "The Spool Company"
+	s1.material = "PETG"
+	s1.code = "X000SKGR05"
+	s1.diameter = 1.75
+	s1.diameterTolerance = 0.2
+	s1.density = 1.27
+	s1.flowRateCompensation = 110
+	s1.temperature = 182
+	s1.bedtemperature = 52
+	s1.enclosureTemperature = 23
+	s1.totalWeight = 1000.0
+	s1.spoolWeight = 12.3
+	s1.usedWeight = 123.4
+	s1.totalLength = 1321
+	s1.usedLength = 234
+	s1.lastUse = datetime.datetime.now()
+
+	s1.firstUse = datetime.datetime.strptime("2020-03-02 10:33", '%Y-%m-%d %H:%M')
+	s1.purchasedOn = datetime.datetime.strptime("2020-02-01", '%Y-%m-%d')
+	s1.purchasedFrom = "Unknown Seller"
+	s1.cost = "12.30"
+	s1.costUnit = "€"
+	s1.noteText = "Very cheap spool!"
+	return s1

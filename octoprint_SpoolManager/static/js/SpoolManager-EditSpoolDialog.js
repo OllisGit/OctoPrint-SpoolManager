@@ -1,4 +1,3 @@
-"use strict";
  // START: TESTZONE
 $(function() {
 
@@ -90,7 +89,7 @@ function SpoolManagerEditSpoolDialog(){
         // if we just use this Item in readonly-mode we need simple ko.observer
 
         // FormatHelperFunction
-        this.formatOnlyDate = function (data, dateBindingName) {
+        formatOnlyDate = function (data, dateBindingName) {
             var dateValue = data[dateBindingName];
             if (dateValue != null && dateValue() != null && dateValue() != ""){
                 dateValue = dateValue();
@@ -182,7 +181,7 @@ function SpoolManagerEditSpoolDialog(){
 
         // Autosuggest for "density"
         this.material.subscribe(function(newMaterial){
-            if ($("#dialog_spool_select").is(":visible")){
+            if ($("#dialog_spool_edit").is(":visible")){
                 if (self.spoolItemForEditing.isSpoolVisible() == true){
                     var mat = self.spoolItemForEditing.material();
                     if (mat){
@@ -194,7 +193,6 @@ function SpoolManagerEditSpoolDialog(){
                 }
             }
         });
-
 
         if (editable == true){
             var colorViewModel = self.componentFactory.createColorPicker("filament-color-picker");
@@ -210,10 +208,8 @@ function SpoolManagerEditSpoolDialog(){
         }
 
         self.labelsViewModel = self.componentFactory.createLabels("spool-labels-select", $('#spool-form'));
-        this.labels = self.labelsViewModel.selectedOptions;
+        this.labels   = self.labelsViewModel.selectedOptions;
         this.allLabels = self.labelsViewModel.allOptions;
-
-
 
         // Fill Item with data
         this.update(spoolData);
@@ -319,8 +315,8 @@ function SpoolManagerEditSpoolDialog(){
                     self.noteEditor.setText("", 'api');
                 }
             }else {
-                var deltaFormat = JSON.parse(updateData.noteDeltaFormat);
-                self.noteEditor.setContents(deltaFormat, 'api');
+                    deltaFormat = JSON.parse(updateData.noteDeltaFormat);
+                    self.noteEditor.setContents(deltaFormat, 'api');
             }
         }
 
@@ -436,7 +432,7 @@ function SpoolManagerEditSpoolDialog(){
         self.pluginSettings = pluginSettings;
         self.printerProfilesViewModel = printerProfilesViewModel;
 
-        self.spoolDialog = $("#dialog_spool_select");
+        self.spoolDialog = $("#dialog_spool_edit");
 //        self.firstUseDatePickerModel = self.componentFactory.createDatePicker("firstUse-date-container");
 ////        self.firstUseDatePickerModel.currentDate(new Date(2014, 1, 14));
 //
@@ -767,7 +763,7 @@ function SpoolManagerEditSpoolDialog(){
         if (spoolItem == null){
             // New Spool
             self.isExistingSpool(false);
-            var templateSpoolItemCopy = ko.mapping.toJS(self.templateSpool);
+            templateSpoolItemCopy = ko.mapping.toJS(self.templateSpool);
             self.spoolItemForEditing.update(templateSpoolItemCopy);
             // reset values for a new spool
             self.spoolItemForEditing.isTemplate(false);
@@ -790,7 +786,7 @@ function SpoolManagerEditSpoolDialog(){
         }else{
             self.isExistingSpool(true);
             // Make a copy of provided spoolItem
-            var spoolItemCopy = ko.mapping.toJS(spoolItem);
+            spoolItemCopy = ko.mapping.toJS(spoolItem);
             self.spoolItemForEditing.update(spoolItemCopy);
         }
         self.spoolItemForEditing.drivenScope(COMBINED);
@@ -798,7 +794,6 @@ function SpoolManagerEditSpoolDialog(){
         self.spoolItemForEditing.isSpoolVisible(true);
 
         self.spoolDialog.modal({
-            //minHeight: function() { return Math.max($.fn.modal.defaults.maxHeight() - 80, 250); }
             keyboard: false,
             clickClose: true,
             showClose: false,
@@ -808,12 +803,31 @@ function SpoolManagerEditSpoolDialog(){
             width: 'auto',
             'margin-left': function() { return -($(this).width() /2); }
         });
+
+
+
+            // // show settings, ensure centered position
+            // self.settingsDialog
+            //     .modal({
+            //         minHeight: function () {
+            //             return Math.max($.fn.modal.defaults.maxHeight() - 80, 250);
+            //         }
+            //     })
+            //     .css({
+            //         "width": "auto",
+            //         "margin-left": function () {
+            //             return -($(this).width() / 2);
+            //         }
+            //     });
+
+
+
         self.autoUpdateEnabled = true;
     };
 
     this.copySpoolItem = function(){
         self.isExistingSpool(false);
-        var spoolItemCopy = ko.mapping.toJS(self.spoolItemForEditing);
+        spoolItemCopy = ko.mapping.toJS(self.spoolItemForEditing);
         self.spoolItemForEditing.update(spoolItemCopy);
         self.spoolItemForEditing.isTemplate(false);
         self.spoolItemForEditing.isActive(true);
@@ -849,7 +863,8 @@ function SpoolManagerEditSpoolDialog(){
         self.apiClient.callSaveSpool(self.spoolItemForEditing, function(allPrintJobsResponse){
             self.spoolItemForEditing.isSpoolVisible(false);
             self.spoolDialog.modal('hide');
-            self.closeDialogHandler(true);
+            // var specialCloseAction = self.isExistingSpool() == false ? "saveNewSpool"
+            self.closeDialogHandler(true, "save");
         });
     }
 
@@ -867,7 +882,7 @@ function SpoolManagerEditSpoolDialog(){
     this.selectSpoolItemForPrinting = function(){
         self.spoolItemForEditing.isSpoolVisible(false);
         self.spoolDialog.modal('hide');
-        self.closeDialogHandler(true, "selectSpoolForPrinting", self.spoolItemForEditing);
+        self.closeDialogHandler(false, "selectSpoolForPrinting", self.spoolItemForEditing);
     }
 
     this.generateQRCodeImageSourceAttribute = function(){
@@ -880,7 +895,7 @@ function SpoolManagerEditSpoolDialog(){
         // var windowsLocation = window.location.origin;
         // var windowsLocationEncoded = encodeURIComponent(windowsLocation);
         // var source = "/plugin/SpoolManager/generateQRCode/" + self.spoolItemForEditing.databaseId() + "?windowlocation="+windowsLocationEncoded;
-        var source = "/plugin/SpoolManager/generateQRCode/" + self.spoolItemForEditing.databaseId();
+        var source = PLUGIN_BASEURL + "SpoolManager/generateQRCode/" + self.spoolItemForEditing.databaseId();
         var title = "QR-Code for " + self.spoolItemForEditing.displayName();
         return {
             src: source,

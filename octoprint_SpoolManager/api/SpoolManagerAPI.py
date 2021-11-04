@@ -141,39 +141,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		return spoolModelList
 
-	def _createSampleSpoolModel(self):
-		#DisplayName, Vendor, Material, Color[# code], Diameter [mm], Density [g/cm³], Temperature [°C], TotalWeight [g], UsedWeight [g], UsedLength [mm], FirstUse [dd.mm.yyyy hh:mm], LastUse [dd.mm.yyyy hh:mm], PurchasedFrom, PurchasedOn [dd.mm.yyyy hh:mm], Cost, CostUnit, Labels, NoteText
-
-		s1 = SpoolModel()
-		s1.displayName = "Number #1"
-		s1.colorName = "raw-red"
-		s1.color = "#FF0000"
-		s1.vendor = "The Spool Company"
-		s1.material = "PETG"
-		s1.diameter = 1.75
-		s1.diameterTolerance = 0.2
-		s1.density = 1.27
-		s1.flowRateCompensation = 110
-		s1.temperature = 182
-		s1.bedtemperature = 52
-		s1.enclosureTemperature = 23
-		s1.totalWeight = 1000.0
-		s1.spoolWeight = 12.3
-		s1.usedWeight = 123.4
-		s1.totalLength = 1321
-		s1.usedLength = 234
-		s1.lastUse = datetime.datetime.now()
-
-		s1.firstUse = datetime.datetime.strptime("2020-03-02 10:33", '%Y-%m-%d %H:%M')
-		s1.purchasedOn = datetime.datetime.strptime("2020-02-01", '%Y-%m-%d')
-		s1.purchasedFrom = "Unknown Seller"
-		s1.cost = "12.30"
-		s1.costUnit = "€"
-		s1.noteText = "Very cheap spool!"
-		return s1
-
-
-
 	def _createSpoolModelFromLegacy(self, allSpoolLegacyList):
 		allSpoolModels = list()
 		for spoolDict in allSpoolLegacyList:
@@ -208,7 +175,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			allSpoolModels.append(spoolModel)
 
 		return allSpoolModels
-
 
 	def _calculateUsedLength(self, usedWeight, density, diameter):
 		if (diameter == None or density == None or usedWeight == None):
@@ -289,7 +255,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		allSpoolModels = list()
 
-		spoolModel = self._createSampleSpoolModel()
+		spoolModel = CSVExportImporter.createSampleSpoolModel()
 		allSpoolModels.append(spoolModel)
 		return Response(CSVExportImporter.transform2CSV(allSpoolModels),
 						mimetype='text/csv',
@@ -304,16 +270,23 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		reminderSelectingSpool = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_REMINDER_SELECTING_SPOOL])
 
 		spoolModels = self.loadSelectedSpools()
+		metaOrAttributesMissing = False
 		result = {
 			'noSpoolSelected': [],
 			'filamentNotEnough': [],
 			'reminderSpoolSelection': [],
 		}
-		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+
+		filamentLengthPresentInMeta = self._readingFilamentMetaData()
+		printer_profile = self._printer_profile_manager.get_current_or_default()
+		printerProfileToolCount = printer_profile['extruder']['count']
+		# for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+		for toolIndex in range(printerProfileToolCount):
 			# we go over the filamentlength because those are what matters for this print
-			if not filamentLength:
-				# if this tool is not used in this print, everything is fine
-				continue
+			if filamentLengthPresentInMeta:
+				if toolIndex >= len(self.metaDataFilamentLengths):
+					# if this tool is not used (no filaLenght) in this print, everything is fine
+					continue
 
 			spoolModel = spoolModels[toolIndex] if toolIndex < len(spoolModels) else None
 
@@ -327,23 +300,71 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				"enclosureOffset": spoolModel.offsetEnclosureTemperature if spoolModel else ''
 			}
 
-			if spoolModel is not None:
-				if not self.checkRemainingFilament(toolIndex):
-					result['filamentNotEnough'].append(infoData)
-				result['reminderSpoolSelection'].append(infoData)
+			requiredWeightResult = self.checkRemainingFilament(toolIndex)
+			# "metaDataMissing": metaDataMissing,
+			# "warnUser": fromPluginSettings,
+			# "attributesMissing": someAttributesMissing,
+			# "notEnough": notEnough,
+			# "detailedSpoolResult": [
+			# 				"toolIndex": toolIndex,
+			# 				"requiredWeight": requiredWeight,
+			# 				"requiredLength": filamentLength,
+			# 				"remainingWeight": remainingWeight,
+			# 				"diameter": diameter,
+			# 				"density": density,
+			# 				"notEnough": notEnough,
+			# 				"spoolSelected": True
+			# ]
+			if (requiredWeightResult["metaDataMissing"] == True or requiredWeightResult["attributesMissing"] == True):
+				metaOrAttributesMissing = True
+
+			detailedSpoolResult = None
+			if ("detailedSpoolResult" in requiredWeightResult and len(requiredWeightResult["detailedSpoolResult"]) > 0):
+				detailedSpoolResult = requiredWeightResult["detailedSpoolResult"][0]
+
+			if spoolModel is not None and detailedSpoolResult is not None and detailedSpoolResult["spoolSelected"] == True:
+
+				if (detailedSpoolResult["requiredLength"] > 0):
+					if (detailedSpoolResult["notEnough"] == True):
+						# if not enough or needed amount could not calculated
+						result['filamentNotEnough'].append(infoData)
+					# add every spool for reminding, if more the 0gr is needed
+					result['reminderSpoolSelection'].append(infoData)
 			elif checkForSelectedSpool:
-				result['noSpoolSelected'].append(infoData)
+				if (detailedSpoolResult is not None):
+					if (detailedSpoolResult["requiredLength"] > 0):
+						result['noSpoolSelected'].append(infoData)
+				else:
+					result['noSpoolSelected'].append(infoData)
+
+			# 	if (metaNotPresent or
+			# 		attributesMissing or
+			# 		notEnough
+			# 	):
+			# 		# if not enough or needed amount could not calculated
+			# 		result['filamentNotEnough'].append(infoData)
+			# 		if (metaNotPresent or
+			# 			attributesMissing):
+			# 			metaOrAttributesMissing = True
+			#
+			# 	# add every spool for reminding
+			# 	result['reminderSpoolSelection'].append(infoData)
+			# elif checkForSelectedSpool:
+			# 	# if no metatdata is present we cant check if this tool is needed, so we cant inform the user that a selection is missing
+			# 	if (filamentLengthPresentInMeta == True):
+			# 		result['noSpoolSelected'].append(infoData)
 
 		# check if the user want a popup
 		if (checkForFilamentLength == False):
 			result['filamentNotEnough'] = []
 
 		if (reminderSelectingSpool == False):
-			# no popup, because turned off
+			# no popup, because turned off by user
 			result['reminderSpoolSelection'] = []
 
 		return flask.jsonify({
 			"result": result,
+			"metaOrAttributesMissing": metaOrAttributesMissing,
 			"toolOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED]),
 			"bedOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED]),
 			"enclosureOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED]),
@@ -352,11 +373,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	#####################################################################################################   SELECT SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/selectSpool", methods=["PUT"])
 	def select_spool(self):
-		self._logger.info("API Store selected spool")
 		jsonData = request.json
 
-		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
-		toolIndex = self._getValueFromJSONOrNone("toolIndex", jsonData)
+		databaseId = self._toIntFromJSONOrNone("databaseId", jsonData)
+		toolIndex = self._toIntFromJSONOrNone("toolIndex", jsonData)
 
 		if self._printer.is_printing():
 			# changing a spool mid-print? we want to know
@@ -379,6 +399,8 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			self.set_temp_offsets(toolIndex, spoolModel)
 		except Exception as e:
 			self._sendMessageToClient("warning", "Temperature offsets failed to set!", str(e))
+
+		self.checkRemainingFilament()
 
 		return flask.jsonify({
 								"selectedSpool": spoolModelAsDict
@@ -406,6 +428,9 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		else:
 			abort(404)
 
+	# hmmm..TODO not fully tested
+	def is_blueprint_protected(self):
+		return False  # No API key required to request API access
 
 	#####################################################################################################   GENERATE QR FOR SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/generateQRCode/<int:databaseId>", methods=["GET"])
@@ -426,7 +451,9 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				error_correction=qrcode.constants.ERROR_CORRECT_H
 			)
 
-			qrMaker.add_data(flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, _scheme="https", databaseId=databaseId))
+			# spoolSelectionUrl = flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, _scheme="https", databaseId=databaseId)
+			spoolSelectionUrl = flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, databaseId=databaseId)
+			qrMaker.add_data(spoolSelectionUrl)
 			qrMaker.make(fit=True, )
 
 			fillColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR])
@@ -670,7 +697,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 	##################################################################################################   LOAD ALL SPOOLS
 	@octoprint.plugin.BlueprintPlugin.route("/loadSpoolsByQuery", methods=["GET"])
-	def loadAllSpools(self):
+	def loadAllSpoolsByQuery(self):
 
 		self._logger.debug("API Load all spool")
 		# sp1 = SpoolModel()
@@ -711,6 +738,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		vendors = list(self._databaseManager.loadCatalogVendors(tableQuery))
 		materials = list(self._databaseManager.loadCatalogMaterials(tableQuery))
 		labels = list(self._databaseManager.loadCatalogLabels(tableQuery))
+		colors = list(self._databaseManager.loadCatalogColors(tableQuery))
 
 		materials = self._addAdditionalMaterials(materials)
 
@@ -724,6 +752,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		catalogs = {
 			"vendors": vendors,
 			"materials": materials,
+			"colors": colors,
 			"labels": labels
 		}
 		# catalogs = {
@@ -794,6 +823,9 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		databaseId = self._databaseManager.saveSpool(spoolModel, withReusedConnection=True)
 		self._databaseManager.closeDatabase()
+
+		# data for the sidebar
+		self.checkRemainingFilament()
 
 		return flask.jsonify()
 

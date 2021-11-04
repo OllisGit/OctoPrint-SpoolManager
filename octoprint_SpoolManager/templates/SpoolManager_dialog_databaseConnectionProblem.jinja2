@@ -1,0 +1,27 @@
+
+<!--###############################################################  DatabaseConnectionProblem-Dialog: id="dialog_spoolManager_databaseConnectionProblem" -->
+<div id="dialog_spoolManager_databaseConnectionProblem" class="modal hide fade">
+    <div class="modal-header">
+        <h2 class="modal-title" >SpoolManager<br/> <span data-bind="text: databaseConnectionProblemDialog.dialogTitle"></span></h2>
+    </div>
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="centering">
+                    <font color="red">
+                        <div data-bind="text: databaseConnectionProblemDialog.dialogMessage"></div>
+                    </font>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-footer">
+        <div class="control-group">
+            <div class="controls">
+<!--                   data-bind="click: printJobEditDialog.closePrintStatusDialog"  -->
+                <button class="btn btn-warning"   data-bind="click: databaseConnectionProblemDialog.closeDialog"  style="text-align:right">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>

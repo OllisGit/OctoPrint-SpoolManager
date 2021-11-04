@@ -5,7 +5,6 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
     this.pluginId = pluginId;
     this.baseUrl = baseUrl;
 
-
     // see https://gomakethings.com/how-to-build-a-query-string-from-an-object-with-vanilla-js/
     var _buildRequestQuery = function (data) {
         // If the data is already a string, return it as-is
