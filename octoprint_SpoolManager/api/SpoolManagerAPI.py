@@ -66,9 +66,12 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModel.usedWeight = self._toFloatFromJSONOrNone("usedWeight", jsonData)
 		spoolModel.code = self._getValueFromJSONOrNone("code", jsonData)
 
-		spoolModel.firstUse = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("firstUse", jsonData))
-		spoolModel.lastUse = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("lastUse", jsonData))
-		spoolModel.purchasedOn = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("purchasedOn", jsonData))
+		# spoolModel.firstUse = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("firstUse", jsonData))
+		# spoolModel.lastUse = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("lastUse", jsonData))
+		# spoolModel.purchasedOn = StringUtils.transformToDateTimeOrNone(self._getValueFromJSONOrNone("purchasedOn", jsonData))
+		spoolModel.firstUse = StringUtils.transformFromIsoToDateTimeOrNone(self._getValueFromJSONOrNone("firstUseKO", jsonData))
+		spoolModel.lastUse = StringUtils.transformFromIsoToDateTimeOrNone(self._getValueFromJSONOrNone("lastUseKO", jsonData))
+		spoolModel.purchasedOn = StringUtils.transformFromIsoToDateTimeOrNone(self._getValueFromJSONOrNone("purchasedOnKO", jsonData))
 
 		spoolModel.purchasedFrom = self._getValueFromJSONOrNone("purchasedFrom", jsonData)
 		spoolModel.cost = self._toFloatFromJSONOrNone("cost", jsonData)
@@ -209,7 +212,22 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				# assign model to selected toolId
 				if (toolIndex != -1):
 					databaseIds = databaseIds + [None] * (toolIndex + 1 - len(databaseIds))  # pad list to the needed length
-					databaseIds = [(None if i == databaseId else i) for i in databaseIds] # remove spool from other tool(s)
+					idx = 0;
+					for selectedSpoolDBId in databaseIds:
+						if (selectedSpoolDBId == databaseId):
+							databaseIds[idx] = None
+							# check if tool changed, if yes inform user about the switch
+							if (idx != toolIndex):
+								# spool was already assigned and is now used for different tool
+								self._sendMessageToClient("warning",
+														  "Spool swaped",
+														  "Spool '"+spoolModel.displayName+"' was switched from Tool "+str(idx)+" to Tool "+str(toolIndex),
+														  autoclose=True)
+							pass
+						else:
+							databaseIds[idx] = selectedSpoolDBId
+						idx = idx + 1
+					# assign new spool selection to the tool
 					databaseIds[toolIndex] = databaseId
 				else:
 					# spool present, but no toolId -> remove spool from current toolIndex
@@ -810,10 +828,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		databaseId = self._getValueFromJSONOrNone("databaseId", jsonData)
 		self._databaseManager.connectoToDatabase()
 		if (databaseId != None):
-			self._logger.info("Update spool with database id '"+str(databaseId)+"'")
+			self._logger.info("Load spool for update with database id '"+str(databaseId)+"'")
 			spoolModel = self._databaseManager.loadSpool(databaseId, withReusedConnection=True)
 			if (spoolModel == None):
-				self._logger.warning("Save spool failed. Something is wrong")
+				self._logger.warning("Save spool failed. Inital loading not possible, maybe already deleted.")
 			else:
 				self._updateSpoolModelFromJSONData(spoolModel, jsonData)
 		else:

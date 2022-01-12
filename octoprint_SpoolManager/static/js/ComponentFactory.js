@@ -56,8 +56,9 @@ function ComponentFactory(pluginId) {
             closeOnDateSelect:true,
             closeOnTimeSelect:false,
             timepicker:showTimePicker,
-            weeks:true
+            weeks:true,
         });
+        jQuery.datetimepicker.setLocale('en');
 
         $($(elementSelector).parent().find('span[class=add-on]')[0]).on('click', function () {
             if (componentViewModel.isEnabled() == true){
@@ -83,11 +84,9 @@ function ComponentFactory(pluginId) {
         var elementSelector = "#" + elementId ;
         // Build defualt widget
         var datePicker = $(elementSelector).datepicker({
-            // TODO set datepicker options like dateformat
-            autoHide: true,
-            language: 'de-DE',
             format: "dd.mm.yyyy"
         });
+        jQuery.datetimepicker.setLocale('en');
 
         // sync: jquery -> observable
         datePicker.on('pick.datepicker', function (event) {

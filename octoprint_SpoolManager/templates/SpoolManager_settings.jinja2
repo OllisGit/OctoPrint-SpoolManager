@@ -1,7 +1,6 @@
 
 <form id="settings_spoolmanager" class="form-horizontal" >
-
-
+    <h3>Spool Manager <small>{{ _('Version') }}: <span data-bind="text: pluginSettings.installed_version"></span></small></h3>
     <div class="tabbable"> <!-- Only required for left/right tabs -->
         <ul class="nav nav-tabs" id="spoolmanger-settings-tab">
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
@@ -162,7 +161,10 @@ FPE;	2.16
 
                 <h3>Import</h3>
 
-                <div class="control-group">
+                <div class="alert" data-bind="visible: printerStateViewModel.isBusy()" style="">
+                        Take note that import functionality is disabled while your printer is printing or paused.
+                </div>
+                <div class="control-group" data-bind="visible: !printerStateViewModel.isBusy()">
                     <div class="controls">
                         <div class="row">
                             Import a CSV-File to the SpoolManager database.
@@ -385,6 +387,14 @@ FPE;	2.16
                             <input type="checkbox" data-bind="checked: pluginSettings.sqlLoggingEnabled" > SQL Logging enabled
                         </label>
                         <span class="help-inline">Hint: You need to restart your server after you changed the checkbox value.</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.extrusionDebuggingEnabled" > Extrusion debugging enabled
+                        </label>
+                        <span class="help-inline">Hint: Could slow down your print.</span>
                     </div>
                 </div>
             </div>

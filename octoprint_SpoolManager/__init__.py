@@ -47,7 +47,7 @@ class SpoolmanagerPlugin(
 		# self._filamentOdometer = FilamentOdometer()
 		# TODO no idea what this thing is doing in detail self._filamentOdometer.set_g90_extruder(self._settings.getBoolean(["feature", "g90InfluencesExtruder"]))
 
-		self.myFilamentOdometer = NewFilamentOdometer()
+		self.myFilamentOdometer = NewFilamentOdometer(self._extrusionValuesChanged)
 		self.myFilamentOdometer.set_g90_extruder(self._settings.get_boolean(["feature", "g90InfluencesExtruder"]))
 
 		self._filamentManagerPluginImplementation = None
@@ -126,12 +126,13 @@ class SpoolmanagerPlugin(
 		self._plugin_manager.send_plugin_message(self._identifier,
 												 payloadDict)
 
-	def _sendMessageToClient(self, type, title, message):
+	def _sendMessageToClient(self, type, title, message, autoclose=False):
 		self._logger.warning("SendToClient: " + type + "#" + title + "#" + message)
 		self._sendDataToClient(dict(action="showPopUp",
 									type=type,
 									title= title,
-									message=message))
+									message=message,
+									autoclose=autoclose))
 
 	def _checkForMissingPluginInfos(self, sendToClient=False):
 
@@ -172,6 +173,13 @@ class SpoolmanagerPlugin(
 			status = "missing"
 
 		return [status, implementation]
+
+	def _extrusionValuesChanged(self, newExtrusionValues):
+		if (self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_EXTRUSION_DEBUGGING_ENABLED])):
+			self._sendDataToClient(dict(action="extrusionValuesChanged",
+										extrusionValues=newExtrusionValues))
+
+		pass
 
 	def _readingFilamentMetaData(self):
 		filamentLengthPresentInMeta = False
@@ -270,6 +278,7 @@ class SpoolmanagerPlugin(
 						requiredWeight = int(self._calculateWeight(filamentLength, diameter, density))
 
 						# Vorhanden Gewicht = Gesamtgewicht - Verbrauchtes Gewicht
+						# TODO don't calculate here use the value from the database
 						remainingWeight = totalWeight - usedWeight
 
 						notEnough = False
@@ -290,7 +299,8 @@ class SpoolmanagerPlugin(
 							"diameter": diameter,
 							"density": density,
 							"notEnough": notEnough,
-							"spoolSelected": True
+							"spoolSelected": True,
+							"spoolName": selectedSpool.displayName
 						}
 						requiredWeightResultDict["detailedSpoolResult"].append(detailedSpoolResultItem)
 			else:
@@ -299,6 +309,7 @@ class SpoolmanagerPlugin(
 					"toolIndex": toolIndex,
 					"requiredLength": filamentLength,
 					"spoolSelected": False,
+					"spoolName": "not selected"
 				}
 				requiredWeightResultDict["detailedSpoolResult"].append(detailedSpoolResultItem)
 				pass
@@ -413,7 +424,7 @@ class SpoolmanagerPlugin(
 			self._sendDataToClient(dict(
 										action="reloadTable"
 										))
-
+	# assign the current extrusion to the current selected spools
 	def commitOdometerData(self):
 		reload = False
 		selectedSpools = self.loadSelectedSpools()
@@ -434,9 +445,9 @@ class SpoolmanagerPlugin(
 				continue
 			self._logger.info("Tool %d: Extruded filament length: %s" % (toolIndex, str(currentExtrusionLength)))
 			spoolUsedLength = 0.0 if StringUtils.isEmpty(spoolModel.usedLength) == True else spoolModel.usedLength
-			self._logger.info("Tool %d: Current Spool filament length: %s" % (toolIndex, str(spoolUsedLength)))
+			self._logger.info("Tool %d: Current Spool used filament length: %s" % (toolIndex, str(spoolUsedLength)))
 			newUsedLength = spoolUsedLength + currentExtrusionLength
-			self._logger.info("Tool %d: New Spool filament length: %s" % (toolIndex, str(newUsedLength)))
+			self._logger.info("Tool %d: New Spool used filament length: %s" % (toolIndex, str(newUsedLength)))
 			spoolModel.usedLength = newUsedLength
 			# - Used weight
 			diameter = spoolModel.diameter
@@ -450,12 +461,13 @@ class SpoolmanagerPlugin(
 				spoolUsedWeight = 0.0 if spoolModel.usedWeight == None else spoolModel.usedWeight
 				newUsedWeight = spoolUsedWeight + usedWeight
 				spoolModel.usedWeight = newUsedWeight
+				self._logger.info("Tool %d: spoolUsedWeight: %s" % (toolIndex, str(spoolUsedWeight)))
+				self._logger.info("Tool %d: New spoolUsedWeight: %s" % (toolIndex, str(newUsedWeight)))
 
 			self._databaseManager.saveSpool(spoolModel)
 			reload = True
 
-		# self._filamentOdometer.reset_extruded_length()
-		# self.myFilamentOdometer.reset()
+		self.myFilamentOdometer.reset_extruded_length()
 
 		if reload:
 			self._sendDataToClient(dict(
@@ -690,7 +702,9 @@ class SpoolmanagerPlugin(
 	##~~ SettingsPlugin mixin
 	def get_settings_defaults(self):
 
-		settings = dict()
+		settings = dict(
+			installed_version=self._plugin_version
+		)
 
 		# Not visible
 		settings[SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS] = []
@@ -719,6 +733,7 @@ class SpoolmanagerPlugin(
 
 		## Debugging
 		settings[SettingsKeys.SETTINGS_KEY_SQL_LOGGING_ENABLED] = False
+		settings[SettingsKeys.SETTINGS_KEY_EXTRUSION_DEBUGGING_ENABLED] = False
 
 		## Database
 		## nested settings are not working, because if only a few attributes are changed it only returns these few attribuets, instead the default values + adjusted values
@@ -759,7 +774,8 @@ class SpoolmanagerPlugin(
 			js=[
 				"js/quill.min.js",
 				"js/select2.min.js",
-				"js/jquery.datetimepicker.full.min.js",
+				# "js/jquery.datetimepicker.full.min.js",
+				"js/jquery.datetimepicker.full.js",
 				"js/tinycolor.js",
 				"js/pick-a-color.js",
 				"js/ResetSettingsUtilV3.js",
@@ -767,6 +783,7 @@ class SpoolmanagerPlugin(
 				"js/TableItemHelper.js",
 				"js/SpoolManager.js",
 				"js/SpoolManager-APIClient.js",
+				"js/SpoolManager-FilterSorter.js",
 				"js/SpoolManager-EditSpoolDialog.js",
 				"js/SpoolManager-ImportDialog.js",
 				"js/SpoolManager-DatabaseConnectionProblemDialog.js"
@@ -797,10 +814,38 @@ class SpoolmanagerPlugin(
 				repo="OctoPrint-SpoolManager",
 				current=self._plugin_version,
 
+				# Release channels
+				stable_branch=dict(
+					name="Only Release",
+					branch="master",
+					comittish=["master"]
+				),
+				prerelease_branches=[
+					dict(
+						name="Release & Candidate",
+						branch="pre-release",
+						comittish=["pre-release", "master"],
+					),
+					dict(
+						name="Release & Candidate & under Development",
+						branch="development",
+						comittish=["development", "pre-release", "master"],
+					)
+				],
+
 				# update method: pip
-				pip="https://github.com/OllisGit/OctoPrint-SpoolManager/releases/latest/download/master.zip"
+				pip="https://github.com/OllisGit/OctoPrint-SpoolManager/releases/download/{target_version}/master.zip"
 			)
 		)
+
+
+
+
+
+
+
+
+
 
 	# def message_on_connect(self, comm, script_type, script_name, *args, **kwargs):
 	# 	print(script_name)

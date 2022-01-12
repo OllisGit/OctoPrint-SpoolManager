@@ -1,0 +1,78 @@
+###
+### Simple script to build a zip file of the whole repository
+###
+## Major - Tasks:
+#  - ZIP
+#  - Build draft release
+#  - Attach Zip
+#  - Download Zip
+
+name: Build Plugin Release - Action
+on: [push]
+jobs:
+  Build-Release-ZIP-Action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - run: echo "Read current plugin version..."
+      - run: export PLUGIN_VERSION=$(cat setup.py | grep 'plugin_version = "*"' | cut -d '"' -f2)
+      - run: echo "Plugin Version  $PLUGIN_VERSION ${PLUGIN_VERSION}"
+
+      - run: echo "Build ZIP"
+      - run: zip -r master.zip * -i '\octoprint_*' 'translations' 'README.md' 'requirements.txt' 'setup.py'
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+
+      - name: version
+        run: echo "::set-output name=version::$(cat setup.py | grep 'plugin_version = "*"' | cut -d '"' -f2)"
+        id: version
+
+      - name: Repository and Branch name
+        id: branch
+        run: |
+               export branch_name=${GITHUB_REF##*/}
+               echo "::set-output name=branch_name::$branch_name"
+               echo running on branch $branch_name
+               export repo_name=${GITHUB_REPOSITORY#*/}
+               echo "::set-output name=repo_name::$repo_name"
+
+
+      - name: release
+        uses: actions/create-release@latest
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          draft: true
+          commitish: ${{ steps.branch.outputs.branch_name }}
+          prerelease: false
+          release_name: V${{ steps.version.outputs.version }}-draft
+          tag_name: ${{ steps.version.outputs.version }}-draft
+          body: |
+            ## [BugFix]
+            - #xxx
+
+            ## [Enhancement]
+            - #xxx
+
+            ## Counter
+            ![downloaded](https://img.shields.io/github/downloads/OllisGit/${{ steps.branch.outputs.repo_name }}/${{ steps.version.outputs.version }}/total)
+#          body_path: RELEASE_TEMPLATE.md
+
+      - name: upload master.zip to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: master.zip
+          asset_name: master.zip
+          asset_content_type: application/gzip
+
+      - name: download master.zip
+        run: curl -O -J -L -v https://github.com/OllisGit/${{ steps.branch.outputs.repo_name }}/releases/download/${{ steps.version.outputs.version }}/master.zip
+
+      - run: echo "🍏 This job's status is ${{ job.status }}."

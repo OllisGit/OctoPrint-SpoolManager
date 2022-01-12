@@ -14,7 +14,7 @@ If you like it, I would be thankful about a cup of coffee :)
 [![More coffee, more code](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6SW5R6ZUKLB5E&source=url)
 
 ## Tested with:
-- OctoPrint 1.5.2:  with Python 3.6.8 and Python 2.7.9
+- OctoPrint 1.7.2:  with Python 3.7.3
 
 ## Included features
 
@@ -54,17 +54,31 @@ If you like it, I would be thankful about a cup of coffee :)
 -->
 ![listSpools-tab](screenshots/listSpools-tab.png "ListSpools-Tab")
 ![selectSpools-sidebar](screenshots/selectSpool-sidebar.png "SelectSpool-Sidebar")
+![selectSpools-dialog](screenshots/selectSpool-dialog.png "SelectSpool-Dialog")
 ![editSpool-dialog](screenshots/editSpool-dialog.png "EditSpool-Dialog")
 
 ![scanSpool-dialog](screenshots/scanSpool-dialog.png "ScanSpool-Dialog")
 
-
 ## Setup
-
 Install via the bundled [Plugin Manager](http://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
 or manually using this URL:
 
     https://github.com/OllisGit/OctoPrint-SpoolManager/releases/latest/download/master.zip
+
+After installation, you can listen on three release channels (since 1.6.0).
+What does this mean: Each channel has its own release-version and each release has a different kind of functionality and stability.
+
+- **"Only Release"**: Only stable and tested versions will be shown in the software-update section of OctoPrint
+- **"Release & Candidate"**: Beside the stable release, you can also see the "release-candidates", like '''1.7.0rc3'''.
+  The rc's includde new functionalty/bugfixes and are already tested by the community.. so by YOU ;-)
+- **"Release & Candidate & under Development"**: Beside stable and rc, you will be informed about development versions.
+  A development version like '''1.8.0.dev5``` could include a new (experimental) feature/bugfixs, but it is not fully tested by the community
+
+Changing between each release is done via the "Software Update section" in the settings.
+![release-channels](screenshots/release-channels.png "Release channels")
+
+Hint: "Easy-switching" is possible with OctoPrint-Version 1.8.0 (see https://github.com/OctoPrint/OctoPrint/issues/4238).
+At the meantime you need to uninstall and install the version you like from the selected channel...or stay in one channel ;-)
 
 
 ## Versions

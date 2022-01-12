@@ -1,47 +1,9 @@
- // START: TESTZONE
-$(function() {
-
-});
-
-
-    function machwas(myObj){
-//        $("#configFields").addClass('open');
-        //debugger
-        //$("#openConfigFields").dropdown();
-
-    }
-/*
-    var specifiedElement = document.getElementById('configFieldsDropDown');
-
-    document.addEventListener('click', function(event) {
-        var isClickInside = specifiedElement.contains(event.target);
-        if (isClickInside) {
-          console.log('You clicked inside')
-        }
-        else {
-//          debugger
-          console.log('You clicked outside');
-
-
-          if (event.target.id == "openConfigFields" &&  $("#configFields").hasClass("open") == false){
-            $("#configFields").addClass('open');
-          } else
-
-
-          if (event.target.id != "openConfigFields" ||
-              (event.target.id == "openConfigFields" && $("#configFields").hasClass("open"))){
-              $("#configFields").removeClass('open');
-          }
-        }
-    });
-*/
- // END: TESTZONE
-
+// Dialog functionality
 function SpoolManagerEditSpoolDialog(){
 
     var self = this;
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////// ITEM MODEL
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////// CONSTANTS
     var DEFAULT_COLOR = "#ff0000";
     var densityMap = {
         PLA:	1.24,
@@ -82,6 +44,7 @@ function SpoolManagerEditSpoolDialog(){
     var COMBINED = self.scopeValues.COMBINED;
     var SPOOL = self.scopeValues.SPOOL;
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////// ITEM MODEL
     var SpoolItem = function(spoolData, editable) {
         // Init Item
 
@@ -101,10 +64,11 @@ function SpoolManagerEditSpoolDialog(){
 
         this.selectedFromQRCode = ko.observable(false);
         this.selectedForTool = ko.observable(0);    // Default Tool 0
+        this.isFilteredForSelection = ko.observable(false);
         // - list all attributes
         this.version = ko.observable();
         this.isSpoolVisible = ko.observable(false);
-        this.isEmpty = ko.observable();
+        this.hasNoData = ko.observable();
         this.databaseId = ko.observable();
         this.isTemplate = ko.observable();
         this.isActive = ko.observable();
@@ -143,31 +107,15 @@ function SpoolManagerEditSpoolDialog(){
 
         this.firstUse = ko.observable();
         this.lastUse = ko.observable();
+        this.firstUseKO = ko.observable();
+        this.lastUseKO = ko.observable();
         this.purchasedOn = ko.observable();
+        this.purchasedOnKO = ko.observable();
+
 
         this.purchasedFrom = ko.observable();
         this.cost = ko.observable();
         this.costUnit = ko.observable();
-
-        // Non-persistent fields (these exist only in this view model)
-        this.totalCombinedWeight = ko.observable();
-        this.remainingCombinedWeight = ko.observable();
-        this.drivenScope = ko.observable();
-        this.drivenScopeOptions = ko.observableArray([
-            {
-                text: "Filament Weight",
-                value: FILAMENT,
-            },
-            {
-                text: "Empty Spool Weight",
-                value: SPOOL,
-            },
-            {
-                text: "Combined Weight",
-                value: COMBINED,
-            },
-        ]);
-
 
         // Assign default values for editing
         // overwrite and/or add attributes
@@ -206,18 +154,38 @@ function SpoolManagerEditSpoolDialog(){
             this.lastUse = lastUseViewModel.currentDateTime;
             this.purchasedOn = purchasedOnViewModel.currentDateTime;
         }
-
         self.labelsViewModel = self.componentFactory.createLabels("spool-labels-select", $('#spool-form'));
         this.labels   = self.labelsViewModel.selectedOptions;
         this.allLabels = self.labelsViewModel.allOptions;
+
+        // Non-persistent fields (these exist only in this view model for weight-calculation)
+        this.totalCombinedWeight = ko.observable();
+        this.remainingCombinedWeight = ko.observable();
+        this.drivenScope = ko.observable();
+        this.drivenScopeOptions = ko.observableArray([
+            {
+                text: "Filament Amount",
+                value: FILAMENT,
+            },
+            {
+                text: "Spool Weight",
+                value: SPOOL,
+            },
+            {
+                text: "Combined Weight",
+                value: COMBINED,
+            },
+        ]);
 
         // Fill Item with data
         this.update(spoolData);
     }
 
     SpoolItem.prototype.update = function (data) {
-        self.autoUpdateEnabled = false;
         var updateData = data || {}
+
+        // TODO weight: renaming
+        self.autoUpdateEnabled = false;
 
         // update latest all catalog
         if (self.catalogs != null){
@@ -233,7 +201,7 @@ function SpoolManagerEditSpoolDialog(){
 
         this.selectedFromQRCode(updateData.selectedFromQRCode);
         this.selectedForTool(updateData.selectedForTool);
-        this.isEmpty(data == null);
+        this.hasNoData(data == null);
         this.version(updateData.version);
         this.databaseId(updateData.databaseId);
         this.isTemplate(updateData.isTemplate);
@@ -279,6 +247,18 @@ function SpoolManagerEditSpoolDialog(){
         this.firstUse(updateData.firstUse);
         this.lastUse(updateData.lastUse);
         this.purchasedOn(updateData.purchasedOn);
+        if (updateData.firstUse){
+            var convertedDateTime = moment(data.firstUse, "DD.MM.YYYY HH:mm").format("YYYY-MM-DDTHH:mm")
+            this.firstUseKO(convertedDateTime);
+        }
+        if (updateData.lastUse){
+            var convertedDateTime = moment(data.lastUse, "DD.MM.YYYY HH:mm").format("YYYY-MM-DDTHH:mm")
+            this.lastUseKO(convertedDateTime);
+        }
+        if (updateData.purchasedOn){
+            var convertedDateTime = moment(data.purchasedOn, "DD.MM.YYYY").format("YYYY-MM-DD")
+            this.purchasedOnKO(convertedDateTime);
+        }
 
         this.purchasedFrom(updateData.purchasedFrom);
 
@@ -320,9 +300,9 @@ function SpoolManagerEditSpoolDialog(){
             }
         }
 
-        // Calculate derived fields (these exist only in this view model)
-        this.totalCombinedWeight(parseFloat(updateData.totalWeight) + parseFloat(updateData.spoolWeight));
-        this.remainingCombinedWeight(parseFloat(updateData.remainingWeight) + parseFloat(updateData.spoolWeight));
+        // Calculate derived fields (these exists only in this view model)
+        this.totalCombinedWeight(_getValueOrZero(updateData.totalWeight) + _getValueOrZero(updateData.spoolWeight));
+        this.remainingCombinedWeight(_getValueOrZero(updateData.remainingWeight) + _getValueOrZero(updateData.spoolWeight));
 
         self.autoUpdateEnabled = true;
     };
@@ -348,46 +328,89 @@ function SpoolManagerEditSpoolDialog(){
     self.catalogs = null;
     self.allToolIndices = ko.observableArray([]);
 
-    //    Option to filter Attributes
-//    SpoolItem.prototype.toJSON = function() {
-//        var copy = ko.toJS(this); //easy way to get a clean copy
-//        // delete
-//      return copy; //return the copy to be serialized
-//    };
-
-//    // FIX Date, if you select 01.06 -> 31.05
-//    Date.prototype.toJSON = function () {
-//        debugger
-//      var timezoneOffsetInHours = -(this.getTimezoneOffset() / 60); //UTC minus local time
-//      var sign = timezoneOffsetInHours >= 0 ? '+' : '-';
-//      var leadingZero = (Math.abs(timezoneOffsetInHours) < 10) ? '0' : '';
-//
-//      //It's a bit unfortunate that we need to construct a new Date instance
-//      //(we don't want _this_ Date instance to be modified)
-//      var correctedDate = new Date(this.getFullYear(), this.getMonth(),
-//          this.getDate(), this.getHours(), this.getMinutes(), this.getSeconds(),
-//          this.getMilliseconds());
-//      correctedDate.setHours(this.getHours() + timezoneOffsetInHours);
-//      var iso = correctedDate.toISOString().replace('Z', '');
-//
-//      return iso + sign + leadingZero + Math.abs(timezoneOffsetInHours).toString() + ':00';
-//    }
-
-    self.transform2Date = function(dateValue){
-        if (dateValue == null){
-            return null;
-        }
-        if (dateValue instanceof Date){
-            return dateValue;
-        }
-        return new Date(dateValue);
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////// PRIVATE
-
     // Knockout stuff
     this.isExistingSpool = ko.observable(false);
     this.spoolSelectedByQRCode = ko.observable(false);
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////// HELPER
+
+    self.isFormValidForSubmit = ko.pureComputed(function () {
+        if (self._checkMandatoryFields() == false){
+            return false;
+        }
+        if (self._checkDateTimeFormats() == false){
+            return false;
+        }
+
+        return true;
+    });
+
+    self._checkMandatoryFields = function(){
+        // "Displayname", "total weight", "color name/code"
+        let namePresent = self.isDisplayNamePresent();
+        if (namePresent == false){
+            return false;
+        }
+        let colorNametPresent = self.isColorNamePresent();
+        if (colorNametPresent == false){
+            return false;
+        }
+        let weightPresent = self.isTotalCombinedWeightPresent();
+        if (weightPresent == false){
+            return false;
+        }
+        return true;
+    }
+
+    self._checkDateTimeFormats = function(){
+
+        // "First/LastUse", "purchasedOn"
+        let firstUse = self.spoolItemForEditing.firstUseKO()
+        if (firstUse && firstUse.trim().length != 0){
+            if (moment(firstUse, "YYYY-MM-DDTHH:mm").isValid() == false){
+                return false;
+            }
+        }
+        let lastUse = self.spoolItemForEditing.lastUseKO()
+        if (lastUse && lastUse.trim().length != 0){
+            if (moment(lastUse, "YYYY-MM-DDTHH:mm").isValid() == false){
+                return false;
+            }
+        }
+        let purchasedOn = self.spoolItemForEditing.purchasedOnKO()
+        if (purchasedOn && purchasedOn.trim().length != 0){
+            if (moment(purchasedOn, "YYYY-MM-DD").isValid() == false){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    self.isDisplayNamePresent = function(){
+        var displayName = self.spoolItemForEditing.displayName();
+        return (!displayName || displayName.trim().length === 0) == false;
+    }
+
+    self.isColorNamePresent = function(){
+        var colorName = self.spoolItemForEditing.colorName();
+        return (!colorName || colorName.trim().length === 0) == false;
+    }
+
+    self.isTotalCombinedWeightPresent = function(){
+        var totalCombinedWeight = self.spoolItemForEditing.totalCombinedWeight();
+        return (!totalCombinedWeight || (""+totalCombinedWeight).trim().length === 0) == false;
+    }
+
+    // self.transform2Date = function(dateValue){
+    //     if (dateValue == null){
+    //         return null;
+    //     }
+    //     if (dateValue instanceof Date){
+    //         return dateValue;
+    //     }
+    //     return new Date(dateValue);
+    // }
 
 //    self.getValueOrDefault = function(data, attribute, defaultValue){
 //        if (data == null){
@@ -400,6 +423,10 @@ function SpoolManagerEditSpoolDialog(){
 //        return value;
 //    }
 
+    function _roundTo(x, precision) {
+        var increments = Math.pow(10, precision);
+        return Math.round((x + Number.EPSILON) * increments) / increments;
+    }
 
     this._reColorFilamentIcon = function(newColor){
         var loopCount = 0;
@@ -424,26 +451,22 @@ function SpoolManagerEditSpoolDialog(){
         });
     };
 
+    function _getValueOrZero(x) {
+        if (!x){
+            x = 0
+        }
+        return parseFloat(x);
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////// PUBLIC
     this.initBinding = function(apiClient, pluginSettings, printerProfilesViewModel){
-        self.autoUpdateEnabled = false;
 
+        self.autoUpdateEnabled = false;
         self.apiClient = apiClient;
         self.pluginSettings = pluginSettings;
         self.printerProfilesViewModel = printerProfilesViewModel;
 
         self.spoolDialog = $("#dialog_spool_edit");
-//        self.firstUseDatePickerModel = self.componentFactory.createDatePicker("firstUse-date-container");
-////        self.firstUseDatePickerModel.currentDate(new Date(2014, 1, 14));
-//
-//        self.lastUseDatePickerModel = self.componentFactory.createDatePicker("lastUse-date-container");
-//        self.purchasedOnDatePickerModel = self.componentFactory.createDatePicker("purchasedOn-date-container");
-
-//        self.labelsViewModel = self.componentFactory.createLabels("spool-labels", $('#spool-form'));
-//        self.labelsViewModel.allOptions.push('FirstLabel','SecondLabel');
-//        self.labelsViewModel.selectedOptions.push('FirstLabel','SecondLabel');
-
-
 
         self.noteEditor = new Quill('#spool-note-editor', {
             modules: {
@@ -471,7 +494,6 @@ function SpoolManagerEditSpoolDialog(){
                 self.spoolItemForEditing.colorName(colorName);
             }
         });
-
         // ----------------- start: weight stuff
 
         var remainingWeightKo = self.spoolItemForEditing.remainingWeight;
@@ -652,7 +674,7 @@ function SpoolManagerEditSpoolDialog(){
                 remainPercentageKo(NaN);
                 return;
             }
-            var usedPercentage = roundTo(
+            var usedPercentage = _roundTo(
                 100 * used / total,
                 0
             );
@@ -669,7 +691,7 @@ function SpoolManagerEditSpoolDialog(){
                 return parseFloat(x()) || 0;
             }
 
-            targetKo(roundTo(
+            targetKo(_roundTo(
                 calcFn.apply(null, calcFnArguments.map(getValueOrZero)),
                 1
             ));
@@ -687,13 +709,13 @@ function SpoolManagerEditSpoolDialog(){
         self.convertToLength = function (weight, density, diameter) {
             var volume = weight / (density *  Math.pow(10, -3)); // [mm^3] = [g] / ( [g/cm^3] * 10^-3 )
             var area = (Math.PI / 4) * Math.pow(diameter, 2); // [mm^2] = pi/4 * [mm]^2
-            return roundTo(volume / area, 0); // [mm] = [mm^3] / [mm^2}
+            return _roundTo(volume / area, 0); // [mm] = [mm^3] / [mm^2}
         };
 
         self.convertToWeight = function (length, density, diameter) {
             var area = (Math.PI / 4) * Math.pow(diameter, 2); // [mm^2] = pi/4 * [mm]^2
             var volume = area * length; // [mm^3] = [mm^2] * [mm]
-            return roundTo(volume * density * Math.pow(10, -3), 1); // [g] = [mm^3] * [g/cm^3] * 10^3
+            return _roundTo(volume * density * Math.pow(10, -3), 1); // [g] = [mm^3] * [g/cm^3] * 10^3
         };
 
         // lock mechanism to prevent infinite update loops
@@ -715,7 +737,7 @@ function SpoolManagerEditSpoolDialog(){
             return self.locksOfInProgressUpdate.length === 0 && self.getLock(source);
         };
 
-        // ----------------- end: length stuff
+        // ----------------- end: weight stuff
     }
 
     this.afterBinding = function(){
@@ -775,25 +797,25 @@ function SpoolManagerEditSpoolDialog(){
             self.spoolItemForEditing.usedWeight(0.0);
             self.spoolItemForEditing.totalLength(0);
             self.spoolItemForEditing.usedLength(0);
-            self.spoolItemForEditing.lastUse(null);
             self.spoolItemForEditing.firstUse(null);
+            self.spoolItemForEditing.firstUseKO(null);
+            self.spoolItemForEditing.lastUse(null);
+            self.spoolItemForEditing.lastUseKO(null);
+            self.spoolItemForEditing.purchasedOn(null);
+            self.spoolItemForEditing.purchasedOnKO(null);
             self.spoolItemForEditing.remainingCombinedWeight(0);
             self.spoolItemForEditing.totalCombinedWeight(0);
-//            self.spoolItemForEditing.displayName(null);
-//            self.spoolItemForEditing.displayName(null);
-//            self.spoolItemForEditing.displayName(null);
-
-        }else{
+        } else {
             self.isExistingSpool(true);
             // Make a copy of provided spoolItem
             spoolItemCopy = ko.mapping.toJS(spoolItem);
             self.spoolItemForEditing.update(spoolItemCopy);
         }
-        self.spoolItemForEditing.drivenScope(COMBINED);
-
+        self.spoolItemForEditing.drivenScope(COMBINED); // default calculation mode
         self.spoolItemForEditing.isSpoolVisible(true);
 
         self.spoolDialog.modal({
+            minHeight: function() { return Math.max($.fn.modal.defaults.maxHeight() - 180, 250); },
             keyboard: false,
             clickClose: true,
             showClose: false,
@@ -803,24 +825,6 @@ function SpoolManagerEditSpoolDialog(){
             width: 'auto',
             'margin-left': function() { return -($(this).width() /2); }
         });
-
-
-
-            // // show settings, ensure centered position
-            // self.settingsDialog
-            //     .modal({
-            //         minHeight: function () {
-            //             return Math.max($.fn.modal.defaults.maxHeight() - 80, 250);
-            //         }
-            //     })
-            //     .css({
-            //         "width": "auto",
-            //         "margin-left": function () {
-            //             return -($(this).width() / 2);
-            //         }
-            //     });
-
-
 
         self.autoUpdateEnabled = true;
     };
@@ -903,9 +907,4 @@ function SpoolManagerEditSpoolDialog(){
             title: title
         }
     }
-}
-
-function roundTo(x, precision) {
-    var increments = Math.pow(10, precision);
-    return Math.round((x + Number.EPSILON) * increments) / increments;
 }

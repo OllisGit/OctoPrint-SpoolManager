@@ -157,12 +157,22 @@ def formatInt(intValue):
 			pass # do nothing
 	return result
 
+# input: dd.mm.yyyy hh:mm -> return: datetime-object or None if the format is not valid
 def transformToDateTimeOrNone(dateTimeString):
 	if dateTimeString != None and len(dateTimeString) != 0:
 		index = dateTimeString.find(" ")
 		if (index != -1):
 			return datetime.datetime.strptime(dateTimeString, '%d.%m.%Y %H:%M')
 		return datetime.datetime.strptime(dateTimeString, '%d.%m.%Y')
+	return None
+
+# input: YYYY-MM-DDTHH:mm -> return: datetime-object or None if the format is not valid
+def transformFromIsoToDateTimeOrNone(dateTimeString):
+	if dateTimeString != None and len(dateTimeString) != 0:
+		index = dateTimeString.find("T")
+		if (index != -1):
+			return datetime.datetime.strptime(dateTimeString, '%Y-%m-%dT%H:%M')
+		return datetime.datetime.strptime(dateTimeString, '%Y-%m-%d')
 	return None
 
 def isEmpty(value):
@@ -247,3 +257,7 @@ print(formatTimeDelta(duration))
 #
 # myDateTime = datetime.datetime.strptime(stingDateTime, "%Y-%m-%dT%H:%M:%S.%fZ")
 # print(myDateTime)
+
+# dateValue = "2020-12-03T13:12"
+# datObject = transformFromIsoToDateTimeOrNone(dateValue)
+# print(datObject)

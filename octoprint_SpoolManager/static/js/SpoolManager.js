@@ -42,10 +42,7 @@ $("#colorFilter").select2({
    }
 });
 
-
-
  // END: TESTZONE
-
 
 $(function() {
 
@@ -97,7 +94,7 @@ $(function() {
         }
 
         // Typs: error
-        self.showPopUp = function(popupType, popupTitle, message){
+        self.showPopUp = function(popupType, popupTitle, message, autoclose){
             var title = popupType.toUpperCase() + ": " + popupTitle;
             var popupId = (title+message).replace(/([^a-z0-9]+)/gi, '-');
             if($("."+popupId).length <1) {
@@ -105,7 +102,7 @@ $(function() {
                     title: "SPM:" + title,
                     text: message,
                     type: popupType,
-                    hide: false,
+                    hide: autoclose,
                     addclass: popupId
                 });
             }
@@ -325,7 +322,13 @@ $(function() {
 
 
         ////////////////////////////////////////////////////////////////////////////////////////// SIDEBAR - REPLACEMENT
-        self.printerStateViewModel.filamentWithWeight = ko.observableArray([]);
+        self.printerStateViewModel.spoolsWithWeight = ko.observableArray([]);
+        self.printerStateViewModel.extrusionValues = ko.observableArray([]);
+
+        self.updateExtrusionValues = function(extrusionValuesArray){
+            // update patched PrinterStateViewModel
+            self.printerStateViewModel.extrusionValues(extrusionValuesArray);
+        }
 
         self.updateRequiredFilament = function(requiredFilament){
 /*
@@ -351,10 +354,10 @@ $(function() {
                     filteredFilamentList.push(filamentItem)
                 }
             }
-            self.printerStateViewModel.filamentWithWeight(filteredFilamentList)
+            self.printerStateViewModel.spoolsWithWeight(filteredFilamentList)
         }
 
-        self.printerStateViewModel.formatFilamentWithWeight = function formatFilamentWithWeightInSidebar(filament) {
+        self.printerStateViewModel.formatSpoolsWithWeight = function formatSpoolsWithWeightInSidebar(filament) {
             if (!filament) return '-';
 
             // length in m
@@ -381,11 +384,19 @@ $(function() {
         self.replaceFilamentView = function replaceFilamentViewInSidebar() {
             $('#state').find('.accordion-inner').contents().each(function (index, item) {
                 if (item.nodeType === Node.COMMENT_NODE) {
-                    if (item.nodeValue === ' ko foreach: filament ') {
+                    if (item.nodeValue === ' ko foreach: filament ' || item.nodeValue === ' ko foreach: [] ') {
                         item.nodeValue = ' ko foreach: [] '; // eslint-disable-line no-param-reassign
-                        var element = '<!-- ko if: filamentWithWeight().length < 1 -->  <span><strong>Required Filament unknown</strong></span><br/> <!-- /ko -->';
-                        element += '<!-- ko foreach: filamentWithWeight --> <span data-bind="text: \'Tool \' + toolIndex + \': \', title: \'Filament usage for \' + name()"></span><strong data-bind="html: $root.formatFilamentWithWeight($data)"></strong><br> <!-- /ko -->';
+                        var element = '<!-- ko if: spoolsWithWeight().length < 1 -->  <span><strong>Required Filament unknown</strong></span><br/> <!-- /ko -->';
+                        element += '<!-- ko foreach: spoolsWithWeight --> <span data-bind="text: \'Tool \' + toolIndex + \': \', attr: {title: \'Filament usage for Spool \' + spoolName}"></span><strong data-bind="html: $root.formatSpoolsWithWeight($data)"></strong><br> <!-- /ko -->';
+
+                        element += '<div data-bind="visible: settings.settings.plugins.SpoolManager.extrusionDebuggingEnabled">';
+                        element += '<!-- ko foreach: extrusionValues -->';
+                        element += '<div>Tracked for Tool <span data-bind="text: $index"></span>: <strong data-bind="text: $data.toFixed(2)"></strong></div>';
+                        element += '<!-- /ko -->';
+
+                        element += '</div>'
                         $(element).insertBefore(item);
+
                         return false; // exit loop
                     }
                 }
@@ -396,8 +407,13 @@ $(function() {
         /////////////////////////////////////////////////////////////////////////////////////////// SIDEBAR - SELECT
         self.allSpoolsForSidebar = ko.observableArray([]);
         self.selectedSpoolsForSidebar = ko.observableArray([]);
+        // see FILTER/SORTING https://embed.plnkr.co/plunk/Kj5JMv
+        self.filterSelectionQuery = ko.observable();
 
-        self.sidebarSelectSpoolModalToolIndex = ko.observable(null);    // index of the current tool we want to select for
+        self.sidebarFilterSorter = new SpoolsFilterSorter("sidebarSpoolSelection", self.allSpoolsForSidebar);
+        self.tableFilterSorter = new SpoolsFilterSorter("tabTableSpool", self.allSpoolsForSidebar);
+
+        self.sidebarSelectSpoolModalToolIndex = ko.observable(null);  // index of the current tool we want to select for
         self.sidebarSelectSpoolModalSpoolItem = ko.observable(null); // current spoolitem
 
         self.deselectSpoolForSidebar = function(toolIndex, item){
@@ -425,22 +441,22 @@ $(function() {
             }
 
             var currentFilterName = "all";
-            if (self.pluginSettings!= null){
-                 if(self.pluginSettings.hideEmptySpoolsInSidebar() == true) {
-                     currentFilterName = "hideEmptySpools";
-                 }
-                 if(self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
-                     currentFilterName = "hideInactiveSpools";
-                 }
-                 if(self.pluginSettings.hideEmptySpoolsInSidebar() == true && self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
-                     currentFilterName = "hideEmptySpools,hideInactiveSpools";
-                 }
-            }
+            // if (self.pluginSettings!= null){
+            //      if(self.pluginSettings.hideEmptySpoolsInSidebar() == true) {
+            //          currentFilterName = "hideEmptySpools";
+            //      }
+            //      if(self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
+            //          currentFilterName = "hideInactiveSpools";
+            //      }
+            //      if(self.pluginSettings.hideEmptySpoolsInSidebar() == true && self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
+            //          currentFilterName = "hideEmptySpools,hideInactiveSpools";
+            //      }
+            // }
 
             var tableQuery = {
                 filterName: currentFilterName,
                 from: 0,
-                to: 3000,
+                to: 3333,
                 sortColumn: "lastUse",
                 sortOrder: "desc"
             }
@@ -464,6 +480,8 @@ $(function() {
                         spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
                         slot(spoolItem);
                     }
+                    // Pre sorting in Selection-Dialog
+                    self.sidebarFilterSorter.sortSpoolArray("displayName", "ascending");
                 }
             });
         }
@@ -485,11 +503,6 @@ $(function() {
             var remainingInfo = "("+_buildRemainingText(spoolItem) + ")";
             return remainingInfo;
         }
-
-        // self.remainingTooltipText = function(spoolItem){
-        //     var remainingInfo = "Remaining weight: " + _buildRemainingText(spoolItem);
-        //     return remainingInfo;
-        // }
 
         self.buildTooltipForSpoolItem = function(spoolItem, textPrefix, attribute){
             var value = "";
@@ -518,7 +531,7 @@ $(function() {
                     'You are changing a spool while printing. SpoolManager will commit the usage so far to the previous spool, unless you wish otherwise.\n\n' +
                     'Commit the usage of the print so far…\n' +
                     '"OK": …to the previously selected spool\n' +
-                    '"Abort": …to the new spool'
+                    '"Cancel": …to the new spool'
                 )
             }
             // api-call
@@ -577,7 +590,12 @@ $(function() {
         self.sidebarOpenSelectSpoolDialog = function(toolIndex, spoolItem){
             self.sidebarSelectSpoolModalSpoolItem(spoolItem);
             self.sidebarSelectSpoolModalToolIndex(toolIndex);
-            self.selectionSpoolDialog.modal("show");
+
+            self.selectionSpoolDialog.modal({
+                minHeight: 300,
+                show: true
+            });
+            $("#filterSelectionQueryTextfield").focus();
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////////// TABLE / TAB
@@ -649,11 +667,15 @@ $(function() {
                 var allCatalogs = responseData["catalogs"];
 
 
+                // assign catalogs to tableFilterSorter
+                self.tableFilterSorter.updateCatalogs(allCatalogs);
+                // assign catalogs to sidebarFilterSorter
+                self.sidebarFilterSorter.updateCatalogs(allCatalogs);
                 // assign catalogs to tablehelper
                 self.spoolItemTableHelper.updateCatalogs(allCatalogs);
-
                 // assign all catalogs to editview
                 self.spoolDialog.updateCatalogs(allCatalogs);
+
                 templateSpoolData = responseData["templateSpool"];
                 self.spoolDialog.updateTemplateSpool(templateSpoolData);
 
@@ -919,20 +941,23 @@ $(function() {
             // Select Spool Dialog (no special binding)
             self.selectionSpoolDialog = $("#dialog_spool_selection");
 
-            self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
-                var payload = {
-                        "hideEmptySpoolsInSidebar": newCheckedVaue
-                    };
-                OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
-                self.loadSpoolsForSidebar();
-            });
-            self.pluginSettings.hideInactiveSpoolsInSidebar.subscribe(function(newCheckedVaue){
-                var payload = {
-                        "hideInactiveSpoolsInSidebar": newCheckedVaue
-                    };
-                OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
-                self.loadSpoolsForSidebar();
-            });
+            // self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
+            //     var payload = {
+            //             "hideEmptySpoolsInSidebar": newCheckedVaue
+            //         };
+            //     OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
+            //     // self.loadSpoolsForSidebar();
+            //     // self.filterSelectionSidebar();
+            // });
+            // self.pluginSettings.hideInactiveSpoolsInSidebar.subscribe(function(newCheckedVaue){
+            //     var payload = {
+            //             "hideInactiveSpoolsInSidebar": newCheckedVaue
+            //         };
+            //     OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
+            //     // self.loadSpoolsForSidebar();
+            //     // self.filterSelectionSidebar();
+            // });
+
             // needed after the tool-count is changed
             self.settingsViewModel.printerProfiles.currentProfileData.subscribe(self.loadSpoolsForSidebar);
         }
@@ -951,6 +976,7 @@ $(function() {
                 });
             }
         }
+
         // receive data from server
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin != PLUGIN_ID) {
@@ -973,7 +999,7 @@ $(function() {
                 return;
             }
             if ("showPopUp" == data.action){
-                self.showPopUp(data.type, data.title, data.message);
+                self.showPopUp(data.type, data.title, data.message, data.autoclose);
                 return;
             }
             if ("reloadTable" == data.action){
@@ -990,11 +1016,15 @@ $(function() {
                 return;
             }
             if ("errorPopUp" == data.action){
-                self.showPopUp("error", 'ERROR:' + data.title, data.message);
+                self.showPopUp("error", 'ERROR:' + data.title, data.message, data.autoclose);
                 return;
             }
             if ("requiredFilamentChanged" == data.action){
                 self.updateRequiredFilament(data);
+                return;
+            }
+            if ("extrusionValuesChanged" == data.action){
+                self.updateExtrusionValues(data.extrusionValues);
                 return;
             }
 

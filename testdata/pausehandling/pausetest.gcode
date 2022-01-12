@@ -1,0 +1,6 @@
+; Do something
+M28
+G1 F1000
+G0 E1000
+M600
+G0 E1000

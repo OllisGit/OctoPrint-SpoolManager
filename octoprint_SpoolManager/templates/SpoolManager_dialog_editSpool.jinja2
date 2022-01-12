@@ -47,13 +47,14 @@
                     </svg>
                 </span>
             </div>
-            <div class="span9">
+            <div class="myspan8">
                 <span data-bind="visible: spoolDialog.isExistingSpool() == false"><h2>NEW </h2></span>
                 <span><h2 data-bind="text: spoolDialog.spoolItemForEditing.displayName"></h2></span>
             </div>
 
-            <div class="span1">
 <!-- Customize Field visiblity
+            <div class="span1">
+
 
                 <div id="configFields" class="btn-group" >
                   <a id="openConfigFields" class="btn dropdown-toggle" onclick="machwas()"   href="#">
@@ -95,12 +96,25 @@
                     </li>
                   </ul>
                 </div>
--->
             </div>
-
-            <div class="span1">
+-->
+            <div class="myspan3">
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isActive" > Active&nbsp;&nbsp;&nbsp;
+                </label>
+                <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isTemplate" > Mark as template&nbsp;&nbsp;&nbsp;<br/>
+
+                        <span data-bind="visible: spoolDialog.templateSpool != null && spoolDialog.templateSpool.hasNoData() == false">
+                            <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate() == false">
+                                <span class="color-preview" data-bind="style: {'background-color': spoolDialog.templateSpool.color}" style="margin-bottom:-4px;"></span>
+                                <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.templateSpool.material">PETG</span> - <span data-bind="text: spoolDialog.templateSpool.displayName">Gute Spule ich schau mal was laueft</span> </span>
+                            </span>
+                            <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate">
+                                <span class="color-preview" data-bind="style: {'background-color': spoolDialog.spoolItemForEditing.color}" style="margin-bottom:-4px;"></span>
+                                <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.spoolItemForEditing.material">PETG</span> - <span data-bind="text: spoolDialog.spoolItemForEditing.displayName">Gute Spule ich schau mal was laueft</span> </span>
+                            </span>
+                        </span>
                 </label>
             </div>
         </div>
@@ -113,14 +127,14 @@
 <!-- LEFT COLUMN -->
 
                     <div class="span6" >
-                        <div class="control-group">
+                        <div class="control-group" data-bind="css: {error: !spoolDialog.isDisplayNamePresent()}">
                             <label class="control-label">Displayname <sup>1</sup></label>
                             <div class="controls">
                                 <input data-bind="textInput: spoolDialog.spoolItemForEditing.displayName"  type="text" class="input-large"  />
                             </div>
                         </div>
-                        <div class="control-group">
-                            <label class="control-label">Color</label>
+                        <div class="control-group" data-bind="css: {error: !spoolDialog.isColorNamePresent()}">
+                            <label class="control-label">Color <sup>1</sup></label>
                             <div class="row controls">
                                 <input data-bind="textInput: spoolDialog.spoolItemForEditing.colorName"  type="text" class="input-small"  /><input id="filament-color-picker" type="text" name="border-color" class="pick-a-color form-control input-mini">
                             </div>
@@ -276,23 +290,52 @@
                             <div class="row">
                                 <div class="control-group  no-bottom-gap">
                                     <label class="control-label">Last use</label>
-                                    <div class="controls" style="display:flex">
-                                        {{ forms.datetimepicker('lastUse-date-picker', 'spoolDialog.spoolItemForEditing.lastUse') }}
+                                    <div class="controls" >
+                                        <input type="datetime-local"
+                                               title="Format e.g. 2022-01-12T14:36"
+                                               placeholder="YYYY-MM-DDThh:mm"
+                                               pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
+                                               data-bind="value: spoolDialog.spoolItemForEditing.lastUseKO" />
                                     </div>
                                 </div>
-                                <div class="control-group">
+                                <div class="control-group  no-bottom-gap">
                                     <label class="control-label">First use</label>
-                                    <div class="controls">
-                                        {{ forms.datetimepicker('firstUse-date-picker', 'spoolDialog.spoolItemForEditing.firstUse') }}
+                                    <div class="controls" >
+                                        <input id="my-firstuse" type="datetime-local"
+                                               title="Format e.g. 2022-01-12T14:36"
+                                               placeholder="YYYY-MM-DDThh:mm"
+                                               pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
+                                               data-bind="value: spoolDialog.spoolItemForEditing.firstUseKO" />
                                     </div>
                                 </div>
-
-                                <div class="control-group no-bottom-gap">
+                                <div class="control-group  no-bottom-gap">
                                     <label class="control-label">Purchased on</label>
-                                    <div class="controls">
-                                        {{ forms.datetimepicker('purchasedOn-date-picker', 'spoolDialog.spoolItemForEditing.purchasedOn') }}
+                                    <div class="controls" >
+                                        <input type="date"
+                                               title="Format e.g. 2022-01-12"
+                                               placeholder="YYYY-MM-DD"
+                                               pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                                               data-bind="value: spoolDialog.spoolItemForEditing.purchasedOnKO" />
                                     </div>
                                 </div>
+{#                                <div class="control-group  no-bottom-gap">#}
+{#                                    <label class="control-label">Last use</label>#}
+{#                                    <div class="controls" style="display:flex">#}
+{#                                        {{ forms.datetimepicker('lastUse-date-picker', 'spoolDialog.spoolItemForEditing.lastUse') }}#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                <div class="control-group">#}
+{#                                    <label class="control-label">First use</label>#}
+{#                                    <div class="controls">#}
+{#                                        {{ forms.datetimepicker('firstUse-date-picker', 'spoolDialog.spoolItemForEditing.firstUse') }}#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                <div class="control-group no-bottom-gap">#}
+{#                                    <label class="control-label">Purchased on</label>#}
+{#                                    <div class="controls">#}
+{#                                        {{ forms.datetimepicker('purchasedOn-date-picker', 'spoolDialog.spoolItemForEditing.purchasedOn') }}#}
+{#                                    </div>#}
+{#                                </div>#}
                                 <div class="control-group no-bottom-gap">
                                     <label class="control-label">Purchased from</label>
                                     <div class="controls">
@@ -322,7 +365,7 @@
                             <div class="custom-divider"></div>
                             <div>
                                 <div class="control-group no-bottom-gap">
-                                    <label for="driven-scope" class="control-label">Auto calculate: </label>
+                                    <label for="driven-scope" class="control-label"><h5>Auto calculation for:</h5></label>
                                     <div class="controls">
                                         <select id="driven-scope" class="input-large"
                                                 data-bind="options: spoolDialog.spoolItemForEditing.drivenScopeOptions,
@@ -332,15 +375,15 @@
                                             <option></option>
                                         </select>
                                     </div>
+                                    <div style="text-align: center;">
+                                        <small class="text-info" >Auto calculation prevents editing.</small>
+                                    </div>
                                 </div>
-                                <h4>Filament Amount <small>(Without Spool)</small></h4>
+                                <h5>Filament Amount <small>(Without Spool)</small></h5>
                                 <p data-bind="visible: !spoolDialog.areDensityAndDiameterValid()"><small class="text-error">
                                     For automatic g to mm conversions, please enter <b>Density</b> and <b>Diameter</b>!
                                 </small></p>
-                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT" class="text-info">
-                                    <b>Auto calculate</b> prevents editing.
-                                </small>
-                                <div class="control-group no-bottom-gap">
+                                <div class="control-group no-bottom-gap" >
                                     <label for="total-weight" class="control-label">Initial <sup>2</sup></label>
                                     <div class="controls">
                                         <div class="input-append">
@@ -388,14 +431,14 @@
                                                    class="input-mini text-right"
                                                    disabled
                                                    data-bind="value: spoolDialog.spoolItemForEditing.remainingWeight,
-                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
+                                                              disable: true"/>
                                             <span class="add-on">g</span>
                                         </span>
                                         <span class="input-append">
                                             <input type="number" step="1" min="0" disabled
                                                    class="input-small text-right"
                                                    data-bind="value: spoolDialog.spoolItemForEditing.remainingLength,
-                                                              disable: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.FILAMENT"/>
+                                                              disable: true"/>
                                             <span class="add-on">mm</span>
                                         </span>
 
@@ -404,10 +447,7 @@
                             </div>
 
                             <div>
-                                <h4>Spool Weight <small>(Without Filament)</small></h4>
-                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.SPOOL" class="text-info">
-                                    <b>Auto calculate</b> prevents editing.
-                                </small>
+                                <h5>Spool Weight <small>(Without Filament)</small></h5>
                                 <div class="control-group no-bottom-gap">
                                     <label for="spool-weight" class="control-label">Empty Spool Weight</label>
                                     <div class="controls">
@@ -423,12 +463,9 @@
                             </div>
 
                             <div>
-                                <h4>Combined Weight <small>(Spool + Filament)</small></h4>
-                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.COMBINED" class="text-info">
-                                    <b>Auto calculate</b> prevents editing.
-                                </small>
-                                <div class="control-group no-bottom-gap">
-                                    <label class="control-label">Initial</label>
+                                <h5>Combined Weight <small>(Spool + Filament)</small></h5>
+                                <div class="control-group no-bottom-gap" data-bind="css: {error: !spoolDialog.isTotalCombinedWeightPresent()}">
+                                    <label class="control-label">Initial total <sup>1</sup></label>
                                     <div class="controls">
                                         <span class="input-append">
                                             <input type="number" step="0.1" min="0" class="input-mini text-right"
@@ -439,9 +476,6 @@
                                         </span>
                                     </div>
                                 </div>
-                                <small data-bind="visible: spoolDialog.spoolItemForEditing.drivenScope() === spoolDialog.scopeValues.SPOOL" class="text-info">
-                                    <b>Auto calculate</b> prevents editing.
-                                </small>
                                 <div class="control-group">
                                     <label class="control-label">Remaining</label>
                                     <div class="controls">
@@ -509,26 +543,11 @@
                                                                                                 }"></select>
                     <button class="btn btn-info" data-bind="click: spoolDialog.selectSpoolItemForPrinting" style="text-align:right">Select for Printing</button>
                     <!-- /ko -->
-
-                    <label class="checkbox">
-                            <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isTemplate" > Mark as template.&nbsp;&nbsp;&nbsp;
-
-                            <span data-bind="visible: spoolDialog.templateSpool != null && spoolDialog.templateSpool.isEmpty() == false">Current
-                                <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate() == false">
-                                    <span class="color-preview" data-bind="style: {'background-color': spoolDialog.templateSpool.color}" style="margin-bottom:-4px;"></span>
-                                    <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.templateSpool.material">PETG</span> - <span data-bind="text: spoolDialog.templateSpool.displayName">Gute Spule ich schau mal was laueft</span> </span>
-                                </span>
-                                <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate">
-                                    <span class="color-preview" data-bind="style: {'background-color': spoolDialog.spoolItemForEditing.color}" style="margin-bottom:-4px;"></span>
-                                    <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.spoolItemForEditing.material">PETG</span> - <span data-bind="text: spoolDialog.spoolItemForEditing.displayName">Gute Spule ich schau mal was laueft</span> </span>
-                                </span>
-                            </span>
-                    </label>
                 </span>
                 <span class="span4 text-right">
 <!--                        data-bind="click: spoolDialog.closeSpoolItemDialog"-->
                     <button class="btn "  data-dismiss="modal"  style="text-align:right">Close</button>
-                    <button class="btn btn-primary" data-bind="click: spoolDialog.saveSpoolItem" style="text-align:right">Save</button>
+                    <button class="btn btn-primary" data-bind="enable: spoolDialog.isFormValidForSubmit(), click: spoolDialog.saveSpoolItem" style="text-align:right">Save</button>
                 </span>
             </div>
         </div>

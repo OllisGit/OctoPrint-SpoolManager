@@ -1,0 +1,24 @@
+## Documentation could be found here
+## https://github.com/actions/stale
+##
+name: 'Stale and close issues'
+on:
+  schedule:
+    # Each day at 1:30am run the action
+    - cron: '30 1 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        with:
+          exempt-issue-labels: 'status: analysing,status: inNextRelease,status: inProgress,status: wontfix'
+
+          days-before-issue-stale: 30
+          stale-issue-message: 'This issue has been automatically marked for closing, because it has not had activity in 30 days. It will be closed if no further activity occurs in 10 days.'
+          stale-issue-label:  'status: markedForAutoClose'
+
+          days-before-issue-close: 10
+          close-issue-message: 'This issue was closed, because it has been already marked for 10 days with no activity.'
+          close-issue-label: 'status: closedByBot'

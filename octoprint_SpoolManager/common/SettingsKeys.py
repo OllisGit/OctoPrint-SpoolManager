@@ -41,3 +41,4 @@ class SettingsKeys():
 
 	## Debugging
 	SETTINGS_KEY_SQL_LOGGING_ENABLED = "sqlLoggingEnabled"
+	SETTINGS_KEY_EXTRUSION_DEBUGGING_ENABLED = "extrusionDebuggingEnabled"

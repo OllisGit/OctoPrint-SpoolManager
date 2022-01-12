@@ -48,6 +48,7 @@ def transformSpoolModelToDict(spoolModel):
 	spoolAsDict["purchasedOn"] = StringUtils.formatDateTime(spoolModel.purchasedOn)
 
 	spoolAsDict["created"] = StringUtils.formatDateTime(spoolModel.created)
+	spoolAsDict["updated"] = StringUtils.formatDateTime(spoolModel.updated)
 
 
 	totalWeight = spoolModel.totalWeight

@@ -22,7 +22,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 
 FORCE_CREATE_TABLES = False
 
-CURRENT_DATABASE_SCHEME_VERSION = 6
+CURRENT_DATABASE_SCHEME_VERSION = 7
 
 # List all Models
 MODELS = [PluginMetaDataModel, SpoolModel]
@@ -166,13 +166,87 @@ class DatabaseManager(object):
 
 	def _upgradeDatabase(self,currentDatabaseSchemeVersion, targetDatabaseSchemeVersion):
 
-		migrationFunctions = [self._upgradeFrom1To2, self._upgradeFrom2To3, self._upgradeFrom3To4, self._upgradeFrom4To5, self._upgradeFrom5To6]
+		migrationFunctions = [self._upgradeFrom1To2,
+							  self._upgradeFrom2To3,
+							  self._upgradeFrom3To4,
+							  self._upgradeFrom4To5,
+							  self._upgradeFrom5To6,
+							  self._upgradeFrom6To7,
+							  self._upgradeFrom7To8,
+							  self._upgradeFrom8To9,
+							  self._upgradeFrom9To10
+							  ]
 
 		for migrationMethodIndex in range(currentDatabaseSchemeVersion -1, targetDatabaseSchemeVersion -1):
 			self._logger.info("Database migration from '" + str(migrationMethodIndex + 1) + "' to '" + str(migrationMethodIndex + 2) + "'")
 			migrationFunctions[migrationMethodIndex]()
 			pass
 		pass
+
+	def _upgradeFrom9To10(self):
+		self._logger.info(" Starting 9 -> 10")
+		# What is changed:
+		# -
+		self._passMessageToClient("error", "DatabaseManager",
+								  "Could not upgrade database scheme V1 to V2. See OctoPrint.log for details!")
+		self._logger.info(" Successfully 9 -> 10")
+
+	def _upgradeFrom8To9(self):
+		self._logger.info(" Starting 8 -> 9")
+		# What is changed:
+		# -
+		self._passMessageToClient("error", "DatabaseManager",
+								  "Could not upgrade database scheme V1 to V2. See OctoPrint.log for details!")
+		self._logger.info(" Successfully 8 -> 9")
+
+	def _upgradeFrom7To8(self):
+		self._logger.info(" Starting 7 -> 8")
+		# What is changed:
+		# -
+		self._passMessageToClient("error", "DatabaseManager",
+								  "Could not upgrade database scheme V1 to V2. See OctoPrint.log for details!")
+		self._logger.info(" Successfully 7 -> 8")
+
+	def _upgradeFrom6To7(self):
+		self._logger.info(" Starting 6 -> 7")
+		# What is changed:
+		# - Recalculate remaining weight
+
+		self._logger.info("  try to calculate remaining weight.")
+
+		#  Calculate the remaining weight for all current spools
+		with self._database.atomic() as transaction:  # Opens new transaction.
+
+			try:
+				allSpoolModels = self.loadAllSpoolsByQuery(None)
+				if (allSpoolModels != None):
+					for spoolModel in allSpoolModels:
+						totalWeight = spoolModel.totalWeight
+						usedWeight = spoolModel.usedWeight
+						remainingWeight = Transformer.calculateRemainingWeight(usedWeight, totalWeight)
+						if (remainingWeight != None):
+							spoolModel.remainingWeight = remainingWeight
+							spoolModel.save()
+
+				localSchemeVersionFromDatabaseModel = PluginMetaDataModel.get(
+					PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION)
+				localSchemeVersionFromDatabaseModel.value = "7"
+				localSchemeVersionFromDatabaseModel.save()
+
+				# do expicit commit
+				transaction.commit()
+			except:
+				# Because this block of code is wrapped with "atomic", a
+				# new transaction will begin automatically after the call
+				# to rollback().
+				transaction.rollback()
+				self._logger.exception("Could not calculate remainingWeight during scheme update from 6 To 7:" )
+
+				return
+			pass
+		self._logger.info(" Successfully 6 -> 7")
+
+
 
 	def _upgradeFrom5To6(self):
 		self._logger.info(" Starting 5 -> 6")
@@ -588,8 +662,9 @@ class DatabaseManager(object):
 
 		# build connection
 		try:
-			self._logger.info("Databaseconnection with...")
-			self._logger.info(self._databaseSettings)
+			if (self.sqlLoggingEnabled):
+				self._logger.info("Databaseconnection with...")
+				self._logger.info(self._databaseSettings)
 			self._database = self._buildDatabaseConnection()
 
 			# connect to Database
@@ -597,7 +672,8 @@ class DatabaseManager(object):
 			self._database.bind(MODELS)
 
 			self._database.connect()
-			self._logger.info("Database connection succesful. Checking Scheme versions")
+			if (self.sqlLoggingEnabled):
+				self._logger.info("Database connection succesful. Checking Scheme versions")
 			# TODO do I realy need to check the meta-infos in the connect function
 			# schemeVersionFromPlugin = str(CURRENT_DATABASE_SCHEME_VERSION)
 			# schemeVersionFromDatabaseModel = str(PluginMetaDataModel.get(PluginMetaDataModel.key == PluginMetaDataModel.KEY_DATABASE_SCHEME_VERSION).value)
@@ -889,9 +965,9 @@ class DatabaseManager(object):
 
 			if ("displayName" == sortColumn):
 				if ("desc" == sortOrder):
-					myQuery = myQuery.order_by(SpoolModel.displayName.desc())
+					myQuery = myQuery.order_by(fn.Lower(SpoolModel.displayName).desc())
 				else:
-					myQuery = myQuery.order_by(SpoolModel.displayName.asc())
+					myQuery = myQuery.order_by(fn.Lower(SpoolModel.displayName).asc())
 			if ("lastUse" == sortColumn):
 				if ("desc" == sortOrder):
 					myQuery = myQuery.order_by(SpoolModel.lastUse.desc())
@@ -977,6 +1053,15 @@ class DatabaseManager(object):
 
 			return databaseId
 
+		# always recalculate the remaing weight (total - used)
+		totalWeight = spoolModel.totalWeight
+		usedWeight = spoolModel.usedWeight
+		if (totalWeight != None):
+			if (usedWeight == None):
+				usedWeight = 0.0
+			remainingWeight = Transformer.calculateRemainingWeight(usedWeight, totalWeight)
+			spoolModel.remainingWeight = remainingWeight
+
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "saveSpool")
 
 	def countSpoolsByQuery(self, withReusedConnection=False):
@@ -1030,15 +1115,14 @@ class DatabaseManager(object):
 			result = []
 			myQuery = SpoolModel.select(SpoolModel.color, SpoolModel.colorName).distinct()
 			for spool in myQuery:
-				value = spool.color
-				if (value != None):
+				if (spool.color != None and spool.colorName):
 					colorInfo = {
 						"colorId": spool.color + ";" + spool.colorName,
 						"color": spool.color,
 						"colorName": spool.colorName
 					}
 					result.append(colorInfo)
-			return result;
+			return result
 
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogColors", set())
 
