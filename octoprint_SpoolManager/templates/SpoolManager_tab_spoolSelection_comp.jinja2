@@ -1,0 +1,162 @@
+{#
+
+File includes all Templates that are needed for custom Knockout.js components, see https://knockoutjs.com/documentation/component-overview.html
+
+#}
+
+
+
+{#
+    Usage:  <spm-selectSpoolTable params="visibleTrigger: ko.observable(true/false),
+                                          spoolsKOArray: ko.observableArray">
+            </spm-selectSpoolTable>
+#}
+<span id="spm-select-spool-table"  style="display: none">
+
+
+{#    <div>spoolsKOArray:<div data-bind="text: allSpoolsKOArray"></div></div>#}
+{#    <div>materialCatalog:<div data-bind="text: allMaterialsKOArray"></div></div>#}
+{#    <div>vendorCatalog:<div data-bind="text: allVendorsKOArray"></div></div>#}
+{#    <div>colorCatalog:<div data-bind="text: allColorsKOArray"></div></div>#}
+{#    <div>selectSpoolFunction<button data-bind="click:selectSpoolFunction">selectSpoolFunction</button></div>#}
+    <div>
+        <span class="filter pull-left">
+                <div style="margin-top:-5px;" class="pull-right search-query-with-clear active-clear" data-bind="css: {'active-clear': filterSelectionQuery}">
+                    <input type="search" class="input-block search-query" data-bind="value: filterSelectionQuery, valueUpdate: 'input'" placeholder="Filter...">
+                    <span class="search-clear" data-bind="click: clearFilterSelectionQuery"><i class="fas fa-times"></i></span>
+                </div>
+        </span>
+        <span >
+            <label>
+                <input style="vertical-align:baseline" type="checkbox"
+                       data-bind="checked: hideEmptySpools">
+                Hide empty spools
+                <input style="vertical-align:baseline" type="checkbox"
+                       data-bind="checked: hideInActiveSpools">
+                Hide inactive spools
+            </label>
+        </span>
+    </div>
+    <div>
+        <span class="pull-left">
+            <small>
+                Sort by:
+                <a href="#" data-bind="click: function() { sortSpoolArray('displayName'); }">Name <span data-bind="visible: currentSortField()=='displayName'">(<span data-bind="text: currentSortOder"></span>)</span></a> |
+                <a href="#" data-bind="click: function() { sortSpoolArray('lastUse'); }">Last use  <span data-bind="visible: currentSortField()=='lastUse'">(<span data-bind="text: currentSortOder"></span>)</span></a> |
+                <a href="#" data-bind="click: function() { sortSpoolArray('firstUse'); }">First use  <span data-bind="visible: currentSortField()=='firstUse'">(<span data-bind="text: currentSortOder"></span>)</span></a> |
+                <a href="#" data-bind="click: function() { sortSpoolArray('remaining'); }">Remaining  <span data-bind="visible: currentSortField()=='remaining'">(<span data-bind="text: currentSortOder"></span>)</span></a> |
+                <a href="#" data-bind="click: function() { sortSpoolArray('material'); }">Material  <span data-bind="visible:  currentSortField()=='material'">(<span data-bind="text: currentSortOder"></span>)</span></a>
+            </small>
+        </span>
+        <span class="pull-right">
+            <small>
+                Show/Total: <b><span data-bind="text: totalShown"></span> / <span data-bind="text: allSpools().length"></span></b>
+            </small>
+        </span>
+    </div>
+
+    <div class="pull-left">
+        <small>
+            Filter:
+            {# Material - Filter #}
+            <span class="dropdown  tabdrop">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material (<span data-bind="text: buildFilterLabel('material')" ></span>)
+                <b class="caret"></b></a>
+                <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                    <li>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" data-bind="checked:showAllMaterialsForFilter , click:doFilterSelectAll($data, 'material')"><i>select/deselect all</i>
+                            </label>
+                        </div>
+                    </li>
+                    <span data-bind="foreach: allMaterials">
+                        <li data-bind="visible: $data != ''">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.selectedMaterialsForFilter"><span data-bind="text: $data"></span>
+                                </label>
+                            </div>
+                        </li>
+                    </span>
+                </ul>
+            </span>
+            {# Vendor - Filter #}
+            <span class="dropdown  tabdrop">
+                |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Vendor (<span data-bind="text: buildFilterLabel('vendor')" ></span>)
+                    <b class="caret"></b></a>
+                <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                    <li>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" data-bind="checked:showAllVendorsForFilter , click:doFilterSelectAll($data, 'vendor')"><i>select/deselect all</i>
+                            </label>
+                        </div>
+                    </li>
+                    <span data-bind="foreach: allVendors">
+                        <li data-bind="visible: $data != ''">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.selectedVendorsForFilter"><span data-bind="text: $data"></span>
+                                </label>
+                            </div>
+                        </li>
+                    </span>
+                </ul>
+            </span>
+            {# Color - Filter #}
+            <span class="dropdown  tabdrop">
+                |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Color (<span data-bind="text: buildFilterLabel('color')" ></span>)
+                    <b class="caret"></b></a>
+
+                <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                    <li>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" data-bind="checked:showAllColorsForFilter , click:doFilterSelectAll($data, 'color')"><i>select/deselect all</i>
+                            </label>
+                        </div>
+                    </li>
+
+                    <span data-bind="foreach: allColors">
+                        <li data-bind="visible: $data.colorCode != ''">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" data-bind="checkedValue: $data.colorId, checked: $parent.selectedColorsForFilter"></input><span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }" ></span><span data-bind="text: $data.colorName"></span>
+                                </label>
+                            </div>
+                        </li>
+                    </span>
+                </ul>
+            </span>
+        </small>
+    </div>
+    {# Spool Table   #}
+    <div>
+        <table class="table table-hover table-bordered">
+            <tbody data-bind="foreach: allSpools">
+                <tr class="entry clickable" data-bind="click: $parent.selectSpoolFunction.bind($data),
+                                                       visible: isFilteredForSelection() == false">
+                    <td class="spool-label">
+                        <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }"></span>
+                        <span data-bind="attr: { title: 'Last use: ' + lastUse() + ' / First use: ' + firstUse() }">
+                            <!-- ko if: material -->
+                            <span data-bind="text: material"></span> -
+                            <!-- /ko -->
+                            <span data-bind="text: displayName"></span>
+                            <!-- ko if: vendor -->
+                            (<span data-bind="text: vendor"></span>)
+                            <!-- /ko -->
+                            <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}"
+                                  class="spool-remaining" title="Remaining weight"></span>
+                            <!-- ko if: lastUse || firstUse-->
+                            (Last/First-Use <span data-bind="text: lastUse"></span> / <span data-bind="text: firstUse"></span>)
+                            <!-- /ko -->
+
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</span>

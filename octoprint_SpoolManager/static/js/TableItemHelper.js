@@ -23,6 +23,9 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
     // Filtering - all, hide empty, hide inactive
     self.filterOptions = ["all", "onlySuccess", "onlyFailed"];
     self.selectedFilterName = ko.observable(defaultFilterName);
+
+    self.selectedFilterNameArrayKO = ko.observableArray([]);
+
     // Filtering - Material
     self.allMaterials = ko.observableArray([]);
     self.showAllMaterialsForFilter = ko.observable(true);
@@ -61,13 +64,20 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
         var vendorFilter = self._evalFilter(self.allVendors(), self.selectedVendorsForFilter());
         var colorFilter = self._evalFilter(self.allColors(), self.selectedColorsForFilter());
 
+        var selectedFilterNamesString = "";
+        var selectedFilterNames = self.selectedFilterNameArrayKO();
+        if (selectedFilterNames.length != 0){
+            selectedFilterNamesString = selectedFilterNames.sort().join();
+        }
+
         var tableQuery = {
             "selectedPageSize": self.selectedPageSize(),
             "from": from,
             "to": to,
             "sortColumn": self.sortColumn(),
             "sortOrder": self.sortOrder(),
-            "filterName": self.selectedFilterName(),
+            // "filterName": self.selectedFilterName(),
+            "filterName": selectedFilterNamesString,
             "materialFilter": materialFilter,
             "vendorFilter": vendorFilter,
             "colorFilter": colorFilter
@@ -89,7 +99,6 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
         // TODO Optimize. provide the defaultpagesize during creation of the helper (default page size)
         self._loadItems()
     });
-
 
     self.selectedMaterialsForFilter.subscribe(function(newValues) {
         if (self.selectedMaterialsForFilter().length > 0){
@@ -200,8 +209,20 @@ function TableItemHelper(loadItemsFunction, defaultPageSize, defaultSortColumn, 
         self._loadItems();
     };
 
+    self.toggleFilter = function(newFilterName){
+        if (self.selectedFilterNameArrayKO().includes(newFilterName)){
+            self.selectedFilterNameArrayKO.remove(newFilterName);
+        } else {
+            // Add the Filter
+            self.selectedFilterNameArrayKO.push(newFilterName);
+        }
+        self.currentPage(0);
+        self._loadItems();
+    }
+
     self.isFilterSelected = function(filterName) {
-        return self.selectedFilterName() == filterName;
+        // return self.selectedFilterName() == filterName;
+        return self.selectedFilterNameArrayKO().includes(filterName);
     };
 
     self.doFilterSelectAll = function(data, catalogName){

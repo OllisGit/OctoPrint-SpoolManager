@@ -597,7 +597,6 @@ class SpoolmanagerPlugin(
 
 	def on_event(self, event, payload):
 
-		# if event == Events.PRINTER_STATE_CHANGED:
 		if (Events.CLIENT_OPENED == event):
 			self._on_clientOpened(payload)
 			return
@@ -784,6 +783,7 @@ class SpoolmanagerPlugin(
 				"js/SpoolManager.js",
 				"js/SpoolManager-APIClient.js",
 				"js/SpoolManager-FilterSorter.js",
+				"js/SpoolManager-SpoolSelectionTableComp.js",
 				"js/SpoolManager-EditSpoolDialog.js",
 				"js/SpoolManager-ImportDialog.js",
 				"js/SpoolManager-DatabaseConnectionProblemDialog.js"

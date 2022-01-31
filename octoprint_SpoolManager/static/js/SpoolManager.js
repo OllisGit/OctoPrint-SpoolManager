@@ -127,11 +127,10 @@ $(function() {
 
 
         ///////////////////////////////////////////////////// START: SETTINGS
-        self.pluginNotWorking = ko.observable(false);
+        self.pluginNotWorking = ko.observable(undefined);
 
         self.downloadDatabaseUrl = ko.observable();
         self.databaseConnectionProblemDialog = new DatabaseConnectionProblemDialog();
-
 
         self.databaseMetaData = {
             localSchemeVersionFromDatabaseModel: ko.observable(),
@@ -410,8 +409,7 @@ $(function() {
         // see FILTER/SORTING https://embed.plnkr.co/plunk/Kj5JMv
         self.filterSelectionQuery = ko.observable();
 
-        self.sidebarFilterSorter = new SpoolsFilterSorter("sidebarSpoolSelection", self.allSpoolsForSidebar);
-        self.tableFilterSorter = new SpoolsFilterSorter("tabTableSpool", self.allSpoolsForSidebar);
+        // self.sidebarFilterSorter = new SpoolsFilterSorter("sidebarSpoolSelection", self.allSpoolsForSidebar);
 
         self.sidebarSelectSpoolModalToolIndex = ko.observable(null);  // index of the current tool we want to select for
         self.sidebarSelectSpoolModalSpoolItem = ko.observable(null); // current spoolitem
@@ -481,7 +479,7 @@ $(function() {
                         slot(spoolItem);
                     }
                     // Pre sorting in Selection-Dialog
-                    self.sidebarFilterSorter.sortSpoolArray("displayName", "ascending");
+                    // self.sidebarFilterSorter.sortSpoolArray("displayName", "ascending");
                 }
             });
         }
@@ -588,8 +586,16 @@ $(function() {
         }
 
         self.sidebarOpenSelectSpoolDialog = function(toolIndex, spoolItem){
+
+            /* needed for Filter-Search dropdown-menu */
+            $('.dropdown-menu.keep-open').click(function(e) {
+                e.stopPropagation();
+            });
+
             self.sidebarSelectSpoolModalSpoolItem(spoolItem);
             self.sidebarSelectSpoolModalToolIndex(toolIndex);
+
+            // self.sidebarFilterSorter.initFilterSorter();
 
             self.selectionSpoolDialog.modal({
                 minHeight: 300,
@@ -666,18 +672,15 @@ $(function() {
                 allSpoolItems = responseData["allSpools"];
                 var allCatalogs = responseData["catalogs"];
 
-
-                // assign catalogs to tableFilterSorter
-                self.tableFilterSorter.updateCatalogs(allCatalogs);
                 // assign catalogs to sidebarFilterSorter
-                self.sidebarFilterSorter.updateCatalogs(allCatalogs);
+                // self.sidebarFilterSorter.updateCatalogs(allCatalogs);
                 // assign catalogs to tablehelper
                 self.spoolItemTableHelper.updateCatalogs(allCatalogs);
                 // assign all catalogs to editview
                 self.spoolDialog.updateCatalogs(allCatalogs);
 
-                templateSpoolData = responseData["templateSpool"];
-                self.spoolDialog.updateTemplateSpool(templateSpoolData);
+                templateSpoolsData = responseData["templateSpools"];
+                self.spoolDialog.updateTemplateSpools(templateSpoolsData);
 
                 var dataRows = ko.utils.arrayMap(allSpoolItems, function (spoolData) {
                     var result = self.spoolDialog.createSpoolItemForTable(spoolData);
@@ -919,6 +922,9 @@ $(function() {
         };
 
         self.onBeforeBinding = function() {
+            // Register Knockout Components
+            new SpoolSelectionTableComp().registerSpoolSelectionTableComp();
+
             // assign current pluginSettings
             self.pluginSettings = self.settingsViewModel.settings.plugins[PLUGIN_ID];
 

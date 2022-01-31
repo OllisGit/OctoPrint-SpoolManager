@@ -761,11 +761,13 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		materials = self._addAdditionalMaterials(materials)
 
 		tempateSpoolAsDict = None
-		allTemplateSpools = self._databaseManager.loadSpoolTemplate()
-		if (allTemplateSpools != None):
-			for spool in allTemplateSpools:
-				tempateSpoolAsDict = Transformer.transformSpoolModelToDict(spool)
-				break
+		allTemplateSpools = self._databaseManager.loadSpoolTemplates()
+		allTemplateSpoolsAsDict = Transformer.transformAllSpoolModelsToDict(allTemplateSpools)
+
+		# if (allTemplateSpools != None):
+		# 	for spool in allTemplateSpools:
+		# 		tempateSpoolAsDict = Transformer.transformSpoolModelToDict(spool)
+		# 		break
 
 		catalogs = {
 			"vendors": vendors,
@@ -785,7 +787,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
 		return flask.jsonify({
 								# "databaseConnectionProblem": self._databaseManager.isConnected() == False,
-								"templateSpool": tempateSpoolAsDict,
+								"templateSpools": allTemplateSpoolsAsDict,
 								"catalogs": catalogs,
 								"totalItemCount": totalItemCount,
 								"allSpools": allSpoolsAsDict,

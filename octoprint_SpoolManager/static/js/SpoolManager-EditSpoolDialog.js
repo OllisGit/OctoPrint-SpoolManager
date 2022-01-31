@@ -125,7 +125,7 @@ function SpoolManagerEditSpoolDialog(){
 
         var materialViewModel = self.componentFactory.createSelectWithFilter("spool-material-select", $('#spool-form'));
         this.material = materialViewModel.selectedOption;
-        this.allMaterials = materialViewModel.allOptions;
+        // this.allMaterials = materialViewModel.allOptions;
 
         // Autosuggest for "density"
         this.material.subscribe(function(newMaterial){
@@ -193,7 +193,7 @@ function SpoolManagerEditSpoolDialog(){
             this.allLabels.removeAll();
             ko.utils.arrayPushAll(this.allLabels, self.catalogs.labels);
             // materials
-            this.allMaterials(self.catalogs.materials);
+            // this.allMaterials(self.catalogs.materials);
 
             //vendors
             this.allVendors(self.catalogs.vendors);
@@ -311,9 +311,10 @@ function SpoolManagerEditSpoolDialog(){
     ///////////////////////////////////////////////////////////////////////////////////////////////// Instance Variables
     self.componentFactory = new ComponentFactory();
     self.spoolDialog = null;
+    self.templateSpoolDialog = null;
     self.closeDialogHandler = null;
     self.spoolItemForEditing = null;
-    self.templateSpool = new SpoolItem({}, false);
+    self.templateSpools = ko.observableArray([]);
 
     self.noteEditor = null;
 
@@ -326,6 +327,10 @@ function SpoolManagerEditSpoolDialog(){
     self.materialViewModel = null;
 
     self.catalogs = null;
+    self.allMaterials = ko.observableArray([]);
+    self.allVendors = ko.observableArray([]);
+    self.allColors = ko.observableArray([]);
+
     self.allToolIndices = ko.observableArray([]);
 
     // Knockout stuff
@@ -467,6 +472,7 @@ function SpoolManagerEditSpoolDialog(){
         self.printerProfilesViewModel = printerProfilesViewModel;
 
         self.spoolDialog = $("#dialog_spool_edit");
+        self.templateSpoolDialog = $("#dialog_template_spool_selection");
 
         self.noteEditor = new Quill('#spool-note-editor', {
             modules: {
@@ -495,7 +501,6 @@ function SpoolManagerEditSpoolDialog(){
             }
         });
         // ----------------- start: weight stuff
-
         var remainingWeightKo = self.spoolItemForEditing.remainingWeight;
         var totalWeightKo = self.spoolItemForEditing.totalWeight;
         var usedWeightKo = self.spoolItemForEditing.usedWeight;
@@ -748,25 +753,36 @@ function SpoolManagerEditSpoolDialog(){
         return self.spoolItemForEditing;
     }
 
-    this.createSpoolItemForTemplate = function(spoolData){
-        self.templateSpool =  new SpoolItem(spoolData, false);
-    }
-
     this.createSpoolItemForTable = function(spoolData){
         var newSpoolItem = new SpoolItem(spoolData, false);
         return newSpoolItem;
     }
 
-    this.updateCatalogs = function(catalogs){
-        self.catalogs = catalogs;
+    this.updateCatalogs = function(allCatalogs){
+        self.catalogs = allCatalogs;
+        if (self.catalogs != null){
+            self.allMaterials(self.catalogs["materials"]);
+            self.allVendors(self.catalogs["vendors"]);
+            self.allColors(self.catalogs["colors"]);
+        } else {
+            self.allMaterials([]);
+            self.allVendors([]);
+            self.allColors([]);
+        }
+
     }
 
-    this.updateTemplateSpool = function(templateSpoolData){
-        if (self.templateSpool == null){
-            self.createSpoolItemForTemplate(templateSpoolData)
-        } else {
-            self.templateSpool.update(templateSpoolData);
+
+    this.updateTemplateSpools = function(templateSpoolsData){
+
+        var spoolItemsArray = [];
+        if (templateSpoolsData != null && templateSpoolsData.length !=0){
+            spoolItemsArray = ko.utils.arrayMap(templateSpoolsData, function (spoolData) {
+                var result = self.createSpoolItemForTable(spoolData);
+                return result;
+            });
         }
+        self.templateSpools(spoolItemsArray);
     }
 
     this.showDialog = function(spoolItem, closeDialogHandler){
@@ -785,8 +801,6 @@ function SpoolManagerEditSpoolDialog(){
         if (spoolItem == null){
             // New Spool
             self.isExistingSpool(false);
-            templateSpoolItemCopy = ko.mapping.toJS(self.templateSpool);
-            self.spoolItemForEditing.update(templateSpoolItemCopy);
             // reset values for a new spool
             self.spoolItemForEditing.isTemplate(false);
             self.spoolItemForEditing.isActive(true);
@@ -826,12 +840,23 @@ function SpoolManagerEditSpoolDialog(){
             'margin-left': function() { return -($(this).width() /2); }
         });
 
+
         self.autoUpdateEnabled = true;
     };
 
-    this.copySpoolItem = function(){
+    self.copySpoolItem = function(){
+        self._copySpoolItemForEditing(self.spoolItemForEditing);
+    }
+
+    self.copySpoolItemFromTemplate = function(spoolItem){
+        self._copySpoolItemForEditing(spoolItem);
+        // close dialog
+        self.templateSpoolDialog.modal('hide');
+    }
+
+    self._copySpoolItemForEditing = function(spoolItem){
         self.isExistingSpool(false);
-        spoolItemCopy = ko.mapping.toJS(self.spoolItemForEditing);
+        let spoolItemCopy = ko.mapping.toJS(spoolItem);
         self.spoolItemForEditing.update(spoolItemCopy);
         self.spoolItemForEditing.isTemplate(false);
         self.spoolItemForEditing.isActive(true);
@@ -839,7 +864,7 @@ function SpoolManagerEditSpoolDialog(){
         self.spoolItemForEditing.isSpoolVisible(true);
     }
 
-    this.saveSpoolItem = function(){
+    self.saveSpoolItem = function(){
 
         // Input validation
         var displayName = self.spoolItemForEditing.displayName();
@@ -872,7 +897,7 @@ function SpoolManagerEditSpoolDialog(){
         });
     }
 
-    this.deleteSpoolItem = function(){
+    self.deleteSpoolItem = function(){
         var result = confirm("Do you really want to delete this spool?");
         if (result == true){
             self.apiClient.callDeleteSpool(self.spoolItemForEditing.databaseId(), function(responseData) {
@@ -883,13 +908,13 @@ function SpoolManagerEditSpoolDialog(){
         }
     }
 
-    this.selectSpoolItemForPrinting = function(){
+    self.selectSpoolItemForPrinting = function(){
         self.spoolItemForEditing.isSpoolVisible(false);
         self.spoolDialog.modal('hide');
         self.closeDialogHandler(false, "selectSpoolForPrinting", self.spoolItemForEditing);
     }
 
-    this.generateQRCodeImageSourceAttribute = function(){
+    self.generateQRCodeImageSourceAttribute = function(){
         //
         // <img loading="lazy" className="qr-code" alt="QR Code"
         //      data-bind="attr: {src: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }"
@@ -906,5 +931,21 @@ function SpoolManagerEditSpoolDialog(){
             href: source,
             title: title
         }
+    }
+
+
+    self.selectAndCopyTemplateSpool = function(){
+
+        /* needed for Filter-Search dropdown-menu */
+        $('.dropdown-menu.keep-open').click(function(e) {
+            e.stopPropagation();
+        });
+
+        self.templateSpoolDialog.modal({
+                minHeight: function () {
+                    return Math.max($.fn.modal.defaults.maxHeight() - 80, 250);
+                },
+                show: true
+            });
     }
 }

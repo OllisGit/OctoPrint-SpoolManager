@@ -6,6 +6,8 @@ function SpoolsFilterSorter(filterSorterId, spoolsArrayKO) {
     ////////////////////////////////////////////////////////////////////// field variables
     self.filterSorterId = filterSorterId;
     self.spoolsArray = spoolsArrayKO;
+
+    self.totalShown = ko.observable(1);
     // SORTING
     self.currentSortField = ko.observable();
     self.currentSortOder = ko.observable("ascending"); // or ascending
@@ -64,7 +66,6 @@ function SpoolsFilterSorter(filterSorterId, spoolsArrayKO) {
         //   self.selectedColorsForFilter(self._stringToArray(localStorage[storageKeyPrefix + "selectedColorsForFilter"]));
         // }
     }
-
 
     self._storeFilterSelectionsToBrowserStorage = function(){
         if (!Modernizr.localstorage) {
@@ -146,9 +147,13 @@ function SpoolsFilterSorter(filterSorterId, spoolsArrayKO) {
         self._storeFilterSelectionsToBrowserStorage();
     });
 
-
-
     ///////////////////////////////////////////////// functions
+
+    self.initFilterSorter = function (){
+        //Needed because, now the array is filled, so triggered it before showing the dialog
+        self._executeFilter();
+    }
+
     // maybe not needed
     self.setSpoolsArray = function(spoolsArrayKO){
         self.spoolsArray = spoolsArrayKO;
@@ -250,7 +255,10 @@ function SpoolsFilterSorter(filterSorterId, spoolsArrayKO) {
     self._executeFilter = function(){
         var filterQuery = self.filterSelectionQuery == null || self.filterSelectionQuery() == null ? "" : self.filterSelectionQuery() ;
         filterQuery = filterQuery.toLowerCase();
-        self.spoolsArray().forEach(function(spool) {
+        var totalShownCount = 0;
+        // self.spoolsArray().forEach(function(spool) {
+        for (spool of self.spoolsArray()) {
+
             var spoolProperties = spool.material() + " " +
                                   spool.displayName() + " " +
                                   spool.colorName();
@@ -300,7 +308,12 @@ function SpoolsFilterSorter(filterSorterId, spoolsArrayKO) {
                     }
                 }
             }
-        });
+            if (spool.isFilteredForSelection() == false){
+                totalShownCount += 1;
+            }
+        // });
+        }
+        self.totalShown(totalShownCount);
     }
 
     /**
