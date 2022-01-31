@@ -90,13 +90,6 @@
     text-overflow: ellipsis;
 }
 
-/* TODO Maybe not needed any more*/
-.dropdown-menu {
-    max-height: 120px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
 /*   use of own span elemenst so that no one can break it (e.g. UI Customizer) */
 .myspan12{width:940px}
 .myspan11{width:860px}

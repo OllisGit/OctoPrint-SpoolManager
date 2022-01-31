@@ -4,8 +4,8 @@
 
 
     <!-- Filter / Sorting -->
-    <div class="row-fluid" data-bind="visible: pluginNotWorking()==true">
-        <div>
+    <div data-bind="visible: pluginNotWorking()==true">
+        <div class="row-fluid" >
             <font color="red"><b>Plugin not working, because of Database issues. Check Plugin-Settings!</b></font>
         </div>
     </div>
@@ -56,7 +56,7 @@
 {#                                                                                                                        ? 'all' : spoolItemTableHelper.selectedMaterialsForFilter().length" ></span>)#}
                             <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material (<span data-bind="text: spoolItemTableHelper.buildFilterLabel('material')" ></span>)
                             <b class="caret"></b></a>
-                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                            <ul class="dropdown-menu keep-open pre-scrollable" style="padding-left:10px" >
                                 <li>
                                     <div class="checkbox">
                                         <label>
@@ -79,7 +79,7 @@
                         <span class="dropdown  tabdrop">
                             |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Vendor (<span data-bind="text: spoolItemTableHelper.buildFilterLabel('vendor')" ></span>)
                                 <b class="caret"></b></a>
-                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                            <ul class="dropdown-menu keep-open pre-scrollable" style="padding-left:10px" >
                                 <li>
                                     <div class="checkbox">
                                         <label>
@@ -103,7 +103,7 @@
                             |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Color (<span data-bind="text: spoolItemTableHelper.buildFilterLabel('color')" ></span>)
                                 <b class="caret"></b></a>
 
-                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >
+                            <ul class="dropdown-menu keep-open pre-scrollable" style="padding-left:10px" >
                                 <li>
                                     <div class="checkbox">
                                         <label>
