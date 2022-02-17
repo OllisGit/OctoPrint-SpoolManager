@@ -31,139 +31,157 @@
 
             </div>
             <hr/>
-            <div class="filter">
 
-                    <div style="margin-top:-5px;" class="pull-right search-query-with-clear active-clear" data-bind="css: {'active-clear': sidebarFilterSorter.filterSelectionQuery}">
-                        <input type="search" class="input-block search-query" data-bind="value: sidebarFilterSorter.filterSelectionQuery, valueUpdate: 'input'" placeholder="Filter...">
-                        <span class="search-clear" data-bind="click: sidebarFilterSorter.clearFilterSelectionQuery"><i class="fas fa-times"></i></span>
-                    </div>
+            <spm-select-spool-table params="allSpoolsKOArray: allSpoolsForSidebar,
+                                            allMaterialsKOArray: spoolDialog.allMaterials,
+                                            allVendorsKOArray: spoolDialog.allVendors,
+                                            allColorsKOArray: spoolDialog.allColors,
+                                            selectSpoolFunction: sidebarSelectSpoolFromDialog
+                                            "></spm-select-spool-table>
 
-                <label>
-                    <input style="vertical-align:baseline" type="checkbox"
-                           data-bind="checked: sidebarFilterSorter.hideEmptySpools">
-                    Hide empty spools
-                </label>
-                <label>
-                    <input style="vertical-align:baseline" type="checkbox"
-                           data-bind="checked: sidebarFilterSorter.hideInActiveSpools">
-                    Hide inactive spools
-                </label>
-            </div>
-            <div class="pull-left">
-                <small>
-                    Sort by:
-                    <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('displayName'); }">Name <span data-bind="visible: sidebarFilterSorter.currentSortField()=='displayName'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |
-                    <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('lastUse'); }">Last use  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='lastUse'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |
-                    <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('firstUse'); }">First use  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='firstUse'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |
-                    <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('remaining'); }">Remaining  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='remaining'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |
-                    <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('material'); }">Material  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='material'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a>
-                </small>
-            </div>
-            <div class="pull-left">
-                    <small>
-                        Filter:
+
+{#            <div>#}
+{#                <span class="filter pull-left">#}
+{#                        <div style="margin-top:-5px;" class="pull-right search-query-with-clear active-clear" data-bind="css: {'active-clear': sidebarFilterSorter.filterSelectionQuery}">#}
+{#                            <input type="search" class="input-block search-query" data-bind="value: sidebarFilterSorter.filterSelectionQuery, valueUpdate: 'input'" placeholder="Filter...">#}
+{#                            <span class="search-clear" data-bind="click: sidebarFilterSorter.clearFilterSelectionQuery"><i class="fas fa-times"></i></span>#}
+{#                        </div>#}
+{#                </span>#}
+{#                <span >#}
+{#                    <label>#}
+{#                        <input style="vertical-align:baseline" type="checkbox"#}
+{#                               data-bind="checked: sidebarFilterSorter.hideEmptySpools">#}
+{#                        Hide empty spools#}
+{#                        <input style="vertical-align:baseline" type="checkbox"#}
+{#                               data-bind="checked: sidebarFilterSorter.hideInActiveSpools">#}
+{#                        Hide inactive spools#}
+{#                    </label>#}
+{#                </span>#}
+{#            </div>#}
+{#            <div>#}
+{#                <span class="pull-left">#}
+{#                    <small>#}
+{#                        Sort by:#}
+{#                        <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('displayName'); }">Name <span data-bind="visible: sidebarFilterSorter.currentSortField()=='displayName'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |#}
+{#                        <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('lastUse'); }">Last use  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='lastUse'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |#}
+{#                        <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('firstUse'); }">First use  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='firstUse'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |#}
+{#                        <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('remaining'); }">Remaining  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='remaining'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a> |#}
+{#                        <a href="#" data-bind="click: function() { sidebarFilterSorter.sortSpoolArray('material'); }">Material  <span data-bind="visible: sidebarFilterSorter.currentSortField()=='material'">(<span data-bind="text: sidebarFilterSorter.currentSortOder"></span>)</span></a>#}
+{#                    </small>#}
+{#                </span>#}
+{#                <span class="pull-right">#}
+{#                    <small>#}
+{#                        Show/Total: <b><span data-bind="text: sidebarFilterSorter.totalShown"></span> / <span data-bind="text: sidebarFilterSorter.spoolsArray().length"></span></b>#}
+{#                    </small>#}
+{#                </span>#}
+{#            </div>#}
+{#            <div class="pull-left">#}
+{#                    <small>#}
+{#                        Filter:#}
                         {# Material - Filter #}
-                        <span class="dropdown  tabdrop">
-                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material (<span data-bind="text: sidebarFilterSorter.buildFilterLabel('material')" ></span>)
-                            <b class="caret"></b></a>
-                            <ul class="dropdown-menu keep-open pre-scrollable" style="padding-left:10px" >
-                                <li>
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" data-bind="checked:sidebarFilterSorter.showAllMaterialsForFilter , click:sidebarFilterSorter.doFilterSelectAll($data, 'material')"><i>select/deselect all</i>
-                                        </label>
-                                    </div>
-                                </li>
-                                <span data-bind="foreach: sidebarFilterSorter.allMaterials">
-                                    <li data-bind="visible: $data != ''">
-                                        <div class="checkbox">
-                                            <label>
-                                                <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.sidebarFilterSorter.selectedMaterialsForFilter"><span data-bind="text: $data"></span>
-                                            </label>
-                                        </div>
-                                    </li>
-                                </span>
-                            </ul>
-                        </span>
+{#                        <span class="dropdown  tabdrop">#}
+{#                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Material (<span data-bind="text: sidebarFilterSorter.buildFilterLabel('material')" ></span>)#}
+{#                            <b class="caret"></b></a>#}
+{#                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >#}
+{#                                <li>#}
+{#                                    <div class="checkbox">#}
+{#                                        <label>#}
+{#                                            <input type="checkbox" data-bind="checked:sidebarFilterSorter.showAllMaterialsForFilter , click:sidebarFilterSorter.doFilterSelectAll($data, 'material')"><i>select/deselect all</i>#}
+{#                                        </label>#}
+{#                                    </div>#}
+{#                                </li>#}
+{#                                <span data-bind="foreach: sidebarFilterSorter.allMaterials">#}
+{#                                    <li data-bind="visible: $data != ''">#}
+{#                                        <div class="checkbox">#}
+{#                                            <label>#}
+{#                                                <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.sidebarFilterSorter.selectedMaterialsForFilter"><span data-bind="text: $data"></span>#}
+{#                                            </label>#}
+{#                                        </div>#}
+{#                                    </li>#}
+{#                                </span>#}
+{#                            </ul>#}
+{#                        </span>#}
                         {# Vendor - Filter #}
-                        <span class="dropdown  tabdrop">
-                            |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Vendor (<span data-bind="text: sidebarFilterSorter.buildFilterLabel('vendor')" ></span>)
-                                <b class="caret"></b></a>
-                            <ul class="dropdown-menu keep-open pre-scrollable" style="padding-left:10px" >
-                                <li>
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" data-bind="checked:sidebarFilterSorter.showAllVendorsForFilter , click:sidebarFilterSorter.doFilterSelectAll($data, 'vendor')"><i>select/deselect all</i>
-                                        </label>
-                                    </div>
-                                </li>
-                                <span data-bind="foreach: sidebarFilterSorter.allVendors">
-                                    <li data-bind="visible: $data != ''">
-                                        <div class="checkbox">
-                                            <label>
-                                                <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.sidebarFilterSorter.selectedVendorsForFilter"><span data-bind="text: $data"></span>
-                                            </label>
-                                        </div>
-                                    </li>
-                                </span>
-                            </ul>
-                        </span>
+{#                        <span class="dropdown  tabdrop">#}
+{#                            |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Vendor (<span data-bind="text: sidebarFilterSorter.buildFilterLabel('vendor')" ></span>)#}
+{#                                <b class="caret"></b></a>#}
+{#                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >#}
+{#                                <li>#}
+{#                                    <div class="checkbox">#}
+{#                                        <label>#}
+{#                                            <input type="checkbox" data-bind="checked:sidebarFilterSorter.showAllVendorsForFilter , click:sidebarFilterSorter.doFilterSelectAll($data, 'vendor')"><i>select/deselect all</i>#}
+{#                                        </label>#}
+{#                                    </div>#}
+{#                                </li>#}
+{#                                <span data-bind="foreach: sidebarFilterSorter.allVendors">#}
+{#                                    <li data-bind="visible: $data != ''">#}
+{#                                        <div class="checkbox">#}
+{#                                            <label>#}
+{#                                                <input type="checkbox" data-bind="checkedValue: $data, checked: $parent.sidebarFilterSorter.selectedVendorsForFilter"><span data-bind="text: $data"></span>#}
+{#                                            </label>#}
+{#                                        </div>#}
+{#                                    </li>#}
+{#                                </span>#}
+{#                            </ul>#}
+{#                        </span>#}
                         {# Color - Filter #}
-                        <span class="dropdown  tabdrop">
-                            |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Color (<span data-bind="text: sidebarFilterSorter.buildFilterLabel('color')" ></span>)
-                                <b class="caret"></b></a>
+{#                        <span class="dropdown  tabdrop">#}
+{#                            |  <a href="#" data-toggle="dropdown" class="dropdown-toggle">Color (<span data-bind="text: sidebarFilterSorter.buildFilterLabel('color')" ></span>)#}
+{#                                <b class="caret"></b></a>#}
+{##}
+{#                            <ul class="dropdown-menu keep-open" style="padding-left:10px" >#}
+{#                                <li>#}
+{#                                    <div class="checkbox">#}
+{#                                        <label>#}
+{#                                            <input type="checkbox" data-bind="checked:sidebarFilterSorter.showAllColorsForFilter , click:sidebarFilterSorter.doFilterSelectAll($data, 'color')"><i>select/deselect all</i>#}
+{#                                        </label>#}
+{#                                    </div>#}
+{#                                </li>#}
+{##}
+{#                                <span data-bind="foreach: sidebarFilterSorter.allColors">#}
+{#                                    <li data-bind="visible: $data.colorCode != ''">#}
+{#                                        <div class="checkbox">#}
+{#                                            <label>#}
+{#                                                <input type="checkbox" data-bind="checkedValue: $data.colorId, checked: $parent.sidebarFilterSorter.selectedColorsForFilter"></input><span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }" ></span><span data-bind="text: $data.colorName"></span>#}
+{#                                            </label>#}
+{#                                        </div>#}
+{#                                    </li>#}
+{#                                </span>#}
+{#                            </ul>#}
+{#                        </span>#}
+{#                    </small>#}
+{##}
+{#            </div>#}
+{#            <table class="table table-hover table-bordered">#}
+{#            <tbody data-bind="foreach: sidebarFilterSorter.getSpoolsArray()">#}
+{#                <tr class="entry clickable" data-bind="click: $root.sidebarSelectSpoolFromDialog.bind($data),#}
+{#                                                       visible: isFilteredForSelection() == false">#}
+{#                    <td class="spool-label">#}
+{#                        <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }"></span>#}
+{#                        <span data-bind="attr: { title: 'Last use: ' + lastUse() + ' / First use: ' + firstUse() }">#}
+{#                            <!-- ko if: material -->#}
+{#                            <span data-bind="text: material"></span> -#}
+{#                            <!-- /ko -->#}
+{#                            <span data-bind="text: displayName"></span>#}
+{#                            <!-- ko if: vendor -->#}
+{#                            (<span data-bind="text: vendor"></span>)#}
+{#                            <!-- /ko -->#}
+{#                            <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}"#}
+{#                                  class="spool-remaining" title="Remaining weight"></span>#}
+{#                            <!-- ko if: lastUse || firstUse-->#}
+{#                            (Last/First-Use <span data-bind="text: lastUse"></span> / <span data-bind="text: firstUse"></span>)#}
+{#                            <!-- /ko -->#}
+{##}
+{#                        </span>#}
+{#                    </td>#}
+{#                </tr>#}
+{#            </tbody>#}
+{#        </table>#}
 
-                            <ul class="dropdown-menu keep-open pre-scrollable" style="padding-left:10px" >
-                                <li>
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" data-bind="checked:sidebarFilterSorter.showAllColorsForFilter , click:sidebarFilterSorter.doFilterSelectAll($data, 'color')"><i>select/deselect all</i>
-                                        </label>
-                                    </div>
-                                </li>
 
-                                <span data-bind="foreach: sidebarFilterSorter.allColors">
-                                    <li data-bind="visible: $data.colorCode != ''">
-                                        <div class="checkbox">
-                                            <label>
-                                                <input type="checkbox" data-bind="checkedValue: $data.colorId, checked: $parent.sidebarFilterSorter.selectedColorsForFilter"></input><span class="color-preview" data-bind="style: {'background-color': $data.color}, attr: { title: $data.colorName }" ></span><span data-bind="text: $data.colorName"></span>
-                                            </label>
-                                        </div>
-                                    </li>
-                                </span>
-                            </ul>
-                        </span>
-                    </small>
-
-            </div>
         </div>
-        <table class="table table-hover table-bordered">
-            <tbody data-bind="foreach: sidebarFilterSorter.getSpoolsArray()">
-                <tr class="entry clickable" data-bind="click: $root.sidebarSelectSpoolFromDialog.bind($data),
-                                                       visible: isFilteredForSelection() == false">
-                    <td class="spool-label">
-                        <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }"></span>
-                        <span data-bind="attr: { title: 'Last use: ' + lastUse() + ' / First use: ' + firstUse() }">
-                            <!-- ko if: material -->
-                            <span data-bind="text: material"></span> -
-                            <!-- /ko -->
-                            <span data-bind="text: displayName"></span>
-                            <!-- ko if: vendor -->
-                            (<span data-bind="text: vendor"></span>)
-                            <!-- /ko -->
-                            <span data-bind="text: $root.remainingText($data), attr: {title: $root.buildTooltipForSpoolItem($data, 'Remaining weight: ', 'remainingWeight')}"
-                                  class="spool-remaining" title="Remaining weight"></span>
-                            <!-- ko if: lastUse || firstUse-->
-                            (Last/First-Use <span data-bind="text: lastUse"></span> / <span data-bind="text: firstUse"></span>)
-                            <!-- /ko -->
-
-                        </span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
     </div>
     <div class="modal-footer">
-        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Cancel</a>
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
     </div>
 </div>

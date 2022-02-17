@@ -872,17 +872,24 @@ class DatabaseManager(object):
 			"externalSpoolItemCount": externalSpoolItemCount
 		}
 
+	def loadFirstSingleSpool(self, withReusedConnection=False):
+		def databaseCallMethode():
+			return SpoolModel.select().limit(1)[0]
+
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadFirstSingleSpool")
+
+
 	def loadSpool(self, databaseId, withReusedConnection=False):
 		def databaseCallMethode():
 			return SpoolModel.get_or_none(databaseId)
 
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadSpool")
 
-	def loadSpoolTemplate(self, withReusedConnection=False):
+	def loadSpoolTemplates(self, withReusedConnection=False):
 		def databaseCallMethode():
 			return SpoolModel.select().where(SpoolModel.isTemplate == True)
 
-		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadSpoolTemplate")
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadSpoolTemplates")
 
 	def loadAllSpoolsByQuery(self, tableQuery = None, withReusedConnection = False):
 
@@ -954,14 +961,17 @@ class DatabaseManager(object):
 					# 	myQuery = myQuery.orwhere(  (SpoolModel.color == color) & (SpoolModel.colorName == colorName) )
 				pass
 
-			mySqlText = myQuery.sql()
+			# mySqlText = myQuery.sql()
 
-			if (filterName == "hideEmptySpools"):
-				myQuery = myQuery.where( (SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None))
-			if (filterName == "hideInactiveSpools"):
-				myQuery = myQuery.where( (SpoolModel.isActive == True) )
-			if (filterName == "hideEmptySpools,hideInactiveSpools"):
-				myQuery = myQuery.where( ((SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None)) & (SpoolModel.isActive == True) )
+			if ("onlyTemplates" in filterName):
+				myQuery = myQuery.where( (SpoolModel.isTemplate == True) )
+			else:
+				if (filterName == "hideEmptySpools"):
+					myQuery = myQuery.where( (SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None))
+				if (filterName == "hideInactiveSpools"):
+					myQuery = myQuery.where( (SpoolModel.isActive == True) )
+				if (filterName == "hideEmptySpools,hideInactiveSpools"):
+					myQuery = myQuery.where( ((SpoolModel.remainingWeight > 0) | (SpoolModel.remainingWeight == None)) & (SpoolModel.isActive == True) )
 
 			if ("displayName" == sortColumn):
 				if ("desc" == sortOrder):
@@ -1033,9 +1043,10 @@ class DatabaseManager(object):
 						newVersion = versionFromUI + 1
 						spoolModel.version = newVersion
 
-					if (spoolModel.isTemplate == True):
-						#  remove template flag from last templateSpool
-						SpoolModel.update({SpoolModel.isTemplate: False}).where(SpoolModel.isTemplate == True).execute()
+					# Not needed any more, we have multi-temlates
+					# if (spoolModel.isTemplate == True):
+					# 	#  remove template flag from last templateSpool
+					# 	SpoolModel.update({SpoolModel.isTemplate: False}).where(SpoolModel.isTemplate == True).execute()
 
 					spoolModel.save()
 					databaseId = spoolModel.get_id()
@@ -1151,3 +1162,4 @@ class DatabaseManager(object):
 				pass
 
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "deleteSpool")
+

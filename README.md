@@ -85,6 +85,63 @@ At the meantime you need to uninstall and install the version you like from the 
 
 see [Release-Overview](https://github.com/OllisGit/OctoPrint-SpoolManager/releases/)
 
+
+---
+# Developer - Section
+
+## Events
+Plugin sends the following custom events to the eventbus like this:
+
+    eventManager().fire(eventKey, eventPayload)
+
+| EventKeys                             |
+| ------------------------------------ |
+| plugin_spoolmanager_spool_weight_updated_after_print |
+| plugin_spoolmanager_spool_selected |
+| plugin_spoolmanager_spool_deselected |
+| plugin_spoolmanager_spool_added |
+| plugin_spoolmanager_spool_deleted |
+
+HINT: In combination with the [MQTT Plugin](https://github.com/OctoPrint/OctoPrint-MQTT) you can subscribe e.g. to this topic:
+```
+octoPrint/event/plugin_spoolmanager_spool_deselected
+```
+
+
+**Payload**
+
+_spool_added_, _spool_selected_
+```javascript
+ {
+   'databaseId': 23,
+   'toolId': 1,
+   'spoolName':'Fancy Spool',
+   'material':'ABS',
+   'colorName':'dark red',
+   'remainingWeight': 1234
+ }
+```
+_spool_deselected_
+```javascript
+ {
+   'toolId': 1
+ }
+```
+_spool_deleted_
+```javascript
+ {
+   'databaseId': 23
+ }
+```
+Other Plugins could listen to this events in there python-code like this:
+
+    eventmanager.subscribe("plugin_spoolmanager_spool_selected", self._myEventListener)
+
+or use `octoprint.plugin.EventHandlerPlugin` with something like this:
+
+    def on_event(self, event, payload):
+        if event == "plugin_spoolmanager_spool_selected":
+            ## do something usefull
 ---
 
 ### Used UI-Tools

@@ -6,6 +6,7 @@
             <li class="active"><a href="#tab-spool-General" data-toggle="tab">General</a></li>
             <li><a href="#tab-spool-Temperature" data-toggle="tab">Temperature</a></li>
             <li><a href="#tab-spool-QR-Code" data-toggle="tab">QR - Code</a></li>
+            <li><a href="#tab-spool-Template" data-toggle="tab">Template</a></li>
             <li><a href="#tab-spool-Export-Import" data-toggle="tab">Export / Import</a></li>
             <li><a href="#tab-spool-Storage" data-toggle="tab">Storage</a></li>
             <li><a href="#tab-spool-Debugging" data-toggle="tab">Debugging</a></li>
@@ -42,6 +43,18 @@
                         </label>
                         <span class="help-inline">Hint: It is only working, if the spool contains values for these fields: <br>
                             <code>diameter</code>, <code>density</code>, <code>total weight</code>!</span>
+                    </div>
+                </div>
+
+                <hr/>
+                <h4>Remaining check</h4>
+                <div class="control-group">
+                    <label class="control-label">Enter safety buffer (e.g. PTFE Tube length)</label>
+                    <div class="controls">
+                        <div class="input-append">
+                            <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: pluginSettings.safetyLength" >
+                            <span class="add-on">mm</span>
+                        </div>
                     </div>
                 </div>
 <!--
@@ -132,16 +145,114 @@ FPE;	2.16
                 <div class="control-group">
                     <label class="control-label">Fill color</label>
                     <div class="controls">
-                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeFillColor">
+{#                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeFillColor">#}
+                        <input id="qrcode-fill-color-picker" type="text" name="border-color" class="pick-a-color form-control input-mini">
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">Background color</label>
                     <div class="controls">
-                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeBackgroundColor">
+{#                        <input type="text" class="input-midi text-left" data-bind="value: pluginSettings.qrCodeBackgroundColor">#}
+                        <input id="qrcode-background-color-picker" type="text" name="border-color" class="pick-a-color form-control input-mini">
                     </div>
                 </div>
-                <span class="help-inline">You can use RGB color code like '#23dda0' or use named color 'red'!</span>
+                <div class="control-group">
+                    <label class="control-label">
+                        <button data-bind="click: reloadQRCodePreviewImage">Reload Image</button>
+                    </label>
+                    <div class="controls">
+                        <a data-bind="attr: $root.generateQRCodeImageSourceAttribute('qrPreviewId','qrPreviewLabel', 'htmlView')" target="_new">
+                            <img id="settings-qrimage-preview" loading="lazy" class="qr-code-large" alt="QR Code" data-bind="attr: $root.generateQRCodeImageSourceAttribute('qrPreviewId',
+                                                                                                                                              'qrPreviewLabel',
+                                                                                                                                              '',
+                                                                                                                                              true)">
+                        </a>
+                    </div>
+                </div>
+                <hr/>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: pluginSettings.qrCodeUseURLPrefix"> Use URL prefix for QR-Code URL
+                        </label>
+                    </div>
+                    <div class="controls">
+                        <input type="text" class="input-xlarge text-left" data-bind="textInput: pluginSettings.qrCodeURLPrefix, enable: pluginSettings.qrCodeUseURLPrefix" placeholder="http://192.168.178.37">
+                    </div>
+                    <div class="control-label" data-bind="visible:pluginSettings.qrCodeUseURLPrefix" >
+                        <a class="text-center" target="_newTab" data-bind="attr: $root.generateQRCodeTestLink()">
+                            <span data-bind="text: pluginSettings.qrCodeURLPrefix"></span>/plugin/SpoolManager/selectSpoolByQRCode/'databaseId'
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Template - TAB -->
+            <div class="tab-pane" id="tab-spool-Template">
+                <div>
+                    Which fields should be copied from the template spool during adding a new new spool?
+                </div>
+                <br/>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('displayName')" > Display Name<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('material')" > Material<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('vendor')" > Vendor<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('density')" > Density<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('diameter')" > Diameter<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('diameterTolerance')" > Diameter Tolerance<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('flowRateCompensation')" > Flow Rate Compensation<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('temperature')" > Temperature<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('bedTemperature')" > Bed Temperature<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('enclosureTemperature')" > Enclosure Temperature<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('offsetTemperature')" > Offset Temperature<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('offsetEnclosureTemperature')" > Offset Enclosure<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('totalWeight')" > Total Weight<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('totalLength')" > Total Length<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('code')" > Serialnumber<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('purchasedFrom')" > Purchased from<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('cost')" > Cost<br/>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" data-bind="checked: checkExcludedFromTemplateCopy('allNotes')" > Notes<br/>
+                        </label>
+                    </div>
+                </div>
+
             </div>
 
             <!-- EXPORT / IMPORT - TAB -->

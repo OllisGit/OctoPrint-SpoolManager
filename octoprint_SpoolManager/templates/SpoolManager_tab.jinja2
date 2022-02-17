@@ -1,25 +1,24 @@
+{% include "SpoolManager_tab_spoolSelection_comp.jinja2" %}
 {% include "SpoolManager_tab_dialogs.jinja2" %}
 {% import 'SpoolManager_tab_macros.jinja2' as forms %}
+
 <div id="tab_spoolOverview">
-
-
     <!-- Filter / Sorting -->
     <div data-bind="visible: pluginNotWorking()==true">
-        <div class="row-fluid" >
+        <div class="row-fluid">
             <font color="red"><b>Plugin not working, because of Database issues. Check Plugin-Settings!</b></font>
         </div>
     </div>
     <div data-bind="visible: pluginNotWorking()==false">
         <div class="row-fluid" >
             <div class="span3">
-
-                Total: <b><span data-bind="text: spoolItemTableHelper.totalItemCount">Anzahl</span></b>
-                per Page:
+                Show/Total: <b><span data-bind="text: spoolItemTableHelper.items().length"></span> /
+                                <span data-bind="text: spoolItemTableHelper.totalItemCount"></span></b>
+                <br/>per Page:
                 <select class="input-mini text-right"
                         data-bind="options: spoolItemTableHelper.pageSizeOptions,
                                    value: spoolItemTableHelper.selectedPageSize">
                 </select>
-                <a href="#" data-bind="click: spoolItemTableHelper.reloadItems" title="Force refresh" ><span class="icon-refresh"></span> Refresh</a>
                 <div class="pull-left">
                     <button title="Add new Spool" class="btn" data-bind="click: addNewSpool"><i class="fa fa-plus"></i> Add Spool</button>
                 </div>
@@ -40,9 +39,10 @@
                 <div class="pull-right" style="clear: both;">
                     <small>
                         Show spools:
-                        <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('all'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('all') ? 'visible' : 'hidden'}"></i> all</a> |
-                        <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideEmptySpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideEmptySpools') ? 'visible' : 'hidden'}"></i> hide empty</a> |
-                        <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('hideInactiveSpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideInactiveSpools') ? 'visible' : 'hidden'}"></i> hide inactive</a>
+{#                        <a href="#" data-bind="click: function() { spoolItemTableHelper.changeFilter('all'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('all') ? 'visible' : 'hidden'}"></i> all</a> |#}
+                        <a href="#" data-bind="click: function() { spoolItemTableHelper.toggleFilter('hideEmptySpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideEmptySpools') ? 'visible' : 'hidden'}"></i>hide empty</a> |
+                        <a href="#" data-bind="click: function() { spoolItemTableHelper.toggleFilter('hideInactiveSpools'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('hideInactiveSpools') ? 'visible' : 'hidden'}"></i> hide inactive</a> |
+                        <a href="#" data-bind="click: function() { spoolItemTableHelper.toggleFilter('onlyTemplates'); }"><i class="icon-ok" data-bind="style: {visibility: spoolItemTableHelper.isFilterSelected('onlyTemplates') ? 'visible' : 'hidden'}"></i> only templates</a>
                     </small>
                 </div>
 
@@ -125,6 +125,11 @@
                         </span>
                     </small>
                 </div>
+                <div class="pull-right" style="clear: both;">
+                    <a href="#" data-bind="click: spoolItemTableHelper.reloadItems" title="Force refresh" ><span class="icon-refresh"></span> Reload</a>
+                </div>
+
+
             </div>
         </div>
 
@@ -146,6 +151,17 @@
             <ul class="dropdown-menu">
                 <li>
                     <div style="margin-left: 10px;">Attribute visibility</div>
+                    <div class="row">
+                        <div class="span3" style="margin-bottom:-10px">
+                            <div class="control-group">
+                                <div class="controls">
+                                    <label class="checkbox" style="margin-left:10px">
+                                        <input type="checkbox" data-bind="checked: tableAttributeVisibility.databaseId"> Database ID
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="span3" style="margin-bottom:-10px">
                             <div class="control-group">
@@ -223,18 +239,20 @@
         <table class="table table-striped table-hover table-condensed table-hover" style="clear: both;">
             <thead>
                 <tr>
-                    <th style="width: 24%" data-bind="visible: tableAttributeVisibility.displayName">Name</th>
+                    <th style="width: 5%" data-bind="visible: tableAttributeVisibility.databaseId">ID</th>
+                    <th style="width: 23%" data-bind="visible: tableAttributeVisibility.displayName">Name</th>
                     <th style="width: 15%" data-bind="visible: tableAttributeVisibility.material">Material</th>
-                    <th style="width: 13%;" data-bind="visible: tableAttributeVisibility.lastFirstUse">Last / First use</th>
-                    <th style="text-align: center; width: 16%;" data-bind="visible: tableAttributeVisibility.weight">Weight</th>
-                    <th style="text-align: center; width: 16%;" data-bind="visible: tableAttributeVisibility.used">Used</th>
-                    <th style="width: 16%;" data-bind="visible: tableAttributeVisibility.note">Note</th>
+                    <th style="width: 12%;" data-bind="visible: tableAttributeVisibility.lastFirstUse">Last / First use</th>
+                    <th style="text-align: center; width: 15%;" data-bind="visible: tableAttributeVisibility.weight">Weight</th>
+                    <th style="text-align: center; width: 15%;" data-bind="visible: tableAttributeVisibility.used">Used</th>
+                    <th style="width: 15%;" data-bind="visible: tableAttributeVisibility.note">Note</th>
     <!-- TODO remove action column                <th style="width: 9%"></th>
     -->
                 </tr>
             </thead>
             <tbody data-bind="foreach: spoolItemTableHelper.paginatedItems" >
               <tr data-bind="click: function() { $root.showSpoolDialogAction($data); }">
+                <td data-bind="visible: $root.tableAttributeVisibility.databaseId"><span data-bind="text: databaseId, attr: { title: databaseId }"></span></td>
                 <td data-bind="visible: $root.tableAttributeVisibility.displayName"><span data-bind="text: displayName, attr: { title: displayName }"></span><br><i><span data-bind="text: vendor, attr: { title: vendor }"></span></i></td>
                 <td data-bind="visible: $root.tableAttributeVisibility.material"><div class="pick-a-color-markup">
                         <span class="color-preview" data-bind="style: {'background-color': color}, attr: { title: colorName }" ></span>

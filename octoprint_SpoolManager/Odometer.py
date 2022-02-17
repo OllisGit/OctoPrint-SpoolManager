@@ -9,6 +9,7 @@ __copyright__ = "Copyright (C) 2017 Sven Lohrmann - Released under terms of the 
 
 import re
 
+########## DEPRECATED use newodometer
 
 class FilamentOdometer(object):
 	regexE = re.compile(r'.*E(-?\d+(\.\d+)?)')

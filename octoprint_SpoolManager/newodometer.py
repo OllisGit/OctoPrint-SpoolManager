@@ -51,7 +51,7 @@ class NewFilamentOdometer(object):
 		T = self._getCodeInt(line, "T")
 
 		if G is not None:
-			if G == 0 or G == 1:  # Move
+			if G >= 0 and G <= 3:  # Move (linear G0/G1 or G2/G3)
 				x = self._getCodeFloat(line, "X")
 				y = self._getCodeFloat(line, "Y")
 				z = self._getCodeFloat(line, "Z")

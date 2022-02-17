@@ -15,6 +15,12 @@
     width: 100px;
     height: 100px;
 }
+
+.qr-code-large {
+    width: 300px;
+    height: 300px;
+}
+
 /* needed, because selection flyout was not fully visible, see #204 */
 /*#sidebar_plugin_SpoolManager.collapse.in {*/
 /*    overflow: visible;*/

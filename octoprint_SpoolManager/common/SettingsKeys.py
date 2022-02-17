@@ -13,8 +13,12 @@ class SettingsKeys():
 
 	SETTINGS_KEY_CURRENCY_SYMBOL = "currencySymbol"
 
+	SETTINGS_KEY_SAFETY_LENGTH = "safetyLength" # in mm e.g. ptfe-tube
+
 	## QR - Code
 	SETTINGS_KEY_QR_CODE_ENABLED = "qrCodeEnabled"
+	SETTINGS_KEY_QR_CODE_USE_URL_PREFIX = "qrCodeUseURLPrefix"
+	SETTINGS_KEY_QR_CODE_URL_PREFIX = "qrCodeURLPrefix"
 	SETTINGS_KEY_QR_CODE_FILL_COLOR = "qrCodeFillColor"
 	SETTINGS_KEY_QR_CODE_BACKGROUND_COLOR = "qrCodeBackgroundColor"
 	SETTINGS_KEY_QR_CODE_WIDTH = "qrCodeWidth"

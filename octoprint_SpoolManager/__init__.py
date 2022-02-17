@@ -11,12 +11,14 @@ from octoprint.util.comm import MachineCom
 
 from octoprint_SpoolManager.DatabaseManager import DatabaseManager
 # from octoprint_SpoolManager.Odometer import FilamentOdometer
+
 from octoprint_SpoolManager.newodometer import NewFilamentOdometer
 
 from octoprint_SpoolManager.api import Transformer
 from octoprint_SpoolManager.api.SpoolManagerAPI import SpoolManagerAPI
 from octoprint_SpoolManager.common import StringUtils
 from octoprint_SpoolManager.common.SettingsKeys import SettingsKeys
+from octoprint_SpoolManager.common.EventBusKeys import EventBusKeys
 
 class SpoolmanagerPlugin(
 							SpoolManagerAPI,
@@ -61,7 +63,6 @@ class SpoolmanagerPlugin(
 
 		self._logger.info("Done initializing")
 		pass
-
 
 	################################################################################################### public functions
 
@@ -133,6 +134,12 @@ class SpoolmanagerPlugin(
 									title= title,
 									message=message,
 									autoclose=autoclose))
+
+	def _sendPayload2EventBus(self, eventKey, eventPayload):
+
+		eventName = "plugin_spoolmanager_" + eventKey
+		self._logger.info("Send Event '"+eventName+"' with payload '"+str(eventPayload)+"' to event-bus")
+		self._event_bus.fire(eventName, payload=eventPayload)
 
 	def _checkForMissingPluginInfos(self, sendToClient=False):
 
@@ -275,14 +282,23 @@ class SpoolmanagerPlugin(
 						someAttributesMissing = True
 					else:
 						# Benötigtes Gewicht = gewicht(geplante länge, durchmesser, dichte)
-						requiredWeight = int(self._calculateWeight(filamentLength, diameter, density))
+						requiredWeight = self._calculateWeight(filamentLength, diameter, density)
 
 						# Vorhanden Gewicht = Gesamtgewicht - Verbrauchtes Gewicht
 						# TODO don't calculate here use the value from the database
 						remainingWeight = totalWeight - usedWeight
 
+						saftyLengthInMM = self._settings.get_int([SettingsKeys.SETTINGS_KEY_SAFETY_LENGTH])
+						if (saftyLengthInMM != 0):
+							saftyRequiredWeight = self._calculateWeight(saftyLengthInMM, diameter, density)
+							self._logger.info("saftyWeight '" + str(saftyRequiredWeight) + "' from saftyLengthInMM '" + str(saftyLengthInMM) + "' calculated")
+							requiredWeight = requiredWeight + saftyRequiredWeight
+
+						self._logger.info("tool" + str(toolIndex) + ", requiredWeight '" + str(requiredWeight) + "',  remainingWeight '" + str(remainingWeight) + "'")
+
 						notEnough = False
 						if remainingWeight < requiredWeight and requiredWeight > 0:
+							self._logger.info("Filament not enough!")
 							if (warnUser == True):
 								self._sendMessageToClient(
 									"warning", "Filament not enough!",
@@ -425,6 +441,7 @@ class SpoolmanagerPlugin(
 										action="reloadTable"
 										))
 	# assign the current extrusion to the current selected spools
+
 	def commitOdometerData(self):
 		reload = False
 		selectedSpools = self.loadSelectedSpools()
@@ -465,6 +482,17 @@ class SpoolmanagerPlugin(
 				self._logger.info("Tool %d: New spoolUsedWeight: %s" % (toolIndex, str(newUsedWeight)))
 
 			self._databaseManager.saveSpool(spoolModel)
+
+			eventPayload = {
+				"toolId": toolIndex,
+				"databaseId": spoolModel.databaseId,
+				"spoolName": spoolModel.displayName,
+				"material": spoolModel.material,
+				"colorName": spoolModel.colorName,
+				"remainingWeight": spoolModel.remainingWeight
+			}
+			self._sendPayload2EventBus(EventBusKeys.EVENT_BUS_SPOOL_WEIGHT_UPDATED_AFTER_PRINT, eventPayload)
+
 			reload = True
 
 		self.myFilamentOdometer.reset_extruded_length()
@@ -597,7 +625,13 @@ class SpoolmanagerPlugin(
 
 	def on_event(self, event, payload):
 
-		# if event == Events.PRINTER_STATE_CHANGED:
+		# if (event != "RegisteredMessageReceived"):
+		# 	print("*** EVENT: " + event)
+		#
+		# if ("plugin_spoolmanager" in event):
+		# 	print(payload)
+		# 	pass
+
 		if (Events.CLIENT_OPENED == event):
 			self._on_clientOpened(payload)
 			return
@@ -715,11 +749,14 @@ class SpoolmanagerPlugin(
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_SPOOL_NOT_SELECTED] = True
 		settings[SettingsKeys.SETTINGS_KEY_WARN_IF_FILAMENT_NOT_ENOUGH] = True
 		settings[SettingsKeys.SETTINGS_KEY_CURRENCY_SYMBOL] = "€"
+		settings[SettingsKeys.SETTINGS_KEY_SAFETY_LENGTH] = 0
 
 		## QR-Code
 		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_ENABLED] = True
-		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR] = "darkgreen"
-		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_BACKGROUND_COLOR] = "white"
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_USE_URL_PREFIX] = False
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_URL_PREFIX] = None
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR] = "#008000"
+		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_BACKGROUND_COLOR] = "#ffffff"
 		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_WIDTH] = "100"
 		settings[SettingsKeys.SETTINGS_KEY_QR_CODE_HEIGHT] = "100"
 
@@ -757,6 +794,7 @@ class SpoolmanagerPlugin(
 		# 	"password": "illO"
 		# }
 
+		settings["excludedFromTemplateCopy"] = []
 		return settings
 
 	##~~ TemplatePlugin mixin
@@ -784,6 +822,7 @@ class SpoolmanagerPlugin(
 				"js/SpoolManager.js",
 				"js/SpoolManager-APIClient.js",
 				"js/SpoolManager-FilterSorter.js",
+				"js/SpoolManager-SpoolSelectionTableComp.js",
 				"js/SpoolManager-EditSpoolDialog.js",
 				"js/SpoolManager-ImportDialog.js",
 				"js/SpoolManager-DatabaseConnectionProblemDialog.js"
@@ -838,12 +877,13 @@ class SpoolmanagerPlugin(
 			)
 		)
 
-
-
-
-
-
-
+	def register_custom_events(*args, **kwargs):
+		return [EventBusKeys.EVENT_BUS_SPOOL_WEIGHT_UPDATED_AFTER_PRINT,
+				EventBusKeys.EVENT_BUS_SPOOL_SELECTED,
+				EventBusKeys.EVENT_BUS_SPOOL_DESELECTED,
+				EventBusKeys.EVENT_BUS_SPOOL_ADDED,
+				EventBusKeys.EVENT_BUS_SPOOL_DELETED
+				]
 
 
 
@@ -870,7 +910,8 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.on_sentGCodeHook
+		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.on_sentGCodeHook,
 		# "octoprint.comm.protocol.scripts": __plugin_implementation__.message_on_connect
+		"octoprint.events.register_custom_events":  __plugin_implementation__.register_custom_events
 	}
 

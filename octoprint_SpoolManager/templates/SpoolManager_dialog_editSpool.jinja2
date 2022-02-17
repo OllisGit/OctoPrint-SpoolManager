@@ -105,16 +105,16 @@
                 <label class="checkbox">
                         <input type="checkbox" data-bind="checked: spoolDialog.spoolItemForEditing.isTemplate" > Mark as template&nbsp;&nbsp;&nbsp;<br/>
 
-                        <span data-bind="visible: spoolDialog.templateSpool != null && spoolDialog.templateSpool.hasNoData() == false">
-                            <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate() == false">
-                                <span class="color-preview" data-bind="style: {'background-color': spoolDialog.templateSpool.color}" style="margin-bottom:-4px;"></span>
-                                <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.templateSpool.material">PETG</span> - <span data-bind="text: spoolDialog.templateSpool.displayName">Gute Spule ich schau mal was laueft</span> </span>
-                            </span>
-                            <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate">
-                                <span class="color-preview" data-bind="style: {'background-color': spoolDialog.spoolItemForEditing.color}" style="margin-bottom:-4px;"></span>
-                                <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.spoolItemForEditing.material">PETG</span> - <span data-bind="text: spoolDialog.spoolItemForEditing.displayName">Gute Spule ich schau mal was laueft</span> </span>
-                            </span>
-                        </span>
+{#                        <span data-bind="visible: spoolDialog.templateSpool != null && spoolDialog.templateSpool.hasNoData() == false">#}
+{#                            <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate() == false">#}
+{#                                <span class="color-preview" data-bind="style: {'background-color': spoolDialog.templateSpool.color}" style="margin-bottom:-4px;"></span>#}
+{#                                <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.templateSpool.material">PETG</span> - <span data-bind="text: spoolDialog.templateSpool.displayName">Gute Spule ich schau mal was laueft</span> </span>#}
+{#                            </span>#}
+{#                            <span data-bind="visible: spoolDialog.spoolItemForEditing.isTemplate">#}
+{#                                <span class="color-preview" data-bind="style: {'background-color': spoolDialog.spoolItemForEditing.color}" style="margin-bottom:-4px;"></span>#}
+{#                                <span style="margin-bottom:30px" ><span data-bind="text: spoolDialog.spoolItemForEditing.material">PETG</span> - <span data-bind="text: spoolDialog.spoolItemForEditing.displayName">Gute Spule ich schau mal was laueft</span> </span>#}
+{#                            </span>#}
+{#                        </span>#}
                 </label>
             </div>
         </div>
@@ -150,7 +150,7 @@
                         <div class="control-group no-bottom-gap">
                             <label class="control-label">Material</label>
                             <div class="controls">
-                                <select id="spool-material-select" class="input-large" data-bind="options: spoolDialog.spoolItemForEditing.allMaterials, value: spoolDialog.spoolItemForEditing.material">
+                                <select id="spool-material-select" class="input-large" data-bind="options: spoolDialog.allMaterials, value: spoolDialog.spoolItemForEditing.material">
                                   <option></option>
                                 </select>
                             </div>
@@ -182,7 +182,7 @@
                             <label class="control-label">Flow Rate Compensation<sup>4</sup></label>
                             <div class="controls">
                                 <div class="input-append">
-                                    <input type="number" step="1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.flowRateCompensation" />
+                                    <input type="number" step="0.1" min="0" class="input-mini text-right" data-bind="value: spoolDialog.spoolItemForEditing.flowRateCompensation" />
                                     <span class="add-on">%</span>
                                 </div>
                             </div>
@@ -241,17 +241,30 @@
                         {# QR-CODE STUFF #}
                         <!-- ko if: spoolDialog.isExistingSpool() && pluginSettings.qrCodeEnabled() -->
                         <div class="control-group no-bottom-gap" data-bind="visible: spoolDialog.isExistingSpool() && pluginSettings.qrCodeEnabled()">
-                            <label class="control-label">QR Code</label>
-                            <div class="controls">
-                                <div class="">
-<!--                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
-<!--                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
-<!--                                        </a>-->
-                                    <a data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()" target="_new">
-                                        <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()">
-                                    </a>
+                            <div class="row-fluid">
+                                <div class="span8">
+                                    <label class="control-label">QR Code</label>
+                                    <div class="controls">
+                                        <div class="">
+        <!--                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
+        <!--                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
+        <!--                                        </a>-->
+                                            <a data-bind="attr: $root.generateQRCodeImageSourceAttribute(spoolDialog.spoolItemForEditing.databaseId(),
+                                                                                                         spoolDialog.spoolItemForEditing.displayName(),
+                                                                                                         'htmlView')" target="_new">
+                                                <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: $root.generateQRCodeImageSourceAttribute(spoolDialog.spoolItemForEditing.databaseId(),
+                                                                                                                                                            spoolDialog.spoolItemForEditing.displayName())">
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
-                           </div>
+                                <div class="span4">
+                                    <label class="">Database ID</label>
+                                    <div class="">
+                                        <input title="Used for QR-Code generation" data-bind="textInput: spoolDialog.spoolItemForEditing.databaseId"  type="text" class="input-mini text-right"  disabled="true"/>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <!-- /ko -->
                         <div class="control-group">
@@ -515,7 +528,6 @@
 
                         </div>
                     </div>
-
             </div>
         </form>
     </div>
@@ -531,8 +543,7 @@
                         <small>Deletion during printing is not possible</small>
                     </div>
                     <button type="button" class="btn btn-warning" data-bind="visible: spoolDialog.isExistingSpool,
-                                                                            disable: printerStateViewModel.isPrinting(),
-                                                                            click: spoolDialog.copySpoolItem" >Copy</button>
+                                                                             click: spoolDialog.copySpoolItem" >Copy</button>
                     <!-- visible: spoolDialog.spoolItemForEditing.selectedFromQRCode() == true,                        -->
                     <!-- ko if: spoolDialog.spoolItemForEditing.databaseId -->
                     <select class="span2" style="margin-bottom: 0px" data-bind="optionsCaption: 'Choose...',
@@ -543,6 +554,10 @@
                                                                                                 }"></select>
                     <button class="btn btn-info" data-bind="click: spoolDialog.selectSpoolItemForPrinting" style="text-align:right">Select for Printing</button>
                     <!-- /ko -->
+
+                    <button class="btn btn-info" data-bind="visible: spoolDialog.isExistingSpool()==false,
+                                                            click: spoolDialog.selectAndCopyTemplateSpool" style="text-align:right">Copy from Template...</button>
+
                 </span>
                 <span class="span4 text-right">
 <!--                        data-bind="click: spoolDialog.closeSpoolItemDialog"-->
@@ -553,3 +568,26 @@
         </div>
     </div>
 </div>
+
+<!--###############################################################  Spool TEMPLATE SELECTION-Dialog: id="dialog_template_spool_selection" -->
+
+
+
+<div id="dialog_template_spool_selection" class="modal hide fade-in">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Select Template Spool</h3>
+    </div>
+    <div class="modal-body">
+        <spm-select-spool-table params="allSpoolsKOArray: spoolDialog.templateSpools,
+                                        allMaterialsKOArray: spoolDialog.allMaterials,
+                                        allVendorsKOArray: spoolDialog.allVendors,
+                                        allColorsKOArray: spoolDialog.allColors,
+                                        selectSpoolFunction: spoolDialog.copySpoolItemFromTemplate
+                                        "></spm-select-spool-table>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
+    </div>
+</div>
+
