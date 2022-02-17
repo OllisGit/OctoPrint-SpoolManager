@@ -125,6 +125,35 @@ $(function() {
             }
         };
 
+        self.reloadQRCodePreviewImage = function(){
+            var imageDom = $("#settings-qrimage-preview");
+            var currentSrc = imageDom.attr("src");
+            currentSrc = currentSrc + "&"+new Date().getTime();
+            imageDom.attr("src", currentSrc);
+        }
+
+        // Generate HTML-Image Attributes for the QR-Code
+        self.generateQRCodeImageSourceAttribute = function(databaseId, spoolDisplayName, showHtmlView, withColors){
+            var requestParameters = "";
+            if (withColors){
+                requestParameters = "?" +
+                                    "fillColor=" + encodeURIComponent(self.pluginSettings.qrCodeFillColor()) + "&" +
+                                    "backgroundColor=" + encodeURIComponent(self.pluginSettings.qrCodeBackgroundColor());
+            }
+
+            var source = "";
+            if (showHtmlView == "htmlView"){
+                source = PLUGIN_BASEURL + "SpoolManager/generateQRCodeView/" + databaseId + "" + requestParameters;
+            } else {
+                source = PLUGIN_BASEURL + "SpoolManager/generateQRCode/" + databaseId+ "" + requestParameters;
+            }
+            var title = "QR-Code for " + spoolDisplayName;
+            return {
+                src: source,
+                href: source,
+                title: title
+            }
+        }
 
         ///////////////////////////////////////////////////// START: SETTINGS
         self.pluginNotWorking = ko.observable(undefined);
@@ -286,7 +315,6 @@ $(function() {
                 responseText = response.responseText; // e.g. Invalid request
             }
         });
-
         self.performCSVImportFromUpload = function() {
             if (self.csvImportUploadData === undefined) return;
 
@@ -300,6 +328,24 @@ $(function() {
             );
             self.csvImportUploadData.submit();
         };
+
+        // template stuff
+        self.checkExcludedFromTemplateCopy = function(fieldName) {
+            return ko.pureComputed({
+                read: function () {
+                    var result = self.pluginSettings.excludedFromTemplateCopy().includes(fieldName) == false;
+                    return result
+                },
+                write: function (value) {
+                    if (value == false){
+                        self.pluginSettings.excludedFromTemplateCopy.push(fieldName);
+                    } else {
+                       self.pluginSettings.excludedFromTemplateCopy.remove(fieldName);
+                    }
+                },
+                owner: this
+            });
+        }
 
         // overwrite save-button
         const origSaveSettingsFunction = self.settingsViewModel.saveData;
@@ -316,6 +362,16 @@ $(function() {
             return origSaveSettingsFunction(data, successCallback, setAsSending);
         }
         self.settingsViewModel.saveData = newSaveSettingsFunction;
+
+        // QR-Code stuff
+        self.generateQRCodeTestLink = function(){
+            var source = self.pluginSettings.qrCodeURLPrefix() + "/plugin/SpoolManager/selectSpoolByQRCode/qrPreviewId";
+            var title = "This link is used for the QR-Code";
+            return {
+                href: source,
+                title: title
+            }
+        }
 
         ///////////////////////////////////////////////////// END: SETTINGS
 
@@ -390,7 +446,7 @@ $(function() {
 
                         element += '<div data-bind="visible: settings.settings.plugins.SpoolManager.extrusionDebuggingEnabled">';
                         element += '<!-- ko foreach: extrusionValues -->';
-                        element += '<div>Tracked for Tool <span data-bind="text: $index"></span>: <strong data-bind="text: $data.toFixed(2)"></strong></div>';
+                        element += '<div>Extruded Tool <span data-bind="text: $index"></span>: <strong data-bind="text: $data.toFixed(2)"></strong></div>';
                         element += '<!-- /ko -->';
 
                         element += '</div>'
@@ -612,6 +668,7 @@ $(function() {
 
 
         var TableAttributeVisibility = function (){
+            this.databaseId = ko.observable(false);
             this.displayName = ko.observable(true);
             this.material = ko.observable(true);
             this.lastFirstUse = ko.observable(true);
@@ -631,7 +688,8 @@ $(function() {
             assignVisibility = function(attributeName){
                 var storageKey = "spoolmanager.table.visible." + attributeName;
                 if (localStorage[storageKey] == null){
-                    localStorage[storageKey] = true
+                    // localStorage[storageKey] = true; // default value
+                    localStorage[storageKey] = self.tableAttributeVisibility[attributeName](); // default value
                 } else {
                     self.tableAttributeVisibility[attributeName]( "true" == localStorage[storageKey]);
                 }
@@ -640,6 +698,7 @@ $(function() {
                 });
             }
 
+            assignVisibility("databaseId");
             assignVisibility("displayName");
             assignVisibility("material");
             assignVisibility("lastFirstUse");
@@ -927,7 +986,6 @@ $(function() {
 
             // assign current pluginSettings
             self.pluginSettings = self.settingsViewModel.settings.plugins[PLUGIN_ID];
-
             // load browser stored settings (includs TabelVisibility and pageSize, ...)
             loadSettingsFromBrowserStore();
 
@@ -946,6 +1004,27 @@ $(function() {
             self.databaseConnectionProblemDialog.init(self.apiClient);
             // Select Spool Dialog (no special binding)
             self.selectionSpoolDialog = $("#dialog_spool_selection");
+
+
+
+            // Settings - Color-Picker
+            self.componentFactory = new ComponentFactory();
+            var fillColorViewModel = self.componentFactory.createColorPicker("qrcode-fill-color-picker");
+            this.qrCodeFillColor = fillColorViewModel.selectedColor;
+            // Init with current value
+            this.qrCodeFillColor(self.pluginSettings.qrCodeFillColor());  // needed
+            this.qrCodeFillColor.subscribe(function(newColorValue){
+                self.pluginSettings.qrCodeFillColor(newColorValue);
+            });
+
+            var backgroundColorViewModel = self.componentFactory.createColorPicker("qrcode-background-color-picker");
+            this.qrCodeBackgroundColor = backgroundColorViewModel.selectedColor;
+            // Init with current value
+            this.qrCodeBackgroundColor(self.pluginSettings.qrCodeBackgroundColor());  // needed
+            this.qrCodeBackgroundColor.subscribe(function(newColorValue){
+                self.pluginSettings.qrCodeBackgroundColor(newColorValue);
+            });
+
 
             // self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
             //     var payload = {
@@ -1055,7 +1134,6 @@ $(function() {
 
         self.onTabChange = function(next, current){
             //alert("Next:"+next +" Current:"+current);
-            // debugger
             if ("#tab_plugin_PrintJobHistory" == next){
                 //self.reloadTableData();
             }

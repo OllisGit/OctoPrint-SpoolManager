@@ -241,17 +241,30 @@
                         {# QR-CODE STUFF #}
                         <!-- ko if: spoolDialog.isExistingSpool() && pluginSettings.qrCodeEnabled() -->
                         <div class="control-group no-bottom-gap" data-bind="visible: spoolDialog.isExistingSpool() && pluginSettings.qrCodeEnabled()">
-                            <label class="control-label">QR Code</label>
-                            <div class="controls">
-                                <div class="">
-<!--                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
-<!--                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
-<!--                                        </a>-->
-                                    <a data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()" target="_new">
-                                        <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: spoolDialog.generateQRCodeImageSourceAttribute()">
-                                    </a>
+                            <div class="row-fluid">
+                                <div class="span8">
+                                    <label class="control-label">QR Code</label>
+                                    <div class="controls">
+                                        <div class="">
+        <!--                                        <a data-bind="attr: {href: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId()}" target="_new">-->
+        <!--                                            <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: {src: '{{ url_for("index") }}plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }">-->
+        <!--                                        </a>-->
+                                            <a data-bind="attr: $root.generateQRCodeImageSourceAttribute(spoolDialog.spoolItemForEditing.databaseId(),
+                                                                                                         spoolDialog.spoolItemForEditing.displayName(),
+                                                                                                         'htmlView')" target="_new">
+                                                <img loading="lazy" class="qr-code" alt="QR Code" data-bind="attr: $root.generateQRCodeImageSourceAttribute(spoolDialog.spoolItemForEditing.databaseId(),
+                                                                                                                                                            spoolDialog.spoolItemForEditing.displayName())">
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
-                           </div>
+                                <div class="span4">
+                                    <label class="">Database ID</label>
+                                    <div class="">
+                                        <input title="Used for QR-Code generation" data-bind="textInput: spoolDialog.spoolItemForEditing.databaseId"  type="text" class="input-mini text-right"  disabled="true"/>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <!-- /ko -->
                         <div class="control-group">
@@ -530,8 +543,7 @@
                         <small>Deletion during printing is not possible</small>
                     </div>
                     <button type="button" class="btn btn-warning" data-bind="visible: spoolDialog.isExistingSpool,
-                                                                            disable: printerStateViewModel.isPrinting(),
-                                                                            click: spoolDialog.copySpoolItem" >Copy</button>
+                                                                             click: spoolDialog.copySpoolItem" >Copy</button>
                     <!-- visible: spoolDialog.spoolItemForEditing.selectedFromQRCode() == true,                        -->
                     <!-- ko if: spoolDialog.spoolItemForEditing.databaseId -->
                     <select class="span2" style="margin-bottom: 0px" data-bind="optionsCaption: 'Choose...',

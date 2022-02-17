@@ -213,14 +213,16 @@ function SpoolManagerEditSpoolDialog(){
         this.density(updateData.density);
         this.diameter(updateData.diameter);
         this.diameterTolerance(updateData.diameterTolerance);
-        this.colorName(updateData.colorName);
+        // first update color code, and then update the color name
         this.color(updateData.color == null ? DEFAULT_COLOR : updateData.color);
-
-        if (this.colorName()==null || this.colorName().length == 0){
-            var colorName = tinycolor(this.color()).toName();
-            if (colorName != false){
-                this.colorName(colorName);
+        // if no custom color name present, use predefined name
+        if (updateData.colorName == null || updateData.colorName.length == 0){
+            var preDefinedColorName = tinycolor(this.color()).toName();
+            if (preDefinedColorName != false){
+                this.colorName(preDefinedColorName);
             }
+        } else {
+            this.colorName(updateData.colorName);
         }
 
         this.flowRateCompensation(updateData.flowRateCompensation);
@@ -772,7 +774,6 @@ function SpoolManagerEditSpoolDialog(){
 
     }
 
-
     this.updateTemplateSpools = function(templateSpoolsData){
 
         var spoolItemsArray = [];
@@ -802,23 +803,24 @@ function SpoolManagerEditSpoolDialog(){
             // New Spool
             self.isExistingSpool(false);
             // reset values for a new spool
-            self.spoolItemForEditing.isTemplate(false);
-            self.spoolItemForEditing.isActive(true);
-            self.spoolItemForEditing.databaseId(null);
-            self.spoolItemForEditing.costUnit(self.pluginSettings.currencySymbol());
-            self.spoolItemForEditing.displayName(null);
-            self.spoolItemForEditing.totalWeight(0.0);
-            self.spoolItemForEditing.usedWeight(0.0);
-            self.spoolItemForEditing.totalLength(0);
-            self.spoolItemForEditing.usedLength(0);
-            self.spoolItemForEditing.firstUse(null);
-            self.spoolItemForEditing.firstUseKO(null);
-            self.spoolItemForEditing.lastUse(null);
-            self.spoolItemForEditing.lastUseKO(null);
-            self.spoolItemForEditing.purchasedOn(null);
-            self.spoolItemForEditing.purchasedOnKO(null);
-            self.spoolItemForEditing.remainingCombinedWeight(0);
-            self.spoolItemForEditing.totalCombinedWeight(0);
+            self.spoolItemForEditing.update({});
+            // self.spoolItemForEditing.isTemplate(false);
+            // self.spoolItemForEditing.isActive(true);
+            // self.spoolItemForEditing.databaseId(null);
+            // self.spoolItemForEditing.costUnit(self.pluginSettings.currencySymbol());
+            // self.spoolItemForEditing.displayName(null);
+            // self.spoolItemForEditing.totalWeight(0.0);
+            // self.spoolItemForEditing.usedWeight(0.0);
+            // self.spoolItemForEditing.totalLength(0);
+            // self.spoolItemForEditing.usedLength(0);
+            // self.spoolItemForEditing.firstUse(null);
+            // self.spoolItemForEditing.firstUseKO(null);
+            // self.spoolItemForEditing.lastUse(null);
+            // self.spoolItemForEditing.lastUseKO(null);
+            // self.spoolItemForEditing.purchasedOn(null);
+            // self.spoolItemForEditing.purchasedOnKO(null);
+            // self.spoolItemForEditing.remainingCombinedWeight(0);
+            // self.spoolItemForEditing.totalCombinedWeight(0);
         } else {
             self.isExistingSpool(true);
             // Make a copy of provided spoolItem
@@ -849,7 +851,31 @@ function SpoolManagerEditSpoolDialog(){
     }
 
     self.copySpoolItemFromTemplate = function(spoolItem){
+        // Copy everything
         self._copySpoolItemForEditing(spoolItem);
+        // reset values that should'nt be copied
+
+
+        var defaultExcludedFields = ["selectedForTool","version", "databaseId", "isTemplate","firstUseKO", "lastUseKO",
+                                    "remainingWeight","remainingPercentage","usedLength", "usedLengthPercentage","remainingLength", "remainingLengthPercentage",
+                                    "usedWeight", "usedPercentage", "totalCombinedWeight", "remainingCombinedWeight"];
+        var allFieldNames = Object.keys(spoolItem);
+        for (const fieldName of allFieldNames){
+            if (self.pluginSettings.excludedFromTemplateCopy().includes(fieldName) ||
+                defaultExcludedFields.includes(fieldName)){
+                var currentValue = self.spoolItemForEditing[fieldName]();
+                self.spoolItemForEditing[fieldName]("");
+            }
+        }
+        if (self.pluginSettings.excludedFromTemplateCopy().includes("allNotes")) {
+            if (self.noteEditor != null) {
+                self.noteEditor.setText("", 'api');
+            }
+            // self.spoolItemForEditing["noteText"]("");
+            // self.spoolItemForEditing["noteDeltaFormat"]("");
+            // self.spoolItemForEditing["noteHtml"]("");
+        }
+
         // close dialog
         self.templateSpoolDialog.modal('hide');
     }
@@ -913,26 +939,6 @@ function SpoolManagerEditSpoolDialog(){
         self.spoolDialog.modal('hide');
         self.closeDialogHandler(false, "selectSpoolForPrinting", self.spoolItemForEditing);
     }
-
-    self.generateQRCodeImageSourceAttribute = function(){
-        //
-        // <img loading="lazy" className="qr-code" alt="QR Code"
-        //      data-bind="attr: {src: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }"
-        //      src="/plugin/SpoolManager/generateQRCode/6"><img loading="lazy" className="qr-code" alt="QR Code"
-        //                                                       data-bind="attr: {src: '/plugin/SpoolManager/generateQRCode/'+spoolDialog.spoolItemForEditing.databaseId() }"
-        //                                                       src="/plugin/SpoolManager/generateQRCode/6">
-        // var windowsLocation = window.location.origin;
-        // var windowsLocationEncoded = encodeURIComponent(windowsLocation);
-        // var source = "/plugin/SpoolManager/generateQRCode/" + self.spoolItemForEditing.databaseId() + "?windowlocation="+windowsLocationEncoded;
-        var source = PLUGIN_BASEURL + "SpoolManager/generateQRCode/" + self.spoolItemForEditing.databaseId();
-        var title = "QR-Code for " + self.spoolItemForEditing.displayName();
-        return {
-            src: source,
-            href: source,
-            title: title
-        }
-    }
-
 
     self.selectAndCopyTemplateSpool = function(){
 

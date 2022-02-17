@@ -872,6 +872,13 @@ class DatabaseManager(object):
 			"externalSpoolItemCount": externalSpoolItemCount
 		}
 
+	def loadFirstSingleSpool(self, withReusedConnection=False):
+		def databaseCallMethode():
+			return SpoolModel.select().limit(1)[0]
+
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadFirstSingleSpool")
+
+
 	def loadSpool(self, databaseId, withReusedConnection=False):
 		def databaseCallMethode():
 			return SpoolModel.get_or_none(databaseId)

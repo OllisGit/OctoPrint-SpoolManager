@@ -20,6 +20,7 @@ from octoprint_SpoolManager.models.SpoolModel import SpoolModel
 from octoprint_SpoolManager.common import StringUtils, CSVExportImporter
 from octoprint_SpoolManager.api import Transformer
 from octoprint_SpoolManager.common.SettingsKeys import SettingsKeys
+from octoprint_SpoolManager.common.EventBusKeys import EventBusKeys
 
 class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 
@@ -229,12 +230,31 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 						idx = idx + 1
 					# assign new spool selection to the tool
 					databaseIds[toolIndex] = databaseId
+					eventPayload = {
+						"toolId": toolIndex,
+						"databaseId": spoolModel.databaseId,
+						"spoolName": spoolModel.displayName,
+						"material": spoolModel.material,
+						"colorName": spoolModel.colorName,
+						"remainingWeight": spoolModel.remainingWeight
+					}
+					self._sendPayload2EventBus(EventBusKeys.EVENT_BUS_SPOOL_SELECTED, eventPayload)
+
 				else:
 					# spool present, but no toolId -> remove spool from current toolIndex
 					i = 0
 					while i < len(databaseIds):
 						if (databaseIds[i] == databaseId):
 							databaseIds[i] = None
+							eventPayload = {
+								"toolId": i,
+								"databaseId": spoolModel.databaseId,
+								"spoolName": spoolModel.displayName,
+								"material": spoolModel.material,
+								"colorName": spoolModel.colorName,
+								"remainingWeight": spoolModel.remainingWeight
+							}
+							self._sendPayload2EventBus(EventBusKeys.EVENT_BUS_SPOOL_DESELECTED, eventPayload)
 							break
 						i += 1
 					pass
@@ -256,6 +276,11 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# remove current spool from toolIndex
 			if (toolIndex < len(databaseIds)):
 				databaseIds[toolIndex] = None
+				eventPayload = {
+					"toolId": toolIndex,
+					"databaseId": None
+				}
+				self._sendPayload2EventBus(EventBusKeys.EVENT_BUS_SPOOL_DESELECTED, eventPayload)
 
 		self._settings.set([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS], databaseIds)
 		self._settings.save()
@@ -425,7 +450,10 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 							})
 
 	#####################################################################################################   SELECT SPOOL BY QR
-	@octoprint.plugin.BlueprintPlugin.route("/selectSpoolByQRCode/<int:databaseId>", methods=["GET"])
+
+	from octoprint.server.util.flask import no_firstrun_access, restricted_access
+	@octoprint.plugin.BlueprintPlugin.route("/selectSpoolByQRCode/<string:databaseId>", methods=["GET"])
+	@no_firstrun_access
 	def selectSpoolByQRCode(self, databaseId):
 		self._logger.info("API select spool by QR code" + str(databaseId))
 
@@ -433,6 +461,13 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# not doing this mid-print since we can't ask the user what to do
 			abort(409)
 			return
+
+		spoolModel = None
+
+		if ("qrPreviewId" == databaseId):
+			#Just pick a single spool
+			spoolModel = self._databaseManager.loadFirstSingleSpool();
+			databaseId = spoolModel.databaseId
 
 		# TODO QR-Code pre-select always tool0 and then the edit-dialog is shown. Better approach: show dialog and the user could choose
 		spoolModel = self._selectSpool(0, databaseId)
@@ -451,17 +486,35 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		return False  # No API key required to request API access
 
 	#####################################################################################################   GENERATE QR FOR SPOOL
-	@octoprint.plugin.BlueprintPlugin.route("/generateQRCode/<int:databaseId>", methods=["GET"])
+	@octoprint.plugin.BlueprintPlugin.route("/generateQRCode/<string:databaseId>", methods=["GET"])
 	def generateSpoolQRCode(self, databaseId):
-		if (self._databaseManager.loadSpool(databaseId) is not None):
-			self._logger.info("API generate QR code for Spool")
+
+		if (databaseId == "qrPreviewId" or self._databaseManager.loadSpool(databaseId) is not None):
+			self._logger.info("API generate QR code for Spool with databaseId: " +str(databaseId))
+
+			requestParameters = request.args
+
+			fillColor = None
+			backgroundColor = None
+			if ("fillColor" in requestParameters and "backgroundColor" in requestParameters):
+				fillColor = requestParameters["fillColor"]
+				backgroundColor = requestParameters["backgroundColor"]
+			else:
+				fillColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR])
+				backgroundColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_BACKGROUND_COLOR])
+
+
+			# verify color codes
+			from PIL import ImageColor
+			if (fillColor.startswith("#")):
+				fillColor = ImageColor.getcolor(fillColor, "RGB")
+			if (backgroundColor.startswith("#")):
+				backgroundColor = ImageColor.getcolor(backgroundColor, "RGB")
 
 			# windowLocation = request.args.get("windowlocation")
-
 			from PIL import Image
 			imageFileLocation = self._basefolder + "/static/images/SPMByOlli.png"
 			olliImage = Image.open(imageFileLocation)#.crop((175, 90, 235, 150))
-
 
 			# https://note.nkmk.me/en/python-pillow-qrcode/
 			qrMaker = qrcode.QRCode(
@@ -470,16 +523,22 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			)
 
 			# spoolSelectionUrl = flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, _scheme="https", databaseId=databaseId)
-			spoolSelectionUrl = flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, databaseId=databaseId)
+			spoolSelectionUrl = None
+
+			if (self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_QR_CODE_USE_URL_PREFIX])):
+				qrCodeUrlPrefix = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_URL_PREFIX])
+				spoolSelectionUrl = qrCodeUrlPrefix + "/plugin/SpoolManager/selectSpoolByQRCode/"+databaseId
+			else:
+				spoolSelectionUrl = flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, databaseId=databaseId)
+
 			qrMaker.add_data(spoolSelectionUrl)
 			qrMaker.make(fit=True, )
 
-			fillColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR])
-			backgroundColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_BACKGROUND_COLOR])
 
 			img_qr_big = qrMaker.make_image(fill_color=fillColor, back_color=backgroundColor).convert('RGB')
 			pos = ((img_qr_big.size[0] - olliImage.size[0]) // 2, (img_qr_big.size[1] - olliImage.size[1]) // 2)
 			img_qr_big.paste(olliImage, pos)
+
 			# img_qr_big.save('data/dst/qr_lena2.png')
 			#
 			#
@@ -495,6 +554,33 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			return send_file(qr_io, mimetype='image/jpeg')
 		else:
 			abort(404)
+
+
+	@octoprint.plugin.BlueprintPlugin.route("/generateQRCodeView/<string:databaseId>", methods=["GET"])
+	def generateSpoolQRCodeHTMLView(self, databaseId):
+		htmlContent = ""
+		spoolModel = self._databaseManager.loadSpool(databaseId);
+		if (spoolModel is not None):
+			self._logger.info("Generate HTML iew for QR-Code")
+			htmlContent = \
+						"<h3>Database Id: " + str(databaseId) + "</h3>" \
+						"<h3>Spoolname: " + spoolModel.displayName + "</h3>" \
+						"<img loading='lazy' src='/plugin/SpoolManager/generateQRCode/"+str(databaseId)+"' />"
+		else:
+			htmlContent = "<h3>Spool with database Id not found</h3>"
+
+		qrCodeHTMLViewTemplate = ""\
+								"<html>" \
+								+ htmlContent +\
+								"</html>" \
+								""
+
+		return Response(
+						qrCodeHTMLViewTemplate,
+						mimetype='text/html',
+						# headers={'Content-Disposition': 'attachment; filename='+reportType+'PrintJobReport-Template.jinja2'}
+						)
+
 
 	######################################################################################   UPLOAD CSV FILE (in Thread)
 
@@ -841,8 +927,19 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			spoolModel = SpoolModel()
 			self._updateSpoolModelFromJSONData(spoolModel, jsonData)
 
-		databaseId = self._databaseManager.saveSpool(spoolModel, withReusedConnection=True)
+		newDatabaseId = self._databaseManager.saveSpool(spoolModel, withReusedConnection=True)
 		self._databaseManager.closeDatabase()
+
+		if (databaseId == None):
+			# New spool was created
+			eventPayload = {
+				"databaseId": spoolModel.databaseId,
+				"spoolName": spoolModel.displayName,
+				"material": spoolModel.material,
+				"colorName": spoolModel.colorName,
+				"remainingWeight": spoolModel.remainingWeight
+			}
+			self._sendPayload2EventBus(EventBusKeys.EVENT_BUS_SPOOL_ADDED, eventPayload)
 
 		# data for the sidebar
 		self.checkRemainingFilament()
@@ -854,10 +951,13 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 	@octoprint.plugin.BlueprintPlugin.route("/deleteSpool/<int:databaseId>", methods=["DELETE"])
 	def deleteSpool(self, databaseId):
 		self._logger.info("API Delete spool with database id '" + str(databaseId) + "'")
-		printJob = self._databaseManager.deleteSpool(databaseId)
-		# snapshotFilename = CameraManager.buildSnapshotFilename(printJob.printStartDateTime)
-		# self._cameraManager.deleteSnapshot(snapshotFilename)
-		# self._databaseManager.deletePrintJob(databaseId)
+		databaseId = self._databaseManager.deleteSpool(databaseId)
+		if (databaseId != None):
+			eventPayload = {
+				"databaseId": databaseId
+			}
+			self._sendPayload2EventBus(EventBusKeys.EVENT_BUS_SPOOL_DELETED, eventPayload)
+
 		return flask.jsonify()
 
 
