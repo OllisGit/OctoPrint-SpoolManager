@@ -412,6 +412,7 @@ FPE;	2.16
                 </div>
 
                 <!-- EXTERNAL DATABASE
+                -->
                 <h4>External Database <i class='fa fa-spinner fa-spin' data-bind="visible: showLocalBusyIndicator"></i></h4>
                 <label class="radio">
                     <input type="radio" name="externalDatabaseGroup" data-bind="checked: pluginSettings.useExternal, checkedValue: true"> Use external database
@@ -476,7 +477,7 @@ FPE;	2.16
                         <input type="text" disabled class="input-small text-right" data-bind="value: databaseMetaData.schemeVersionFromPlugin" value="5">
                     </div>
                 </div>
-                -->
+
                 <div class="help-block" data-bind="visible: showDatabaseErrorMessage">
                     <span style="color: red; "><b><div data-bind="text: databaseErrorMessage"></div></b></span>
                 </div>
