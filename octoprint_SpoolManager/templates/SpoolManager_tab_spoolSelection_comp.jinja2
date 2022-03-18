@@ -21,20 +21,26 @@ File includes all Templates that are needed for custom Knockout.js components, s
 {#    <div>selectSpoolFunction<button data-bind="click:selectSpoolFunction">selectSpoolFunction</button></div>#}
     <div>
         <span class="filter pull-left">
-                <div style="margin-top:-5px;" class="pull-right search-query-with-clear active-clear" data-bind="css: {'active-clear': filterSelectionQuery}">
+                <div style="margin-top:5px; margin-right:40px" class="pull-right search-query-with-clear active-clear" data-bind="css: {'active-clear': filterSelectionQuery}">
                     <input type="search" class="input-block search-query" data-bind="value: filterSelectionQuery, valueUpdate: 'input'" placeholder="Filter...">
                     <span class="search-clear" data-bind="click: clearFilterSelectionQuery"><i class="fas fa-times"></i></span>
                 </div>
         </span>
         <span >
-            <label>
-                <input style="vertical-align:baseline" type="checkbox"
-                       data-bind="checked: hideEmptySpools">
-                Hide empty spools
-                <input style="vertical-align:baseline" type="checkbox"
-                       data-bind="checked: hideInActiveSpools">
-                Hide inactive spools
-            </label>
+            <div>
+                <label class="checkbox">
+                    <input style="vertical-align:baseline" type="checkbox"
+                           data-bind="checked: hideEmptySpools">
+                    Hide empty spools
+                </label>
+            </div>
+            <div >
+                <label class="checkbox">
+                    <input style="vertical-align:baseline" type="checkbox"
+                           data-bind="checked: hideInActiveSpools">
+                    Hide inactive spools
+                </label>
+            </div>
         </span>
     </div>
     <div>

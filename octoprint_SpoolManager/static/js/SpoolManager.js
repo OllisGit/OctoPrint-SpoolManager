@@ -139,6 +139,12 @@ $(function() {
                 requestParameters = "?" +
                                     "fillColor=" + encodeURIComponent(self.pluginSettings.qrCodeFillColor()) + "&" +
                                     "backgroundColor=" + encodeURIComponent(self.pluginSettings.qrCodeBackgroundColor());
+
+                if (self.pluginSettings.qrCodeUseURLPrefix() == true){
+                    requestParameters = requestParameters + "&" +
+                        "useURLPrefix=true" + "&" +
+                        "urlPrefix=" + encodeURIComponent(self.pluginSettings.qrCodeURLPrefix())
+                }
             }
 
             var source = "";
@@ -666,7 +672,6 @@ $(function() {
             self.spoolDialog.showDialog(null, closeDialogHandler);
         }
 
-
         var TableAttributeVisibility = function (){
             this.databaseId = ko.observable(false);
             this.displayName = ko.observable(true);
@@ -708,13 +713,10 @@ $(function() {
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////// TABLE BEHAVIOR
-
-
         /* needed for Filter-Search dropdown-menu */
         $('.dropdown-menu.keep-open').click(function(e) {
             e.stopPropagation();
         });
-
 
         self.spoolItemTableHelper = new TableItemHelper(function(tableQuery, observableTableModel, observableTotalItemCount){
 
@@ -897,8 +899,10 @@ $(function() {
                             return;
                         }
                     }
-
-                    origStartPrintFunction();
+                    // we are ready to go. Inform the backend and after that START PRINT
+                    self.apiClient.startPrintConfirmed(function(responseData){
+                        origStartPrintFunction();
+                    });
                 });
         };
         // overwrite loadFile

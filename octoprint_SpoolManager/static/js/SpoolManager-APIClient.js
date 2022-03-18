@@ -158,11 +158,24 @@ function SpoolManagerAPIClient(pluginId, baseUrl) {
         });
     }
 
-    //////////////////////////////////////////////////////////////////////////////////////// ALLOWED TO PRINT Spool-Item
+    /////////////////////////////////////////////////////////////////////////////////////////////////// ALLOWED TO PRINT
     this.allowedToPrint = function (responseHandler){
 
         $.ajax({
             url: this.baseUrl + "plugin/" + this.pluginId + "/allowedToPrint",
+            dataType: "json",
+            contentType: "application/json; charset=UTF-8",
+            type: "GET"
+        }).always(function( data ){
+            responseHandler(data);
+        });
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////// START PRINT CONFIRMED
+    this.startPrintConfirmed = function (responseHandler){
+
+        $.ajax({
+            url: this.baseUrl + "plugin/" + this.pluginId + "/startPrintConfirmed",
             dataType: "json",
             contentType: "application/json; charset=UTF-8",
             type: "GET"

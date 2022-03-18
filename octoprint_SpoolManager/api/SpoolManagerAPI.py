@@ -132,7 +132,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 		spoolModelList = []
 		databaseIds = self._settings.get([SettingsKeys.SETTINGS_KEY_SELECTED_SPOOLS_DATABASE_IDS])
 
-		for i, databaseId in enumerate(databaseIds):
+		for toolIndex, databaseId in enumerate(databaseIds):
 			spoolModel = None
 			if (databaseId != None):
 				self._databaseManager.connectoToDatabase()
@@ -142,6 +142,16 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 					self._logger.warning(
 						"Last selected Spool for Tool %d from plugin-settings not found in database. Maybe deleted in the meantime." % i)
 			spoolModelList.append(spoolModel)
+			if (spoolModel != None):
+				eventPayload = {
+					"toolId": toolIndex,
+					"databaseId": spoolModel.databaseId,
+					"spoolName": spoolModel.displayName,
+					"material": spoolModel.material,
+					"colorName": spoolModel.colorName,
+					"remainingWeight": spoolModel.remainingWeight
+				}
+				self._sendPayload2EventBus(EventBusKeys.EVENT_BUS_SPOOL_SELECTED, eventPayload)
 
 		return spoolModelList
 
@@ -221,7 +231,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 							if (idx != toolIndex):
 								# spool was already assigned and is now used for different tool
 								self._sendMessageToClient("warning",
-														  "Spool swaped",
+														  "Spool swapped",
 														  "Spool '"+spoolModel.displayName+"' was switched from Tool "+str(idx)+" to Tool "+str(toolIndex),
 														  autoclose=True)
 							pass
@@ -366,7 +376,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				detailedSpoolResult = requiredWeightResult["detailedSpoolResult"][0]
 
 			if spoolModel is not None and detailedSpoolResult is not None and detailedSpoolResult["spoolSelected"] == True:
-
 				if (detailedSpoolResult["requiredLength"] > 0):
 					if (detailedSpoolResult["notEnough"] == True):
 						# if not enough or needed amount could not calculated
@@ -405,6 +414,7 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# no popup, because turned off by user
 			result['reminderSpoolSelection'] = []
 
+
 		return flask.jsonify({
 			"result": result,
 			"metaOrAttributesMissing": metaOrAttributesMissing,
@@ -412,6 +422,29 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			"bedOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED]),
 			"enclosureOffsetEnabled": self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED]),
 		})
+
+
+	#############################################################################################  START PRINT CONFIRMED
+	@octoprint.plugin.BlueprintPlugin.route("/startPrintConfirmed", methods=["GET"])
+	def start_print_confirmed(self):
+		spoolModels = self.loadSelectedSpools()
+		printer_profile = self._printer_profile_manager.get_current_or_default()
+		printerProfileToolCount = printer_profile['extruder']['count']
+		# for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+		for toolIndex in range(printerProfileToolCount):
+			spoolModel = spoolModels[toolIndex] if toolIndex < len(spoolModels) else None
+			if (spoolModel != None):
+				# - assign temp-offset here, because after the print is started (event: ) it is too late Events.PRINT_STARTED
+				try:
+					self.set_temp_offsets(toolIndex, spoolModel)
+				except Exception as e:
+					self._logger.exception("Temperature offsets for Spool '"+str(spoolModel.displayName)+"' failed to set!")
+					self._sendMessageToClient("warning", "Temperature offsets for Spool '"+str(spoolModel.displayName)+"' failed to set!", str(e))
+
+		return flask.jsonify({
+			"result": "goForIt"
+		})
+
 
 	#####################################################################################################   SELECT SPOOL
 	@octoprint.plugin.BlueprintPlugin.route("/selectSpool", methods=["PUT"])
@@ -503,7 +536,6 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 				fillColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_FILL_COLOR])
 				backgroundColor = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_BACKGROUND_COLOR])
 
-
 			# verify color codes
 			from PIL import ImageColor
 			if (fillColor.startswith("#")):
@@ -525,8 +557,19 @@ class SpoolManagerAPI(octoprint.plugin.BlueprintPlugin):
 			# spoolSelectionUrl = flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, _scheme="https", databaseId=databaseId)
 			spoolSelectionUrl = None
 
-			if (self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_QR_CODE_USE_URL_PREFIX])):
-				qrCodeUrlPrefix = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_URL_PREFIX])
+			useURLPrefix = None
+			qrCodeUrlPrefix = None
+			if ("useURLPrefix" in requestParameters):
+				useURLPrefix = True
+				qrCodeUrlPrefix = requestParameters["urlPrefix"]
+
+			if (useURLPrefix == None):
+				useURLPrefix = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_QR_CODE_USE_URL_PREFIX])
+
+			if (useURLPrefix):
+				if (qrCodeUrlPrefix == None):
+					qrCodeUrlPrefix = self._settings.get([SettingsKeys.SETTINGS_KEY_QR_CODE_URL_PREFIX])
+
 				spoolSelectionUrl = qrCodeUrlPrefix + "/plugin/SpoolManager/selectSpoolByQRCode/"+databaseId
 			else:
 				spoolSelectionUrl = flask.url_for("plugin.SpoolManager.selectSpoolByQRCode", _external=True, databaseId=databaseId)
