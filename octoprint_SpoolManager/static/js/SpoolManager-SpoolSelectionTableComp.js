@@ -21,6 +21,9 @@ function SpoolSelectionTableComp() {
 
         ////////////////////////////////////////////////////////////////////// public field/functions variables
         self.allSpools = params.allSpoolsKOArray;
+        self.allSpools.subscribe(function(neValue){
+            self._executeFilter()
+        });
         self.allMaterials = params.allMaterialsKOArray;
         self.allVendors = params.allVendorsKOArray;
         self.allColors = params.allColorsKOArray;
@@ -39,6 +42,9 @@ function SpoolSelectionTableComp() {
         self.clearFilterSelectionQuery = function(){
             self.filterSelectionQuery("");
         }
+        self.filterSelectionQuery.subscribe(function(filterQuery) {
+            self._executeFilter();
+        });
         self.hideEmptySpools = ko.observable(true);
         self.hideInActiveSpools = ko.observable(true);
 
@@ -176,7 +182,7 @@ function SpoolSelectionTableComp() {
         //  - do sorting
         self.sortSpoolArray = function(sortField, requestedSortOrder){
                 var sortResult = 0;
-                var sorted = self.allSpoolsKOArray();
+                var sorted = self.allSpools();
 
                 if (requestedSortOrder){
                     self.currentSortOder(requestedSortOrder == "descending" ? "ascending" : "descending");
@@ -342,66 +348,75 @@ function SpoolSelectionTableComp() {
 
         // execute the filter
         self._executeFilter = function(){
-        var filterQuery = self.filterSelectionQuery == null || self.filterSelectionQuery() == null ? "" : self.filterSelectionQuery() ;
-        filterQuery = filterQuery.toLowerCase();
-        var totalShownCount = 0;
-        for (spool of self.allSpools()) {
+            var filterQuery = self.filterSelectionQuery == null || self.filterSelectionQuery() == null ? "" : self.filterSelectionQuery() ;
+            filterQuery = filterQuery.toLowerCase();
+            var totalShownCount = -1;
+            //console.error(self.allSpoolsKOArray().length)
+            for (spool of self.allSpools()) {
 
-            var spoolProperties = spool.material() + " " +
-                                  spool.displayName() + " " +
-                                  spool.colorName();
+                var spoolProperties = spool.material() + " " +
+                                      spool.vendor() + " " +
+                                      spool.displayName() + " " +
+                                      spool.colorName();
 
-            if (spoolProperties.toLowerCase().indexOf(filterQuery) > -1) {
-                spool.isFilteredForSelection(false);
-            } else {
-                spool.isFilteredForSelection(true);
-            }
-            if (self.hideEmptySpools() == true){
-                var isEmpty = spool.remainingWeight == null || spool.remainingWeight() <= 0 ? true : false;
-                if (isEmpty){
+                if (spoolProperties.toLowerCase().indexOf(filterQuery) > -1) {
+                    spool.isFilteredForSelection(false);
+                } else {
                     spool.isFilteredForSelection(true);
                 }
-            }
-            if (self.hideInActiveSpools() == true && spool.isActive() == false){
-                spool.isFilteredForSelection(true);
-            }
-
-            // Filter against catalogs,  if not already filtered
-            if (spool.isFilteredForSelection() == false){
-                // Material
-                if (self.allMaterials().length != self.selectedMaterialsForFilter().length){
-                    var spoolMaterial = spool.material != null && spool.material() != null ? spool.material() : "";
-                    if (self.selectedMaterialsForFilter().includes(spoolMaterial) == false){
+                if (self.hideEmptySpools() == true){
+                    var isEmpty = spool.remainingWeight == null || spool.remainingWeight() <= 0 ? true : false;
+                    if (isEmpty){
                         spool.isFilteredForSelection(true);
                     }
                 }
+                if (self.hideInActiveSpools() == true && spool.isActive() == false){
+                    spool.isFilteredForSelection(true);
+                }
+
+                // Filter against catalogs,  if not already filtered
                 if (spool.isFilteredForSelection() == false){
-                    // Vendor
-                    if (self.allVendors().length != self.selectedVendorsForFilter().length){
-                        var spoolVendor = spool.vendor != null && spool.vendor() != null ? spool.vendor() : "";
-                        if (self.selectedVendorsForFilter().includes(spoolVendor) == false){
+                    // Material
+                    if (self.allMaterials().length != self.selectedMaterialsForFilter().length){
+                        var spoolMaterial = spool.material != null && spool.material() != null ? spool.material() : "";
+                        if (self.selectedMaterialsForFilter().includes(spoolMaterial) == false){
                             spool.isFilteredForSelection(true);
                         }
                     }
                     if (spool.isFilteredForSelection() == false){
-                        // Color
-                        if (self.allColors().length != self.selectedColorsForFilter().length){
-                            var spoolColorCode = spool.color != null && spool.color() != null ? spool.color() : "";
-                            var spoolColorName = spool.colorName != null && spool.colorName() != null ? spool.colorName() : "";
-                            var colorId = spoolColorCode + ";" + spoolColorName;
-                            if (self.selectedColorsForFilter().includes(colorId) == false){
+                        // Vendor
+                        if (self.allVendors().length != self.selectedVendorsForFilter().length){
+                            var spoolVendor = spool.vendor != null && spool.vendor() != null ? spool.vendor() : "";
+                            if (self.selectedVendorsForFilter().includes(spoolVendor) == false){
                                 spool.isFilteredForSelection(true);
+                            }
+                        }
+                        if (spool.isFilteredForSelection() == false){
+                            // Color
+                            if (self.allColors().length != self.selectedColorsForFilter().length){
+                                var spoolColorCode = spool.color != null && spool.color() != null ? spool.color() : "";
+                                var spoolColorName = spool.colorName != null && spool.colorName() != null ? spool.colorName() : "";
+                                var colorId = spoolColorCode + ";" + spoolColorName;
+                                if (self.selectedColorsForFilter().includes(colorId) == false){
+                                    spool.isFilteredForSelection(true);
+                                }
                             }
                         }
                     }
                 }
+                if (spool.isFilteredForSelection() == false){
+                    if (totalShownCount == -1){
+                        totalShownCount = 0;
+                    }
+                    totalShownCount += 1;
+                }
+            // });
             }
-            if (spool.isFilteredForSelection() == false){
-                totalShownCount += 1;
+            if (totalShownCount == -1){
+                self.totalShown(self.allSpools().length);
+            } else {
+                self.totalShown(totalShownCount);
             }
-        // });
-        }
-        self.totalShown(totalShownCount);
     }
 
         /**

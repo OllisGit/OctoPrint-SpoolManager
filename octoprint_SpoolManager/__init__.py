@@ -114,12 +114,52 @@ class SpoolmanagerPlugin(
 			offset_dict["tool"+str(toolIndex)] = spoolModel.offsetTemperature if spoolModel.offsetTemperature is not None else 0
 
 		if (bedOffsetEnabled == True and spoolModel != None):
-			offset_dict["bed"] = spoolModel.offsetBedTemperature if spoolModel.offsetBedTemperature is not None else 0
+			if (spoolModel.offsetBedTemperature != None):
+				if (self._isNewOffsetTemperatureGreater("bed", spoolModel.offsetBedTemperature) == True):
+					offset_dict["bed"] = spoolModel.offsetBedTemperature
 
 		if (enclosureOffsetEnabled == True and spoolModel != None):
-			offset_dict["chamber"] = spoolModel.offsetEnclosureTemperature if spoolModel.offsetEnclosureTemperature is not None else 0
+			if (spoolModel.offsetEnclosureTemperature != None):
+				if (self._isNewOffsetTemperatureGreater("chamber", spoolModel.offsetEnclosureTemperature) == True):
+					offset_dict["chamber"] = spoolModel.offsetEnclosureTemperature
 
-		self._printer.set_temperature_offset(offset_dict)
+		if (len(offset_dict) != 0):
+			self._printer.set_temperature_offset(offset_dict)
+
+
+	def _isNewOffsetTemperatureGreater(self, selectedOffset, newOffset):
+
+		allTemperatures = self._printer.get_current_temperatures()
+		selectedTemperature =  allTemperatures[selectedOffset] if selectedOffset in allTemperatures else None
+		if (selectedTemperature != None):
+			currentOffset = selectedTemperature["offset"]
+			if (currentOffset != None and newOffset > currentOffset):
+				return True
+		return False
+
+
+	def clear_temp_offsets(self):
+		toolOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_TOOL_OFFSET_ENABLED])
+		bedOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_BED_OFFSET_ENABLED])
+		enclosureOffsetEnabled = self._settings.get_boolean([SettingsKeys.SETTINGS_KEY_ENCLOSURE_OFFSET_ENABLED])
+
+		offset_dict = dict()
+		if (toolOffsetEnabled == True):
+			printer_profile = self._printer_profile_manager.get_current_or_default()
+			printerProfileToolCount = printer_profile['extruder']['count']
+			# for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
+			for toolIndex in range(printerProfileToolCount):
+				# toolIndex should be tool0
+				offset_dict["tool"+str(toolIndex)] = 0
+
+		if (bedOffsetEnabled == True):
+			offset_dict["bed"] = 0
+
+		if (enclosureOffsetEnabled == True):
+			offset_dict["chamber"] = 0
+
+		if (len(offset_dict) != 0):
+			self._printer.set_temperature_offset(offset_dict)
 
 	################################################################################################## private functions
 
@@ -428,8 +468,6 @@ class SpoolmanagerPlugin(
 		for toolIndex, filamentLength in enumerate(self.metaDataFilamentLengths):
 			spoolModel = selectedSpools[toolIndex] if toolIndex < len(selectedSpools) else None
 
-			self.set_temp_offsets(toolIndex, spoolModel)
-
 			if (spoolModel != None):
 				if (StringUtils.isEmpty(spoolModel.firstUse) == True):
 					firstUse = datetime.now()
@@ -512,6 +550,8 @@ class SpoolmanagerPlugin(
 		requiredWeightResult["action"] = "requiredFilamentChanged"
 		self._sendDataToClient(requiredWeightResult)
 
+		if ("paused" != printStatus):
+			self.clear_temp_offsets()
 
 	def _on_clientOpened(self, payload):
 		# start-workaround https://github.com/foosel/OctoPrint/issues/3400
