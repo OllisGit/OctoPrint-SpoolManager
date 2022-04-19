@@ -178,7 +178,7 @@ class SpoolmanagerPlugin(
 	def _sendPayload2EventBus(self, eventKey, eventPayload):
 
 		eventName = "plugin_spoolmanager_" + eventKey
-		self._logger.info("Send Event '"+eventName+"' with payload '"+str(eventPayload)+"' to event-bus")
+		self._logger.debug("Send Event '"+eventName+"' with payload '"+str(eventPayload)+"' to event-bus")
 		self._event_bus.fire(eventName, payload=eventPayload)
 
 	def _checkForMissingPluginInfos(self, sendToClient=False):
