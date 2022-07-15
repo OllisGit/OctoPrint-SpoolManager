@@ -1137,6 +1137,18 @@ class DatabaseManager(object):
 
 		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogColors", set())
 
+	def loadCatalogPurchasedFrom(self, withReusedConnection=False):
+		def databaseCallMethode():
+			result = set()
+			myQuery = SpoolModel.select(SpoolModel.purchasedFrom).distinct()
+			for spool in myQuery:
+				value = spool.purchasedFrom
+				if (value != None):
+					result.add(value)
+			return result
+
+		return self._handleReusableConnection(databaseCallMethode, withReusedConnection, "loadCatalogPurchasedFrom", set())
+
 	def deleteSpool(self, databaseId, withReusedConnection=False):
 		def databaseCallMethode():
 			with self._database.atomic() as transaction:  # Opens new transaction.

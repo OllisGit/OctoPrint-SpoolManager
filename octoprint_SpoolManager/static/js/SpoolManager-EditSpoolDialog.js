@@ -114,7 +114,7 @@ function SpoolManagerEditSpoolDialog(){
         this.purchasedOnKO = ko.observable();
 
 
-        this.purchasedFrom = ko.observable();
+        // this.purchasedFrom = ko.observable();
         this.cost = ko.observable();
         this.costUnit = ko.observable();
 
@@ -127,6 +127,10 @@ function SpoolManagerEditSpoolDialog(){
         var materialViewModel = self.componentFactory.createSelectWithFilter("spool-material-select", $('#spool-form'));
         this.material = materialViewModel.selectedOption;
         // this.allMaterials = materialViewModel.allOptions;
+
+        var purchasedFromViewModel = self.componentFactory.createSelectWithFilter("spool-purchasedFrom-select", $('#spool-form'));
+        this.purchasedFrom = purchasedFromViewModel.selectedOption;
+        this.allPurchasedFrom = purchasedFromViewModel.allOptions;
 
         // Autosuggest for "density"
         this.material.subscribe(function(newMaterial){
@@ -198,6 +202,9 @@ function SpoolManagerEditSpoolDialog(){
 
             //vendors
             this.allVendors(self.catalogs.vendors);
+
+            //purchasedFrom
+            this.allPurchasedFrom(self.catalogs.purchasedFrom);
         }
 
         this.selectedFromQRCode(updateData.selectedFromQRCode);
@@ -210,6 +217,7 @@ function SpoolManagerEditSpoolDialog(){
         this.isInActive(!updateData.isActive);
         this.displayName(updateData.displayName);
         this.vendor(updateData.vendor);
+        this.purchasedFrom(updateData.purchasedFrom);
 
         this.material(updateData.material);
         this.density(updateData.density);
@@ -334,6 +342,7 @@ function SpoolManagerEditSpoolDialog(){
     self.allMaterials = ko.observableArray([]);
     self.allVendors = ko.observableArray([]);
     self.allColors = ko.observableArray([]);
+    self.allPurchasedFrom = ko.observableArray([]);
 
     self.allToolIndices = ko.observableArray([]);
 
@@ -773,10 +782,12 @@ function SpoolManagerEditSpoolDialog(){
             self.allMaterials(self.catalogs["materials"]);
             self.allVendors(self.catalogs["vendors"]);
             self.allColors(self.catalogs["colors"]);
+            self.allPurchasedFrom(self.catalogs["purchasedFrom"]);
         } else {
             self.allMaterials([]);
             self.allVendors([]);
             self.allColors([]);
+            self.allPurchasedFrom([]);
         }
 
     }

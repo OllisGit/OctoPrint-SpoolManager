@@ -355,7 +355,9 @@
                                 <div class="control-group no-bottom-gap">
                                     <label class="control-label">Purchased from</label>
                                     <div class="controls">
-                                        <input type="text" class="input-xlarge text-left" data-bind="value: spoolDialog.spoolItemForEditing.purchasedFrom"/>
+                                        <select id="spool-purchasedFrom-select" class="input-large" data-bind="options: spoolDialog.spoolItemForEditing.allPurchasedFrom, value: spoolDialog.spoolItemForEditing.purchasedFrom">
+                                        <option></option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="control-group ">
