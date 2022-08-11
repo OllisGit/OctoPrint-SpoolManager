@@ -916,7 +916,7 @@ $(function() {
             var dataLength = dataLines.length;
             const spoolInfo = self.api_getSelectedSpoolInformations();
             for (var i = 0; i < dataLength; i++) {
-                if (spoolInfo.length && dataLines[i].includes("Filament:")) {
+                if (spoolInfo.length && /: [\d\.]+m \/ [\d\.]+cm³/.test(dataLines[i])) {
                     const filament = data["gcodeAnalysis"]["filament"]["tool" + 0];
                     if (filament && filament.hasOwnProperty("volume") && filament.volume) {
                         const density = spoolInfo[0]["density"];
