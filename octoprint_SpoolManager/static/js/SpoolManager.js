@@ -907,26 +907,42 @@ $(function() {
         };
         // overwrite getAdditionalData
         self.originalGetAdditionalData = self.filesViewModel.getAdditionalData;
-
         self.filesViewModel.getAdditionalData = function addFilamentWeight(data) {
             const additionalData = self.originalGetAdditionalData(data);
 
             var dataLines = additionalData.split(/<br>/);
+            const dataLength = dataLines.length;
+            if (data.hasOwnProperty("gcodeAnalysis") &&
+                data["gcodeAnalysis"].hasOwnProperty("filament") &&
+                data["gcodeAnalysis"]["filament"].hasOwnProperty("tool" + 0) &&
+                data["gcodeAnalysis"]["filament"]["tool" + 0].hasOwnProperty("volume") &&
+                data["gcodeAnalysis"]["filament"]["tool" + 0].volume
+                ){
 
-            var dataLength = dataLines.length;
-            const spoolInfo = self.api_getSelectedSpoolInformations();
-            for (var i = 0; i < dataLength; i++) {
-                if (spoolInfo.length && /: [\d\.]+m \/ [\d\.]+cm³/.test(dataLines[i])) {
-                    const filament = data["gcodeAnalysis"]["filament"]["tool" + 0];
-                    if (filament && filament.hasOwnProperty("volume") && filament.volume) {
-                        const density = spoolInfo[0]["density"];
-                        const weight = Math.round((density * filament.volume) * 100) / 100;
-                        if (weight > 0) {
-                            dataLines[i] = dataLines[i] + " / " + weight + "g";
-                        }
-                    }
-                }
-            }
+                const filamentVolume = data["gcodeAnalysis"]["filament"]["tool" + 0].volume;
+
+                var spoolDensity = null;
+                var spoolItem = null;
+                for (var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
+                    spoolItem = self.selectedSpoolsForSidebar()[i]();
+                    if (spoolItem !== null){
+                        spoolDensity = spoolItem.density();
+                        break;
+                    };
+                };
+
+                if (spoolDensity != null){
+                    const weight = Math.round((spoolDensity * filamentVolume) * 100) / 100;
+                    if (weight > 0){
+                        for (var i = 0; i < dataLength; i++){
+                            if (/: [\d\.]+m \/ [\d\.]+cm³/.test(dataLines[i])){
+                                dataLines[i] = dataLines[i] + " / " + weight + "g";
+                                break;
+                            };
+                        };
+                    };
+                };
+            };
 
             return dataLines.join("<br>");
         };
