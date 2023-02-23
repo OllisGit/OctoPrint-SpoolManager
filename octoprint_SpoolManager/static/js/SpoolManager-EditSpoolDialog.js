@@ -864,8 +864,7 @@ function SpoolManagerEditSpoolDialog(){
         self._copySpoolItemForEditing(spoolItem);
         // reset values that should'nt be copied
 
-
-        var defaultExcludedFields = ["selectedForTool", "version", "firstUseKO", "lastUseKO", "remainingWeight", "remainingPercentage", "usedLength", 
+        var defaultExcludedFields = ["selectedForTool", "version", "firstUseKO", "lastUseKO", "remainingWeight", "remainingPercentage", 
                                     "usedLengthPercentage", "remainingLength", "remainingLengthPercentage", "usedWeight", "usedPercentage"];
         var allFieldNames = Object.keys(spoolItem);
         for (const fieldName of allFieldNames){
@@ -884,6 +883,8 @@ function SpoolManagerEditSpoolDialog(){
             // self.spoolItemForEditing["noteHtml"]("");
         }
 
+        self.spoolItemForEditing.usedLength(0);
+        
         // close dialog
         self.templateSpoolDialog.modal('hide');
     }
