@@ -873,7 +873,7 @@ function SpoolManagerEditSpoolDialog(){
             if (self.pluginSettings.excludedFromTemplateCopy().includes(fieldName) ||
                 defaultExcludedFields.includes(fieldName)){
                 var currentValue = self.spoolItemForEditing[fieldName]();
-                self.spoolItemForEditing[fieldName]("");
+                self.spoolItemForEditing[fieldName](null);
             }
         }
         if (self.pluginSettings.excludedFromTemplateCopy().includes("allNotes")) {
