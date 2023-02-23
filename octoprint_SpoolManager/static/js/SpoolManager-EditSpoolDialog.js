@@ -865,9 +865,8 @@ function SpoolManagerEditSpoolDialog(){
         // reset values that should'nt be copied
 
 
-        var defaultExcludedFields = ["selectedForTool","version", "databaseId", "isTemplate","firstUseKO", "lastUseKO",
-                                    "remainingWeight","remainingPercentage","usedLength", "usedLengthPercentage","remainingLength", "remainingLengthPercentage",
-                                    "usedWeight", "usedPercentage"];
+        var defaultExcludedFields = ["selectedForTool", "version", "firstUseKO", "lastUseKO", "remainingWeight", "remainingPercentage", "usedLength", 
+                                    "usedLengthPercentage", "remainingLength", "remainingLengthPercentage", "usedWeight", "usedPercentage"];
         var allFieldNames = Object.keys(spoolItem);
         for (const fieldName of allFieldNames){
             if (self.pluginSettings.excludedFromTemplateCopy().includes(fieldName) ||
