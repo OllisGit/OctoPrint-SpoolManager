@@ -333,7 +333,7 @@ $(function() {
                     if (value == false){
                         self.pluginSettings.excludedFromTemplateCopy.push(fieldName);
                     } else {
-                       self.pluginSettings.excludedFromTemplateCopy.remove(fieldName);
+                        self.pluginSettings.excludedFromTemplateCopy.remove(fieldName);
                     }
                 },
                 owner: this
@@ -343,15 +343,20 @@ $(function() {
         // overwrite save-button
         const origSaveSettingsFunction = self.settingsViewModel.saveData;
         const newSaveSettingsFunction = function confirmSpoolSelectionBeforeStartPrint(data, successCallback, setAsSending) {
-            if (self.pluginSettings.useExternal() == true &&
-                (self.showDatabaseErrorMessage() == true || self.showUpdateSchemeMessage() == true)
-                ){
-                var check = confirm('External database will not work. Save settings anyway?');
-                if (check == true) {
+            if (
+                self.pluginSettings.useExternal() == true &&
+                (
+                    self.showDatabaseErrorMessage() == true ||
+                    self.showUpdateSchemeMessage() == true
+                )
+            ) {
+                const confirmationResult = confirm('External database will not work. Save settings anyway?');
+                if (confirmationResult == true) {
                     return origSaveSettingsFunction(data, successCallback, setAsSending);
                 }
                 return null;
             }
+
             return origSaveSettingsFunction(data, successCallback, setAsSending);
         }
         self.settingsViewModel.saveData = newSaveSettingsFunction;
