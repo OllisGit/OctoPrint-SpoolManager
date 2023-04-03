@@ -536,7 +536,7 @@ $(function() {
             });
         }
 
-        _buildRemainingText = function(spoolItem) {
+        _buildRemainingWeightText = function(spoolItem) {
             const remainingWeight = spoolItem.remainingWeight();
 
             if (remainingWeight == null || remainingWeight.length == 0) {
@@ -546,9 +546,10 @@ $(function() {
             return `${remainingWeight}${WEIGHT_UNIT_SYMBOL}`;
         }
 
-        self.remainingText = function(spoolItem){
-            var remainingInfo = "("+_buildRemainingText(spoolItem) + ")";
-            return remainingInfo;
+        self.remainingText = function(spoolItem) {
+            const remainingWeightText = _buildRemainingWeightText(spoolItem);
+
+            return `(${remainingWeightText})`;
         }
 
         self.buildTooltipForSpoolItem = function(spoolItem, textPrefix, attribute){
