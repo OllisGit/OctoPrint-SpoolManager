@@ -217,9 +217,8 @@ $(function() {
             }
         }
 
-        self.buildDatabaseSettings = function(){
-
-            var databaseSettings = {
+        self.buildDatabaseSettings = function() {
+            return {
                 databaseType: self.pluginSettings.databaseType(),
                 databaseHost: self.pluginSettings.databaseHost(),
                 databasePort: self.pluginSettings.databasePort(),
@@ -227,7 +226,6 @@ $(function() {
                 databaseUser: self.pluginSettings.databaseUser(),
                 databasePassword: self.pluginSettings.databasePassword(),
             }
-            return databaseSettings
         }
 
         self.testDatabaseConnection = function(){
