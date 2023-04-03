@@ -241,22 +241,17 @@ $(function() {
         }
 
         self.deleteDatabaseAction = function(databaseType) {
-            var result = confirm("Do you really want to delete all SpoolManager data?");
-            if (result == true){
-//  TODO cleanup
-//                var databaseSettings = {
-//                    databaseType: self.pluginSettings.databaseType(),
-//                    databaseHost: self.pluginSettings.databaseHost(),
-//                    databasePort: self.pluginSettings.databasePort(),
-//                    databaseName: self.pluginSettings.databaseName(),
-//                    databaseUser: self.pluginSettings.databaseUser(),
-//                    databasePassword: self.pluginSettings.databasePassword(),
-//                }
-                var databaseSettings = self.buildDatabaseSettings();
-                self.apiClient.callDeleteDatabase(databaseType, databaseSettings, function(responseData) {
-                    self.spoolItemTableHelper.reloadItems();
-                });
+            const confirmationResult = confirm("Do you really want to delete all SpoolManager data?");
+
+            if (!confirmationResult) {
+                return;
             }
+
+            const databaseSettings = self.buildDatabaseSettings();
+
+            self.apiClient.callDeleteDatabase(databaseType, databaseSettings, function(responseData) {
+                self.spoolItemTableHelper.reloadItems();
+            });
         };
 
         $("#spoolmanger-settings-tab").find('a[data-toggle="tab"]').on('shown', function (e) {
