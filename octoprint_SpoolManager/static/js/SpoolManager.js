@@ -228,22 +228,13 @@ $(function() {
             }
         }
 
-        self.testDatabaseConnection = function(){
-
+        self.testDatabaseConnection = function() {
             self.resetDatabaseMessages()
             self.showExternalBusyIndicator(true);
 
-//  TODO cleanup          var databaseSettings = {
-//                databaseType: self.pluginSettings.databaseType(),
-//                databaseHost: self.pluginSettings.databaseHost(),
-//                databasePort: self.pluginSettings.databasePort(),
-//                databaseName: self.pluginSettings.databaseName(),
-//                databaseUser: self.pluginSettings.databaseUser(),
-//                databasePassword: self.pluginSettings.databasePassword(),
-//            }
-            var databaseSettings = self.buildDatabaseSettings();
-            // api-call
-            self.apiClient.testDatabaseConnection(databaseSettings, function(responseData){
+            const databaseSettings = self.buildDatabaseSettings();
+
+            self.apiClient.testDatabaseConnection(databaseSettings, function(responseData) {
                 self.handleDatabaseMetaDataResponse(responseData);
                 self.showExternalBusyIndicator(false);
             });
