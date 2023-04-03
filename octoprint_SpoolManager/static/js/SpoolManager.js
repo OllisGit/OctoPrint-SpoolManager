@@ -499,49 +499,39 @@ $(function() {
                 self.selectedSpoolsForSidebar.valueHasMutated();
             }
 
-            var currentFilterName = "all";
-            // if (self.pluginSettings!= null){
-            //      if(self.pluginSettings.hideEmptySpoolsInSidebar() == true) {
-            //          currentFilterName = "hideEmptySpools";
-            //      }
-            //      if(self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
-            //          currentFilterName = "hideInactiveSpools";
-            //      }
-            //      if(self.pluginSettings.hideEmptySpoolsInSidebar() == true && self.pluginSettings.hideInactiveSpoolsInSidebar() == true) {
-            //          currentFilterName = "hideEmptySpools,hideInactiveSpools";
-            //      }
-            // }
-
-            var tableQuery = {
-                filterName: currentFilterName,
+            const fetchSpoolsQueryParams = {
+                filterName: "all",
                 from: 0,
                 to: 3333,
                 sortColumn: "lastUse",
                 sortOrder: "desc"
             }
 
-            // api-call
-            self.apiClient.callLoadSpoolsByQuery(tableQuery, function(responseData){
+            self.apiClient.callLoadSpoolsByQuery(fetchSpoolsQueryParams, function(responseData) {
+                const allSpoolData = responseData.allSpools;
 
-                var allSpoolData = responseData["allSpools"]; // rawdtata
-                if (allSpoolData != null){
-                    var allSpoolItems = ko.utils.arrayMap(allSpoolData, function (spoolData) {
-                        var result = self.spoolDialog.createSpoolItemForTable(spoolData);
-                        return result;
-                    }); // transform to SpoolItems with KO.obseravables
-                    self.allSpoolsForSidebar(allSpoolItems);
-
-                    var spoolsData = responseData["selectedSpools"],
-                        slot, spoolData, spoolItem;
-                    for(var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
-                        slot = self.selectedSpoolsForSidebar()[i];
-                        spoolData = (i < spoolsData.length) ? spoolsData[i] : null;
-                        spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
-                        slot(spoolItem);
-                    }
-                    // Pre sorting in Selection-Dialog
-                    // self.sidebarFilterSorter.sortSpoolArray("displayName", "ascending");
+                if (allSpoolData == null) {
+                    return;
                 }
+
+                // transform to SpoolItems with KO.obseravables
+                const allSpoolItems = ko.utils.arrayMap(allSpoolData, function (spoolData) {
+                    return self.spoolDialog.createSpoolItemForTable(spoolData);
+                });
+                self.allSpoolsForSidebar(allSpoolItems);
+
+                const spoolsData = responseData.selectedSpools;
+
+                for (let spoolIdx = 0; spoolIdx < self.selectedSpoolsForSidebar().length; spoolIdx++) {
+                    const slot = self.selectedSpoolsForSidebar()[spoolIdx];
+                    const spoolData = (spoolIdx < spoolsData.length) ? spoolsData[spoolIdx] : null;
+                    const spoolItem = spoolData ? self.spoolDialog.createSpoolItemForTable(spoolData) : null;
+
+                    slot(spoolItem);
+                }
+
+                // Pre sorting in Selection-Dialog
+                // self.sidebarFilterSorter.sortSpoolArray("displayName", "ascending");
             });
         }
 
