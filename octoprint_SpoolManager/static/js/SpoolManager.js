@@ -552,13 +552,15 @@ $(function() {
             return `(${remainingWeightText})`;
         }
 
-        self.buildTooltipForSpoolItem = function(spoolItem, textPrefix, attribute){
-            var value = "";
-            if (spoolItem[attribute]() != null){
-                value = spoolItem[attribute]();
-            }
-            var toolTip = textPrefix + value;
-            return toolTip;
+        self.buildTooltipForSpoolItem = function(spoolItem, textPrefix, attribute) {
+            const spoolItemAttributeValue = spoolItem[attribute]();
+            const mainContent = (
+                spoolItemAttributeValue != null ?
+                    spoolItemAttributeValue :
+                    ""
+            );
+
+            return `${textPrefix}${mainContent}`;
         }
 
         self.getSpoolItemSelectedTool = function(databaseId) {
