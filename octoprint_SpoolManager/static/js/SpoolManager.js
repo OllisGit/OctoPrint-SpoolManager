@@ -436,24 +436,31 @@ $(function() {
 
         self.replaceFilamentView = function replaceFilamentViewInSidebar() {
             $('#state').find('.accordion-inner').contents().each(function (index, item) {
-                if (item.nodeType === Node.COMMENT_NODE) {
-                    if (item.nodeValue === ' ko foreach: filament ' || item.nodeValue === ' ko foreach: [] ') {
-                        item.nodeValue = ' ko foreach: [] '; // eslint-disable-line no-param-reassign
-                        var element = '<!-- ko if: spoolsWithWeight().length < 1 -->  <span><strong>Required Filament unknown</strong></span><br/> <!-- /ko -->';
-                        element += '<!-- ko foreach: spoolsWithWeight --> <span data-bind="text: \'Tool \' + toolIndex + \': \', attr: {title: \'Filament usage for Spool \' + spoolName}"></span><strong data-bind="html: $root.formatSpoolsWithWeight($data)"></strong><br> <!-- /ko -->';
-
-                        element += '<div data-bind="visible: settings.settings.plugins.SpoolManager.extrusionDebuggingEnabled">';
-                        element += '<!-- ko foreach: extrusionValues -->';
-                        element += '<div>Extruded Tool <span data-bind="text: $index"></span>: <strong data-bind="text: $data.toFixed(2)"></strong></div>';
-                        element += '<!-- /ko -->';
-
-                        element += '</div>'
-                        $(element).insertBefore(item);
-
-                        return false; // exit loop
-                    }
+                if (item.nodeType !== Node.COMMENT_NODE) {
+                    return true;
                 }
-                return true;
+
+                if (
+                    item.nodeValue !== ' ko foreach: filament ' &&
+                    item.nodeValue !== ' ko foreach: [] '
+                ) {
+                    return true;
+                }
+
+                item.nodeValue = ' ko foreach: [] '; // eslint-disable-line no-param-reassign
+
+                let newElement = '<!-- ko if: spoolsWithWeight().length < 1 -->  <span><strong>Required Filament unknown</strong></span><br/> <!-- /ko -->';
+                newElement += '<!-- ko foreach: spoolsWithWeight --> <span data-bind="text: \'Tool \' + toolIndex + \': \', attr: {title: \'Filament usage for Spool \' + spoolName}"></span><strong data-bind="html: $root.formatSpoolsWithWeight($data)"></strong><br> <!-- /ko -->';
+
+                newElement += '<div data-bind="visible: settings.settings.plugins.SpoolManager.extrusionDebuggingEnabled">';
+                newElement += '<!-- ko foreach: extrusionValues -->';
+                newElement += '<div>Extruded Tool <span data-bind="text: $index"></span>: <strong data-bind="text: $data.toFixed(2)"></strong></div>';
+                newElement += '<!-- /ko -->';
+
+                newElement += '</div>'
+                $(newElement).insertBefore(item);
+
+                return false; // exit loop
             });
         };
 
