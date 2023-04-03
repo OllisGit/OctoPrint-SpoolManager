@@ -564,13 +564,19 @@ $(function() {
         }
 
         self.getSpoolItemSelectedTool = function(databaseId) {
-            var spoolItem;
-            for (var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
-                spoolItem = self.selectedSpoolsForSidebar()[i]();
-                if (spoolItem !== null && self.selectedSpoolsForSidebar()[i]().databaseId() === databaseId) {
-                    return i;
+            const selectedSpools = self.selectedSpoolsForSidebar();
+
+            for (let spoolIdx = 0; spoolIdx < selectedSpools.length; spoolIdx++) {
+                const spoolItem = selectedSpools[spoolIdx]();
+
+                if (
+                    spoolItem !== null &&
+                    spoolItem.databaseId() === databaseId
+                ) {
+                    return spoolIdx;
                 }
             }
+
             return null;
         }
 
