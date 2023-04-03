@@ -45,6 +45,7 @@ $("#colorFilter").select2({
  // END: TESTZONE
 
 $(function() {
+    const WEIGHT_UNIT_SYMBOL = "g";
 
     var PLUGIN_ID = "SpoolManager"; // from setup.py plugin_identifier
 
@@ -535,17 +536,14 @@ $(function() {
             });
         }
 
-        _buildRemainingText = function(spoolItem){
-            var remainingInfo = "";
-            // if (  spoolItem.remainingWeight() != null && spoolItem.remainingWeight().length != 0
-            //     && spoolItem.remainingPercentage() != null && spoolItem.remainingPercentage().length != 0){
-            //     remainingInfo = "("+spoolItem.remainingWeight()+"g / "+spoolItem.remainingPercentage()+"%)";
-            // }
-            if (  spoolItem.remainingWeight() != null && spoolItem.remainingWeight().length != 0){
-                // remainingInfo = "(R: "+spoolItem.remainingWeight()+"g)";
-                remainingInfo = ""+spoolItem.remainingWeight()+"g";
+        _buildRemainingText = function(spoolItem) {
+            const remainingWeight = spoolItem.remainingWeight();
+
+            if (remainingWeight == null || remainingWeight.length == 0) {
+                return "";
             }
-            return remainingInfo
+
+            return `${remainingWeight}${WEIGHT_UNIT_SYMBOL}`;
         }
 
         self.remainingText = function(spoolItem){
