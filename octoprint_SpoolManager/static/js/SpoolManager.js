@@ -254,23 +254,25 @@ $(function() {
             });
         };
 
-        $("#spoolmanger-settings-tab").find('a[data-toggle="tab"]').on('shown', function (e) {
+        $("#spoolmanger-settings-tab")
+            .find('a[data-toggle="tab"]')
+            .on('shown', function (evt) {
+                const activatedTab = evt.target.hash;
+                const prevTab = evt.relatedTarget.hash;
 
-              var activatedTab = e.target.hash; // activated tab
-              var prevTab = e.relatedTarget.hash; // previous tab
+                if ("#tab-spool-Storage" != activatedTab) {
+                    return;
+                }
 
-              if ("#tab-spool-Storage" == activatedTab){
-                  self.resetDatabaseMessages()
-
-                  self.showLocalBusyIndicator(true);
-                  self.showExternalBusyIndicator(true);
-                  self.apiClient.loadDatabaseMetaData(function(responseData) {
-                        self.handleDatabaseMetaDataResponse(responseData);
-                        self.showLocalBusyIndicator(false);
-                        self.showExternalBusyIndicator(false);
-                   });
-              }
-        });
+                self.resetDatabaseMessages()
+                self.showLocalBusyIndicator(true);
+                self.showExternalBusyIndicator(true);
+                self.apiClient.loadDatabaseMetaData(function(responseData) {
+                    self.handleDatabaseMetaDataResponse(responseData);
+                    self.showLocalBusyIndicator(false);
+                    self.showExternalBusyIndicator(false);
+                });
+            });
 
         self.isFilamentManagerPluginAvailable = ko.observable(false);
 
