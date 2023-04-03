@@ -309,16 +309,16 @@ $(function() {
             }
         });
         self.performCSVImportFromUpload = function() {
-            if (self.csvImportUploadData === undefined) return;
+            if (self.csvImportUploadData === undefined) {
+                return;
+            }
 
             self.csvImportInProgress(true);
-            self.csvImportDialog.showDialog(function(shouldTableReload){
-                    //
-                    if (shouldTableReload == true){
-                        self.spoolItemTableHelper.reloadItems();
-                    }
+            self.csvImportDialog.showDialog(function(shouldTableReload) {
+                if (shouldTableReload == true) {
+                    self.spoolItemTableHelper.reloadItems();
                 }
-            );
+            });
             self.csvImportUploadData.submit();
         };
 
