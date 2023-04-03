@@ -188,31 +188,32 @@ $(function() {
             self.databaseErrorMessage("");
         }
 
-        self.handleDatabaseMetaDataResponse = function(metaDataResponse){
-            var metadata = metaDataResponse["metadata"];
-            if (metadata != null){
-                var errorMessage = metadata["errorMessage"];
-                if (errorMessage != null && errorMessage.length != 0){
-                    self.showDatabaseErrorMessage(true);
-                    self.databaseErrorMessage(errorMessage);
-                }
-                var success = metadata["success"];
-                if (success != null && success == true){
-                    self.showSuccessMessage(true);
-                } else {
-                    self.showSuccessMessage(false);
-                }
+        self.handleDatabaseMetaDataResponse = function(metaDataResponse) {
+            const metadata = metaDataResponse.metadata;
 
-                self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
-                self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata["localSchemeVersionFromDatabaseModel"]);
-                self.databaseMetaData.localSpoolItemCount(metadata["localSpoolItemCount"]);
-                self.databaseMetaData.externalSchemeVersionFromDatabaseModel(metadata["externalSchemeVersionFromDatabaseModel"]);
-                self.databaseMetaData.externalSpoolItemCount(metadata["externalSpoolItemCount"]);
-                self.databaseMetaData.schemeVersionFromPlugin(metadata["schemeVersionFromPlugin"]);
+            if (metadata == null) {
+                return;
+            }
 
-                if (self.databaseMetaData.schemeVersionFromPlugin() != self.databaseMetaData.externalSchemeVersionFromDatabaseModel()){
-                    self.showUpdateSchemeMessage(true);
-                }
+            const errorMessage = metadata.errorMessage;
+            if (errorMessage != null && errorMessage.length != 0) {
+                self.showDatabaseErrorMessage(true);
+                self.databaseErrorMessage(errorMessage);
+            }
+            const success = metadata.success;
+            const successMessageFlag = (success != null && success == true) ? true : false;
+
+            self.showSuccessMessage(successMessageFlag);
+
+            self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata.localSchemeVersionFromDatabaseModel);
+            self.databaseMetaData.localSchemeVersionFromDatabaseModel(metadata.localSchemeVersionFromDatabaseModel);
+            self.databaseMetaData.localSpoolItemCount(metadata.localSpoolItemCount);
+            self.databaseMetaData.externalSchemeVersionFromDatabaseModel(metadata.externalSchemeVersionFromDatabaseModel);
+            self.databaseMetaData.externalSpoolItemCount(metadata.externalSpoolItemCount);
+            self.databaseMetaData.schemeVersionFromPlugin(metadata.schemeVersionFromPlugin);
+
+            if (self.databaseMetaData.schemeVersionFromPlugin() != self.databaseMetaData.externalSchemeVersionFromDatabaseModel()) {
+                self.showUpdateSchemeMessage(true);
             }
         }
 
