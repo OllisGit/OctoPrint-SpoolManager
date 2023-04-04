@@ -682,33 +682,37 @@ $(function() {
         }
         self.tableAttributeVisibility = new TableAttributeVisibility();
 
-        self.initTableVisibilities = function(){
-            // load all settings from browser storage
+        const assignSpoolsTableColumnVisibility = (attributeName) => {
+            const localStorageKey = `spoolmanager.table.visible.${attributeName}`;
+            const localStorageValue = localStorage[localStorageKey];
+            const attributeVisibilityObservable = self.tableAttributeVisibility[attributeName];
+
+            if (localStorageValue == null) {
+                // Initialize localStorage with default value
+                localStorage[localStorageKey] = attributeVisibilityObservable();
+            } else {
+                const isVisible = "true" == localStorageValue;
+
+                attributeVisibilityObservable(isVisible);
+            }
+
+            attributeVisibilityObservable.subscribe(function(newValue) {
+                localStorage[localStorageKey] = newValue;
+            });
+        };
+
+        self.initTableVisibilities = function() {
             if (!Modernizr.localstorage) {
-                // damn!!!
-                return false;
+                return;
             }
 
-            assignVisibility = function(attributeName){
-                var storageKey = "spoolmanager.table.visible." + attributeName;
-                if (localStorage[storageKey] == null){
-                    // localStorage[storageKey] = true; // default value
-                    localStorage[storageKey] = self.tableAttributeVisibility[attributeName](); // default value
-                } else {
-                    self.tableAttributeVisibility[attributeName]( "true" == localStorage[storageKey]);
-                }
-                self.tableAttributeVisibility[attributeName].subscribe(function(newValue){
-                    localStorage[storageKey] = newValue;
-                });
-            }
-
-            assignVisibility("databaseId");
-            assignVisibility("displayName");
-            assignVisibility("material");
-            assignVisibility("lastFirstUse");
-            assignVisibility("weight");
-            assignVisibility("used");
-            assignVisibility("note");
+            assignSpoolsTableColumnVisibility("databaseId");
+            assignSpoolsTableColumnVisibility("displayName");
+            assignSpoolsTableColumnVisibility("material");
+            assignSpoolsTableColumnVisibility("lastFirstUse");
+            assignSpoolsTableColumnVisibility("weight");
+            assignSpoolsTableColumnVisibility("used");
+            assignSpoolsTableColumnVisibility("note");
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////// TABLE BEHAVIOR
