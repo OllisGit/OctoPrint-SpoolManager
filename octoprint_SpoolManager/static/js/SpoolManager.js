@@ -4,46 +4,6 @@
  * Author: OllisGit
  * License: AGPLv3
  */
- // START: TESTZONE
-
- var expanded = false;
-
-function showCheckboxes() {
-
-  var checkboxes = document.getElementById("checkboxes");
-  if (!expanded) {
-    checkboxes.style.display = "block";
-    expanded = true;
-  } else {
-    checkboxes.style.display = "none";
-    expanded = false;
-  }
-}
-
-var data = [{
-   id: 0,
-   text: 'enhancement',
-	html: '<div class="pick-a-color-markup"><span class="color-preview" style="background-color: rgb(255, 255, 0);"></span>enhancement</div>'
-}, {
-   id: 1,
-   text: 'bug',
-	html: '<div style="color:red">bug</div><div><small>This is some small text on a new line</small></div>'
-}];
-
-function template(data) {
-	return data.html;
-}
-
-$("#colorFilter").select2({
-   data: data,
-   templateResult: template,
-   escapeMarkup: function(m) {
-      return m;
-   }
-});
-
- // END: TESTZONE
-
 const WEIGHT_UNIT_SYMBOL = "g";
 
 const buildSpoolLabel = (item) => {
