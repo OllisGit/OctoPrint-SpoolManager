@@ -671,16 +671,15 @@ $(function() {
             self.spoolDialog.showDialog(null, closeDialogHandler);
         }
 
-        var TableAttributeVisibility = function (){
-            this.databaseId = ko.observable(false);
-            this.displayName = ko.observable(true);
-            this.material = ko.observable(true);
-            this.lastFirstUse = ko.observable(true);
-            this.weight = ko.observable(true);
-            this.used = ko.observable(true);
-            this.note = ko.observable(true);
-        }
-        self.tableAttributeVisibility = new TableAttributeVisibility();
+        self.tableAttributeVisibility = {
+            databaseId: ko.observable(false),
+            displayName: ko.observable(true),
+            material: ko.observable(true),
+            lastFirstUse: ko.observable(true),
+            weight: ko.observable(true),
+            used: ko.observable(true),
+            note: ko.observable(true),
+        };
 
         const assignSpoolsTableColumnVisibility = (attributeName) => {
             const localStorageKey = `spoolmanager.table.visible.${attributeName}`;
@@ -706,13 +705,9 @@ $(function() {
                 return;
             }
 
-            assignSpoolsTableColumnVisibility("databaseId");
-            assignSpoolsTableColumnVisibility("displayName");
-            assignSpoolsTableColumnVisibility("material");
-            assignSpoolsTableColumnVisibility("lastFirstUse");
-            assignSpoolsTableColumnVisibility("weight");
-            assignSpoolsTableColumnVisibility("used");
-            assignSpoolsTableColumnVisibility("note");
+            Object.keys(self.tableAttributeVisibility).forEach((attributeName) => {
+                assignSpoolsTableColumnVisibility(attributeName);
+            });
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////// TABLE BEHAVIOR
