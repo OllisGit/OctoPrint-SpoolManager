@@ -797,7 +797,6 @@ $(function() {
             }
         }
 
-        // TODO: Refactor
         ///////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT PRINT-BUTTON
         const origStartPrintFunction = self.printerStateViewModel.print;
         const newStartPrintFunction = function confirmSpoolSelectionBeforeStartPrint() {
@@ -852,30 +851,44 @@ $(function() {
                 }
 
                 if (result.reminderSpoolSelection.length) {
-                    itemList = [];
+                    const selectedSpools = result.reminderSpoolSelection.map((item) => {
+                        const spoolLabel = buildSpoolLabel(item);
+                        const toolTempOffsetText = (
+                            responseData.toolOffsetEnabled && item.toolOffset != null
+                                ? "\n--  Tool Offset:  " + item.toolOffset + '\u00B0'
+                                : ""
+                        );
+                        const bedTempOffsetText = (
+                            responseData.bedOffsetEnabled && item.bedOffset != null
+                                ? "\n--  Bed Offset:  " + item.bedOffset + '\u00B0'
+                                : ""
+                        );
+                        const enclosureTempOffsetText = (
+                            responseData.enclosureOffsetEnabled && item.enclosureOffset != null
+                                ? "\n--  Enclosure Offset:  " + item.enclosureOffset + '\u00B0'
+                                : ""
+                        );
 
-                    for (item of result.reminderSpoolSelection) {
-                        var toolMessage = buildSpoolLabel(item);
-                        if (responseData.toolOffsetEnabled && item.toolOffset != null) toolMessage += "\n--  Tool Offset:  "+item.toolOffset+'\u00B0';
-                        if (responseData.bedOffsetEnabled && item.bedOffset != null) toolMessage += "\n--  Bed Offset:  "+item.bedOffset+'\u00B0';
-                        if (responseData.enclosureOffsetEnabled && item.enclosureOffset != null) toolMessage += "\n--  Enclosure Offset:  "+item.enclosureOffset+'\u00B0';
-                        itemList.push(toolMessage);
-                    }
+                        return `- ${spoolLabel}${toolTempOffsetText}${bedTempOffsetText}${enclosureTempOffsetText}`;
+                    });
+
                     const hasConfirmedPrint = confirm(
                         "Do you want to start the print with following selected spools?\n" +
-                        "- "+ itemList.join("\n- ")
+                        selectedSpools.join('\n')
                     );
 
                     if (!hasConfirmedPrint) {
                         return;
                     }
                 }
-                // we are ready to go. Inform the backend and after that START PRINT
-                self.apiClient.startPrintConfirmed(function(responseData){
+
+                self.apiClient.startPrintConfirmed(() => {
                     origStartPrintFunction();
                 });
             });
         };
+        self.printerStateViewModel.print = newStartPrintFunction;
+
         // overwrite loadFile
         self.filesViewModel.loadFile = function confirmSpoolSelectionOnLoadAndPrint(data, printAfterLoad) {
             // orig. SourceCode
@@ -929,8 +942,6 @@ $(function() {
                 startPrint();
             }
         };
-
-        self.printerStateViewModel.print = newStartPrintFunction;
 
         //////////////////////////////////////////////////////////////////////////////////////// PUBLIC VIEWMODEL - APIs
         // e.g. for CostEstaminator-Plugin
