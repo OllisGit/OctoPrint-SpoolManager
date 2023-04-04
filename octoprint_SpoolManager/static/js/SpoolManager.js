@@ -945,30 +945,28 @@ $(function() {
 
         //////////////////////////////////////////////////////////////////////////////////////// PUBLIC VIEWMODEL - APIs
         // e.g. for CostEstaminator-Plugin
-        self.api_getSelectedSpoolInformations = function(){
-            var result = [];
-            var spoolItem;
-            for (var i=0; i<self.selectedSpoolsForSidebar().length; i++) {
-                var spoolData = null;
-                spoolItem = self.selectedSpoolsForSidebar()[i]();
-                if (spoolItem !== null) {
-                    spoolData = {
-                        "toolIndex": i,
-                        "databaseId": spoolItem.databaseId(),
-                        "spoolName": spoolItem.displayName(),
-                        "vendor": spoolItem.vendor(),
-                        "material": spoolItem.material(),
-                        "diameter": spoolItem.diameter(),
-                        "density": spoolItem.density(),
-                        "colorName": spoolItem.colorName(),
-                        "color": spoolItem.color(),
-                        "cost": spoolItem.cost(),
-                        "weight": spoolItem.totalWeight()
-                    }
+        self.api_getSelectedSpoolInformations = function() {
+            return self.selectedSpoolsForSidebar().map((spoolItemObservable) => {
+                const spoolItem = spoolItemObservable();
+
+                if (spoolItem === null) {
+                    return null;
                 }
-                result.push(spoolData);
-            }
-            return result;
+
+                return {
+                    toolIndex: i,
+                    databaseId: spoolItem.databaseId(),
+                    spoolName: spoolItem.displayName(),
+                    vendor: spoolItem.vendor(),
+                    material: spoolItem.material(),
+                    diameter: spoolItem.diameter(),
+                    density: spoolItem.density(),
+                    colorName: spoolItem.colorName(),
+                    color: spoolItem.color(),
+                    cost: spoolItem.cost(),
+                    weight: spoolItem.totalWeight()
+                };
+            });
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT HOOKS
