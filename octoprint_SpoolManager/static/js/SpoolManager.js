@@ -580,8 +580,8 @@ $(function() {
             return null;
         }
 
-        self.selectSpoolForSidebar = function(toolIndex, spoolItem){
-            var commitCurrentSpoolValues;
+        self.selectSpoolForSidebar = function(toolIndex, inputSpoolItem) {
+            let commitCurrentSpoolValues;
             if (self.printerStateViewModel.isPrinting()) {
                 commitCurrentSpoolValues = confirm(
                     'You are changing a spool while printing. SpoolManager will commit the usage so far to the previous spool, unless you wish otherwise.\n\n' +
@@ -590,44 +590,47 @@ $(function() {
                     '"Cancel": …to the new spool'
                 )
             }
-            // api-call
-            var databaseId = -1
-            if (spoolItem != null){
-                databaseId = spoolItem.databaseId();
-                // Why do we need this information
-                // if (toolIndex != -1){
-                //     var alreadyInTool = self.getSpoolItemSelectedTool(databaseId);
-                //     if (alreadyInTool !== null) {
-                //         alert('This spool is already selected for tool ' + alreadyInTool + '!');
-                //         return;
-                //     }
-                // }
-            }
-            self.apiClient.callSelectSpool(toolIndex, databaseId, commitCurrentSpoolValues, function(responseData){
-                var spoolItem = null;
-                var spoolData = responseData["selectedSpool"];
-                if (spoolData != null){
-                    spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
-                } else {
+
+            // Note: there was a commented-out code checking whether the selected spool
+            // is already selected for another tool head.
+            const databaseId = (
+                inputSpoolItem != null ?
+                    inputSpoolItem.databaseId() :
+                    -1
+            );
+
+            self.apiClient.callSelectSpool(toolIndex, databaseId, commitCurrentSpoolValues, function(responseData) {
+                const selectedSpoolData = responseData.selectedSpool;
+
+                if (selectedSpoolData == null) {
                     // remove spool from toolIndex
+
                     self.selectedSpoolsForSidebar()[toolIndex](null);
                     return;
                 }
 
                 // remove the spool from the current toolIndex
-                var currentDatabaseId = spoolItem.databaseId();
-                for (var i = 0; i < self.selectedSpoolsForSidebar().length; i++) {
-                    var tmpSpoolItem = self.selectedSpoolsForSidebar()[i]();
-                    if (tmpSpoolItem !== null && tmpSpoolItem.databaseId() === currentDatabaseId) {
-                        self.selectedSpoolsForSidebar()[i](null);
+                const addedSpoolItem = self.spoolDialog.createSpoolItemForTable(selectedSpoolData);
+                const addedSpoolItemDatabaseId = addedSpoolItem.databaseId();
+                const selectedSpools = self.selectedSpoolsForSidebar();
+
+                for (let spoolIdx = 0; spoolIdx < selectedSpools.length; spoolIdx++) {
+                    const spoolItem = selectedSpools[spoolIdx]();
+
+                    if (
+                        spoolItem !== null &&
+                        spoolItem.databaseId() === addedSpoolItemDatabaseId
+                    ) {
+                        selectedSpools[spoolIdx](null);
+
                         break;
                     }
                 }
+
                 // assign to new (or same) toolIndex
                 if (toolIndex != -1) {
-                    self.selectedSpoolsForSidebar()[toolIndex](spoolItem)
+                    self.selectedSpoolsForSidebar()[toolIndex](addedSpoolItem)
                 }
-
             });
         }
 
