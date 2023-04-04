@@ -44,9 +44,25 @@ $("#colorFilter").select2({
 
  // END: TESTZONE
 
-$(function() {
-    const WEIGHT_UNIT_SYMBOL = "g";
+const WEIGHT_UNIT_SYMBOL = "g";
 
+const buildSpoolLabel = (item) => {
+    const remainingWeightInfo = (
+        (
+            item.remainingWeight != null &&
+            typeof item.remainingWeight === 'number'
+        )
+            ? `(${item.remainingWeight.toFixed(2)} ${WEIGHT_UNIT_SYMBOL})`
+            : undefined
+    );
+
+    const basicInfo = `${item.material} - ${item.spoolName}`;
+    const label = `${item.toolIndex}: '${basicInfo}${remainingWeightInfo ? ` ${remainingWeightInfo}` : ''}'`;
+
+    return label;
+};
+
+$(function() {
     var PLUGIN_ID = "SpoolManager"; // from setup.py plugin_identifier
 
 
@@ -818,16 +834,6 @@ $(function() {
                     if (!check) {
                         return;
                     }
-                }
-
-                buildSpoolLabel = function(item){
-                    var label =  item.toolIndex+": '" + item.material + " - " + item.spoolName;
-
-                    if (item.remainingWeight != null && typeof item.remainingWeight === 'number'){
-                        label = label + " ("+item.remainingWeight.toFixed(2)  +"g)";
-                    }
-                    label = label + "'";
-                    return label;
                 }
 
                 if (result.filamentNotEnough.length) {
