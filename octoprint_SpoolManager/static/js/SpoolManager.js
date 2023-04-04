@@ -797,87 +797,63 @@ $(function() {
             }
         }
 
+        // TODO: Refactor
         ///////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT PRINT-BUTTON
         const origStartPrintFunction = self.printerStateViewModel.print;
         const newStartPrintFunction = function confirmSpoolSelectionBeforeStartPrint() {
             self.apiClient.allowedToPrint(function(responseData) {
-                var result = responseData.result,
-                    check, itemList;
+                var result = responseData.result, itemList;
 
-                var warning = "";
-                var warning2 = "";
-                if (responseData.metaOrAttributesMissing){
-                    warning = "ATTENTION: Needed filament could not calculated (missing metadata or spool-fields)\n\n";
-                    warning2 = " (maybe)"
-                }
-
+                const printWarnings = (
+                    responseData.metaOrAttributesMissing
+                    ? {
+                        header: "ATTENTION: Needed filament could not calculated (missing metadata or spool-fields)\n\n",
+                        missingMeta: " (maybe)",
+                    }
+                    : {
+                        header: "",
+                        missingMeta: "",
+                    }
+                );
 
                 if (result.noSpoolSelected.length) {
-                    itemList = [];
-                    for (item of result.noSpoolSelected) {
-                        itemList.push('Tool '+item.toolIndex)
-                    }
-                    if (itemList.length === 1) {
-                        check = confirm(
-                            warning +
-                            'There is no spool selected for ' + itemList[0] + ' despite it being used' + warning2 + ' by this print.\n\n' +
-                            'Do you want to start the print without a selected spool?'
-                        );
-                    } else {
-                        check = confirm(
-                            warning +
-                            'There are no spools selected for the following tools despite them being used' + warning2 + ' by this print:\n' +
-                            '- '+ itemList.join('\n- ') + '\n\n' +
-                            'Do you want to start the print without selected spools?'
-                        );
-                    }
-                    if (!check) {
+                    const toolsWithMissingSpools = result.noSpoolSelected.map((item) => {
+                        return `- Tool ${item.toolIndex}`;
+                    });
+
+                    const hasConfirmedPrintWithoutSpoolsSelected = confirm(
+                        printWarnings.header +
+                        'There are no spools selected for the following tools ' +
+                        'despite them being used' + printWarnings.missingMeta + ' by this print:\n' +
+                        toolsWithMissingSpools.join('\n') + '\n\n' +
+                        'Do you want to start the print without selected spools?'
+                    );
+
+                    if (!hasConfirmedPrintWithoutSpoolsSelected) {
                         return;
                     }
                 }
 
                 if (result.filamentNotEnough.length) {
-                    itemList = [];
-                    for (item of result.filamentNotEnough) {
-                        var spoolLabel = buildSpoolLabel(item);
-                        // itemList.push("'" + item.spoolName + "' (tool "+item.toolIndex+")");
-                        itemList.push(spoolLabel);
-                    }
-                    if (itemList.length === 1) {
-                        check = confirm(
-                            warning +
-                            'The selected spool for tool ' + itemList[0] + ' does not have enough remaining filament'+warning2+'.\n\n' +
-                            'Do you want to start the print anyway?'
-                        );
-                    } else {
-                        check = confirm(
-                            warning +
-                            'The following selected spools do not have enough remaining filament'+warning2+':\n' +
-                            '- '+ itemList.join('\n- ') + '\n\n' +
-                            'Do you want to start the print anyway?'
-                        );
-                    }
-                    if (!check) {
+                    const inadequateFilamentSpools = result.filamentNotEnough.map((item) => {
+                        return `- ${buildSpoolLabel(item)}`;
+                    });
+
+                    const hasConfirmedPrintWithInadequateFilamentSpools = confirm(
+                        printWarnings.header +
+                        'The following selected spools do not have enough remaining filament' + printWarnings.missingMeta + ':\n' +
+                        inadequateFilamentSpools.join('\n') + '\n\n' +
+                        'Do you want to start the print anyway?'
+                    );
+
+                    if (!hasConfirmedPrintWithInadequateFilamentSpools) {
                         return;
                     }
                 }
 
                 if (result.reminderSpoolSelection.length) {
                     itemList = [];
-                    // for (item of result.reminderSpoolSelection) {
-                    //     itemList.push(((result.reminderSpoolSelection.length>1)?("Tool "+item.toolIndex+": "):'')+"'" + item.spoolName + "'");
-                    // }
-                    // if (itemList.length === 1) {
-                    //     check = confirm(
-                    //         'Do you want to start the print with the selected spool?\n- ' + itemList[0] + '?'
-                    //     );
-                    // } else {
-                    //     check = confirm(
-                    //         "Do you want to start the print with following selected spools?\n" +
-                    //         '- '+ itemList.join('\n- ')
-                    //     );
-                    // }
-                    // build message for each tool
+
                     for (item of result.reminderSpoolSelection) {
                         var toolMessage = buildSpoolLabel(item);
                         if (responseData.toolOffsetEnabled && item.toolOffset != null) toolMessage += "\n--  Tool Offset:  "+item.toolOffset+'\u00B0';
@@ -885,12 +861,12 @@ $(function() {
                         if (responseData.enclosureOffsetEnabled && item.enclosureOffset != null) toolMessage += "\n--  Enclosure Offset:  "+item.enclosureOffset+'\u00B0';
                         itemList.push(toolMessage);
                     }
-                    check = confirm(
+                    const hasConfirmedPrint = confirm(
                         "Do you want to start the print with following selected spools?\n" +
                         "- "+ itemList.join("\n- ")
                     );
 
-                    if (!check) {
+                    if (!hasConfirmedPrint) {
                         return;
                     }
                 }
