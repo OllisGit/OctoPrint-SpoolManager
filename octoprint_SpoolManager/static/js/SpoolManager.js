@@ -727,19 +727,33 @@ $(function() {
         );
 
         self.showSpoolDialogAction = function(selectedSpoolItem) {
+            const currentSpoolDbId = selectedSpoolItem.databaseId();
 
-            // identify for which toolindex is the current selectedSpoolItem is selected
-            var currentDatabaseId = selectedSpoolItem.databaseId();
-            if (currentDatabaseId) {
-                for (var i = 0; i < self.selectedSpoolsForSidebar().length; i++) {
-                    spoolItem = self.selectedSpoolsForSidebar()[i]();
-                    if (spoolItem !== null && spoolItem.databaseId() === currentDatabaseId) {
-                        selectedSpoolItem.selectedForTool(i);
-                        break;
-                    }
-                }
+            const showDialog = () => {
+                self.spoolDialog.showDialog(selectedSpoolItem, handleSpoolDialogClose);
+            };
+
+            if (!currentSpoolDbId) {
+                showDialog();
+
+                return;
             }
-            self.spoolDialog.showDialog(selectedSpoolItem, handleSpoolDialogClose);
+
+            const sidebarSpools = self.selectedSpoolsForSidebar();
+
+            for (let spoolIdx = 0; spoolIdx < sidebarSpools.length; spoolIdx++) {
+                const spoolItem = sidebarSpools[spoolIdx]();
+
+                if (spoolItem === null || spoolItem.databaseId() !== currentSpoolDbId) {
+                    continue;
+                }
+
+                selectedSpoolItem.selectedForTool(spoolIdx);
+
+                break;
+            }
+
+            showDialog();
         };
 
         ///////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT PRINT-BUTTON
