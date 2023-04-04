@@ -7,6 +7,7 @@
 // from setup.py plugin_identifier
 const PLUGIN_ID = "SpoolManager";
 const WEIGHT_UNIT_SYMBOL = "g";
+const DEFAULT_TABLE_PAGE_SIZE = 25;
 
 const buildSpoolLabel = (item) => {
     const remainingWeightInfo = (
@@ -44,24 +45,62 @@ $(function() {
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////// HELPER FUNCTION
+        /**
+         * @param {SpoolManagerViewModel} viewModel
+         * @param {string} attributeName
+         */
+        const assignSpoolsTableColumnVisibility = (viewModel, attributeName) => {
+            const localStorageKey = `spoolmanager.table.visible.${attributeName}`;
+            const localStorageValue = localStorage[localStorageKey];
+            const attributeVisibilityObservable = viewModel.tableAttributeVisibility[attributeName];
 
-        loadSettingsFromBrowserStore = function(){
-            // TODO maybe in a separate js-file
-            // load all settings from browser storage
-            if (!Modernizr.localstorage) {
-                // damn!!!
-                return false;
-            }
-            // Table visibility
-            self.initTableVisibilities();
-
-            var storageKey = "spoolmanager.table.selectedPageSize";
-            if (localStorage[storageKey] == null){
-                localStorage[storageKey] = "25"; // default page size
+            if (localStorageValue == null) {
+                // Initialize localStorage with default value
+                localStorage[localStorageKey] = attributeVisibilityObservable();
             } else {
-                self.spoolItemTableHelper.selectedPageSize(localStorage[storageKey]);
+                const isVisible = "true" == localStorageValue;
+
+                attributeVisibilityObservable(isVisible);
             }
-            self.spoolItemTableHelper.selectedPageSize.subscribe(function(newValue){
+
+            attributeVisibilityObservable.subscribe(function(newValue) {
+                localStorage[localStorageKey] = newValue;
+            });
+        };
+
+        /**
+         * @param {SpoolManagerViewModel} viewModel
+         */
+        const initTableVisibilities = (viewModel) => {
+            if (!Modernizr.localstorage) {
+                return;
+            }
+
+            Object.keys(viewModel.tableAttributeVisibility).forEach((attributeName) => {
+                assignSpoolsTableColumnVisibility(viewModel, attributeName);
+            });
+        }
+
+        /**
+         * @param {SpoolManagerViewModel} viewModel
+         */
+        const loadSettingsFromBrowserStore = (viewModel) => {
+            if (!Modernizr.localstorage) {
+                return;
+            }
+
+            initTableVisibilities(viewModel);
+
+            const storageKey = "spoolmanager.table.selectedPageSize";
+
+            if (localStorage[storageKey] == null) {
+                // Initialize localStorage with default value
+                localStorage[storageKey] = `${DEFAULT_TABLE_PAGE_SIZE}`;
+            } else {
+                viewModel.spoolItemTableHelper.selectedPageSize(localStorage[storageKey]);
+            }
+
+            viewModel.spoolItemTableHelper.selectedPageSize.subscribe(function(newValue) {
                 localStorage[storageKey] = newValue;
             });
         }
@@ -649,35 +688,6 @@ $(function() {
             used: ko.observable(true),
             note: ko.observable(true),
         };
-
-        const assignSpoolsTableColumnVisibility = (attributeName) => {
-            const localStorageKey = `spoolmanager.table.visible.${attributeName}`;
-            const localStorageValue = localStorage[localStorageKey];
-            const attributeVisibilityObservable = self.tableAttributeVisibility[attributeName];
-
-            if (localStorageValue == null) {
-                // Initialize localStorage with default value
-                localStorage[localStorageKey] = attributeVisibilityObservable();
-            } else {
-                const isVisible = "true" == localStorageValue;
-
-                attributeVisibilityObservable(isVisible);
-            }
-
-            attributeVisibilityObservable.subscribe(function(newValue) {
-                localStorage[localStorageKey] = newValue;
-            });
-        };
-
-        self.initTableVisibilities = function() {
-            if (!Modernizr.localstorage) {
-                return;
-            }
-
-            Object.keys(self.tableAttributeVisibility).forEach((attributeName) => {
-                assignSpoolsTableColumnVisibility(attributeName);
-            });
-        }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////// TABLE BEHAVIOR
         /* needed for Filter-Search dropdown-menu */
