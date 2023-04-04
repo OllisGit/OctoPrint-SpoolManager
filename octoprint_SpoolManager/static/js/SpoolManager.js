@@ -4,6 +4,8 @@
  * Author: OllisGit
  * License: AGPLv3
  */
+// from setup.py plugin_identifier
+const PLUGIN_ID = "SpoolManager";
 const WEIGHT_UNIT_SYMBOL = "g";
 
 const buildSpoolLabel = (item) => {
@@ -23,14 +25,8 @@ const buildSpoolLabel = (item) => {
 };
 
 $(function() {
-    var PLUGIN_ID = "SpoolManager"; // from setup.py plugin_identifier
-
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////////// VIEW MODEL
     function SpoolManagerViewModel(parameters) {
-
-        var PLUGIN_ID = "SpoolManager"; // from setup.py plugin_identifier
-
         var self = this;
 
         // assign the injected parameters, e.g.:
