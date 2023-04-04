@@ -26,6 +26,66 @@ const buildSpoolLabel = (item) => {
 };
 
 $(function() {
+    /**
+     * @param {SpoolManagerViewModel} viewModel
+     * @param {string} attributeName
+     */
+    const assignSpoolsTableColumnVisibility = (viewModel, attributeName) => {
+        const localStorageKey = `spoolmanager.table.visible.${attributeName}`;
+        const localStorageValue = localStorage[localStorageKey];
+        const attributeVisibilityObservable = viewModel.tableAttributeVisibility[attributeName];
+
+        if (localStorageValue == null) {
+            // Initialize localStorage with default value
+            localStorage[localStorageKey] = attributeVisibilityObservable();
+        } else {
+            const isVisible = "true" == localStorageValue;
+
+            attributeVisibilityObservable(isVisible);
+        }
+
+        attributeVisibilityObservable.subscribe(function(newValue) {
+            localStorage[localStorageKey] = newValue;
+        });
+    };
+
+    /**
+     * @param {SpoolManagerViewModel} viewModel
+     */
+    const initTableVisibilities = (viewModel) => {
+        if (!Modernizr.localstorage) {
+            return;
+        }
+
+        Object.keys(viewModel.tableAttributeVisibility).forEach((attributeName) => {
+            assignSpoolsTableColumnVisibility(viewModel, attributeName);
+        });
+    }
+
+    /**
+     * @param {SpoolManagerViewModel} viewModel
+     */
+    const loadSettingsFromBrowserStore = (viewModel) => {
+        if (!Modernizr.localstorage) {
+            return;
+        }
+
+        initTableVisibilities(viewModel);
+
+        const storageKey = "spoolmanager.table.selectedPageSize";
+
+        if (localStorage[storageKey] == null) {
+            // Initialize localStorage with default value
+            localStorage[storageKey] = `${DEFAULT_TABLE_PAGE_SIZE}`;
+        } else {
+            viewModel.spoolItemTableHelper.selectedPageSize(localStorage[storageKey]);
+        }
+
+        viewModel.spoolItemTableHelper.selectedPageSize.subscribe(function(newValue) {
+            localStorage[storageKey] = newValue;
+        });
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////// VIEW MODEL
     function SpoolManagerViewModel(parameters) {
         var self = this;
@@ -45,66 +105,6 @@ $(function() {
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////// HELPER FUNCTION
-        /**
-         * @param {SpoolManagerViewModel} viewModel
-         * @param {string} attributeName
-         */
-        const assignSpoolsTableColumnVisibility = (viewModel, attributeName) => {
-            const localStorageKey = `spoolmanager.table.visible.${attributeName}`;
-            const localStorageValue = localStorage[localStorageKey];
-            const attributeVisibilityObservable = viewModel.tableAttributeVisibility[attributeName];
-
-            if (localStorageValue == null) {
-                // Initialize localStorage with default value
-                localStorage[localStorageKey] = attributeVisibilityObservable();
-            } else {
-                const isVisible = "true" == localStorageValue;
-
-                attributeVisibilityObservable(isVisible);
-            }
-
-            attributeVisibilityObservable.subscribe(function(newValue) {
-                localStorage[localStorageKey] = newValue;
-            });
-        };
-
-        /**
-         * @param {SpoolManagerViewModel} viewModel
-         */
-        const initTableVisibilities = (viewModel) => {
-            if (!Modernizr.localstorage) {
-                return;
-            }
-
-            Object.keys(viewModel.tableAttributeVisibility).forEach((attributeName) => {
-                assignSpoolsTableColumnVisibility(viewModel, attributeName);
-            });
-        }
-
-        /**
-         * @param {SpoolManagerViewModel} viewModel
-         */
-        const loadSettingsFromBrowserStore = (viewModel) => {
-            if (!Modernizr.localstorage) {
-                return;
-            }
-
-            initTableVisibilities(viewModel);
-
-            const storageKey = "spoolmanager.table.selectedPageSize";
-
-            if (localStorage[storageKey] == null) {
-                // Initialize localStorage with default value
-                localStorage[storageKey] = `${DEFAULT_TABLE_PAGE_SIZE}`;
-            } else {
-                viewModel.spoolItemTableHelper.selectedPageSize(localStorage[storageKey]);
-            }
-
-            viewModel.spoolItemTableHelper.selectedPageSize.subscribe(function(newValue) {
-                localStorage[storageKey] = newValue;
-            });
-        }
-
         const handleSpoolDialogClose = (shouldTableReload, specialAction, currentSpoolItem) => {
             if (specialAction === "selectSpoolForPrinting") {
                 const spoolToolIdx = currentSpoolItem.selectedForTool() ?? -1;
