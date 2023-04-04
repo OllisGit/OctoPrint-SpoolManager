@@ -898,43 +898,54 @@ $(function() {
         // overwrite loadFile
         self.filesViewModel.loadFile = function confirmSpoolSelectionOnLoadAndPrint(data, printAfterLoad) {
             // orig. SourceCode
-            if (!self.filesViewModel.loginState.hasPermission(self.filesViewModel.access.permissions.FILES_SELECT)) return;
-
-            if (!data) {
+            if (
+                !self.filesViewModel.loginState.hasPermission(self.filesViewModel.access.permissions.FILES_SELECT) ||
+                !data
+            ) {
                 return;
             }
 
-            if (printAfterLoad && self.filesViewModel.listHelper.isSelected(data) && self.filesViewModel.enablePrint(data)) {
+            if (
+                printAfterLoad &&
+                self.filesViewModel.listHelper.isSelected(data) &&
+                self.filesViewModel.enablePrint(data)
+            ) {
                 // file was already selected, just start the print job with the newStartPrint function
                 // SPOOLMANAGER-CHANGE changed OctoPrint.job.start();
                 newStartPrintFunction();
-            } else {
-                // select file, start print job (if requested and within dimensions)
-                var withinPrintDimensions = self.filesViewModel.evaluatePrintDimensions(data, true);
-                var print = printAfterLoad && withinPrintDimensions;
 
-                if (print && self.filesViewModel.settingsViewModel.feature_printStartConfirmation()) {
-                    showConfirmationDialog({
-                        message: gettext("This will start a new print job. Please check that the print bed is clear."),
-                        question: gettext("Do you want to start the print job now?"),
-                        cancel: gettext("No"),
-                        proceed: gettext("Yes"),
-                        onproceed: function() {
-                            OctoPrint.files.select(data.origin, data.path, false).done(function () {
-                                                                                    if (print){
-                                                                                     newStartPrintFunction();
-                                                                                    }
-                                                                                });
-                        },
-                        nofade: true
-                    });
-                } else {
-                    OctoPrint.files.select(data.origin, data.path, false).done(function () {
-                                                                                    if (print){
-                                                                                     newStartPrintFunction();
-                                                                                    }
-                                                                                });
-                }
+                return;
+            }
+
+            // select file, start print job (if requested and within dimensions)
+            const withinPrintDimensions = self.filesViewModel.evaluatePrintDimensions(data, true);
+            const shouldAllowPrint = printAfterLoad && withinPrintDimensions;
+
+            const startPrint = () => {
+                OctoPrint.files.select(data.origin, data.path, false).done(function () {
+                    if (shouldAllowPrint) {
+                        newStartPrintFunction();
+                    }
+                });
+            };
+
+            // TODO: `shouldAllowPrint` should be separated
+            if (
+                shouldAllowPrint &&
+                self.filesViewModel.settingsViewModel.feature_printStartConfirmation()
+            ) {
+                showConfirmationDialog({
+                    message: gettext("This will start a new print job. Please check that the print bed is clear."),
+                    question: gettext("Do you want to start the print job now?"),
+                    cancel: gettext("No"),
+                    proceed: gettext("Yes"),
+                    onproceed: function() {
+                        startPrint();
+                    },
+                    nofade: true
+                });
+            } else {
+                startPrint();
             }
         };
 
