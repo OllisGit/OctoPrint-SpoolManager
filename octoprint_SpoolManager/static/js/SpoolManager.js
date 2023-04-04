@@ -981,7 +981,7 @@ $(function() {
 
         //////////////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT HOOKS
         self.onStartup = function onStartupCallback() {
-            // Replace Filementview in sidebar to show weight instead of volumne
+            // Replace FilamentView in sidebar to show weight instead of volumne
             self.replaceFilamentView();
         };
 
@@ -995,9 +995,9 @@ $(function() {
             loadSettingsFromBrowserStore();
 
             // resetSettings-Stuff
-             new ResetSettingsUtilV3(self.pluginSettings).assignResetSettingsFeature(PLUGIN_ID, function(data){
+            new ResetSettingsUtilV3(self.pluginSettings).assignResetSettingsFeature(PLUGIN_ID, function(data) {
                 // no additional reset function needed in V2
-             });
+            });
 
             // Load all Spools
             self.loadSpoolsForSidebar();
@@ -1009,8 +1009,6 @@ $(function() {
             self.databaseConnectionProblemDialog.init(self.apiClient);
             // Select Spool Dialog (no special binding)
             self.selectionSpoolDialog = $("#dialog_spool_selection");
-
-
 
             // Settings - Color-Picker
             self.componentFactory = new ComponentFactory();
@@ -1030,24 +1028,6 @@ $(function() {
                 self.pluginSettings.qrCodeBackgroundColor(newColorValue);
             });
 
-
-            // self.pluginSettings.hideEmptySpoolsInSidebar.subscribe(function(newCheckedVaue){
-            //     var payload = {
-            //             "hideEmptySpoolsInSidebar": newCheckedVaue
-            //         };
-            //     OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
-            //     // self.loadSpoolsForSidebar();
-            //     // self.filterSelectionSidebar();
-            // });
-            // self.pluginSettings.hideInactiveSpoolsInSidebar.subscribe(function(newCheckedVaue){
-            //     var payload = {
-            //             "hideInactiveSpoolsInSidebar": newCheckedVaue
-            //         };
-            //     OctoPrint.settings.savePluginSettings(PLUGIN_ID, payload);
-            //     // self.loadSpoolsForSidebar();
-            //     // self.filterSelectionSidebar();
-            // });
-
             // needed after the tool-count is changed
             self.settingsViewModel.printerProfiles.currentProfileData.subscribe(self.loadSpoolsForSidebar);
         }
@@ -1059,7 +1039,7 @@ $(function() {
 // testing            self.spoolDialog.showDialog(null, closeDialogHandler);
         }
 
-        self.onSettingsShown = function(){
+        self.onSettingsShown = function() {
             if (self.isFilamentManagerPluginAvailable() == false){
                 self.apiClient.callAdditionalSettings(function(responseData) {
                     self.isFilamentManagerPluginAvailable(responseData.isFilamentManagerPluginAvailable);
@@ -1144,49 +1124,46 @@ $(function() {
             }
         }
 
-        self.onAfterTabChange = function(current, previous){
-            // alert("Next:"+next +" Current:"+previous);
-            //if ("#tab_plugin_SpoolManager" == current){
-            // var selectedSpoolId = getUrlParameter("selectedSpoolId");
-            // if (selectedSpoolId) {
-            //     console.error("Id"+selectedSpoolId);
-            // }
-            var tabHashCode = window.location.hash;
+        self.onAfterTabChange = function(current, previous) {
+            const tabHashCode = window.location.hash;
             // QR-Code-Call: We can only contain -spoolId on the very first page
-            if (tabHashCode.includes("#tab_plugin_SpoolManager-spoolId")){
-                var selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
-                selectedSpoolId = parseInt(selectedSpoolId);
-                console.info('Loading spool: '+selectedSpoolId);
-                var alreadyInTool = self.getSpoolItemSelectedTool(selectedSpoolId);
-                if (alreadyInTool !== null) {
-                    alert('This spool is already selected for tool ' + alreadyInTool + '!');
-                    return;
-                }
-                if (self.printerStateViewModel.isPrinting()) {
-                    // not doing this while printing
-                    return;
-                }
-                // - Load SpoolItem from Backend
-                // - Open SpoolItem
-                // methode signature: toolIndex, databaseId, commitCurrentSpoolValues, responseHandler
-                var commitCurrentSpoolValues = false;
-                var toolIndex = 0
-                self.apiClient.callSelectSpool(0, selectedSpoolId, commitCurrentSpoolValues, function(responseData){
-                    //Select the SpoolManager tab
-                    $('a[href="#tab_plugin_SpoolManager"]').tab('show')
-                    var spoolItem = null;
-                    var spoolData = responseData["selectedSpool"];
-                    if (spoolData != null){
-                        spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
-                        spoolItem.selectedFromQRCode(true);
-                        self.selectedSpoolsForSidebar()[0](spoolItem);
-                        self.showSpoolDialogAction(spoolItem);
-                    }
-                });
+            if (!tabHashCode.includes("#tab_plugin_SpoolManager-spoolId")) {
+                return;
             }
-            //}
-        }
 
+            let selectedSpoolId = tabHashCode.replace("-spoolId", "").replace("#tab_plugin_SpoolManager", "");
+            selectedSpoolId = parseInt(selectedSpoolId);
+            console.info('Loading spool: '+selectedSpoolId);
+
+            const spoolCurrentToolId = self.getSpoolItemSelectedTool(selectedSpoolId);
+            if (spoolCurrentToolId !== null) {
+                alert('This spool is already selected for tool ' + spoolCurrentToolId + '!');
+                return;
+            }
+            if (self.printerStateViewModel.isPrinting()) {
+                // not doing this while printing
+                return;
+            }
+            // - Load SpoolItem from Backend
+            // - Open SpoolItem
+            const commitCurrentSpoolValues = false;
+
+            self.apiClient.callSelectSpool(0, selectedSpoolId, commitCurrentSpoolValues, function(responseData) {
+                //Select the SpoolManager tab
+                $('a[href="#tab_plugin_SpoolManager"]').tab('show')
+                const spoolData = responseData["selectedSpool"];
+
+                if (spoolData == null) {
+                    return;
+                }
+
+                const spoolItem = self.spoolDialog.createSpoolItemForTable(spoolData);
+
+                spoolItem.selectedFromQRCode(true);
+                self.selectedSpoolsForSidebar()[0](spoolItem);
+                self.showSpoolDialogAction(spoolItem);
+            });
+        }
     }
 
     /* view model class, parameters for constructor, container to bind to
