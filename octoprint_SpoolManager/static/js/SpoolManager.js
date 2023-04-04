@@ -66,6 +66,20 @@ $(function() {
             });
         }
 
+        const handleSpoolDialogClose = (shouldTableReload, specialAction, currentSpoolItem) => {
+            if (specialAction === "selectSpoolForPrinting") {
+                const spoolToolIdx = currentSpoolItem.selectedForTool() ?? -1;
+
+                self.selectSpoolForSidebar(spoolToolIdx, currentSpoolItem);
+            }
+
+            if (shouldTableReload == true) {
+                self.spoolItemTableHelper.reloadItems();
+                // TODO auto reload of sidebar spools without loosing selection
+                self.loadSpoolsForSidebar();
+            }
+        }
+
         // Typs: error
         self.showPopUp = function(popupType, popupTitle, message, autoclose){
             var title = popupType.toUpperCase() + ": " + popupTitle;
@@ -623,7 +637,7 @@ $(function() {
         //////////////////////////////////////////////////////////////////////////////////////////////////// TABLE / TAB
 
         self.addNewSpool = function(){
-            self.spoolDialog.showDialog(null, closeDialogHandler);
+            self.spoolDialog.showDialog(null, handleSpoolDialogClose);
         }
 
         self.tableAttributeVisibility = {
@@ -715,26 +729,8 @@ $(function() {
                     }
                 }
             }
-            self.spoolDialog.showDialog(selectedSpoolItem, closeDialogHandler);
+            self.spoolDialog.showDialog(selectedSpoolItem, handleSpoolDialogClose);
         };
-
-        closeDialogHandler = function(shouldTableReload, specialAction, currentSpoolItem){
-
-            if (specialAction === "selectSpoolForPrinting"){
-                var toolIndex = currentSpoolItem.selectedForTool();
-                if (toolIndex === undefined){
-                    // clear current selection
-                    toolIndex = -1;
-                }
-                self.selectSpoolForSidebar(toolIndex, currentSpoolItem);
-            }
-
-            if (shouldTableReload == true){
-                self.spoolItemTableHelper.reloadItems();
-                // TODO auto reload of sidebar spools without loosing selection
-                self.loadSpoolsForSidebar();
-            }
-        }
 
         ///////////////////////////////////////////////////////////////////////////////////////// OCTOPRINT PRINT-BUTTON
         const origStartPrintFunction = self.printerStateViewModel.print;
@@ -965,7 +961,7 @@ $(function() {
             self.spoolDialog.afterBinding();
             self.downloadDatabaseUrl(self.apiClient.getDownloadDatabaseUrl());
 
-// testing            self.spoolDialog.showDialog(null, closeDialogHandler);
+// testing            self.spoolDialog.showDialog(null, handleSpoolDialogClose);
         }
 
         self.onSettingsShown = function() {
