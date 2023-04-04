@@ -716,39 +716,31 @@ $(function() {
             e.stopPropagation();
         });
 
-        self.spoolItemTableHelper = new TableItemHelper(function(tableQuery, observableTableModel, observableTotalItemCount){
+        self.spoolItemTableHelper = new TableItemHelper(
+            function(tableQuery, observableTableModel, observableTotalItemCount) {
+                self.apiClient.callLoadSpoolsByQuery(tableQuery, function(responseData) {
+                    const hasDbConnectionProblem = responseData.databaseConnectionProblem == true;
 
-            // api-call
-            self.apiClient.callLoadSpoolsByQuery(tableQuery, function(responseData){
+                    self.pluginNotWorking(hasDbConnectionProblem);
 
-                if (responseData["databaseConnectionProblem"] != null && responseData["databaseConnectionProblem"] == true){
-                    self.pluginNotWorking(true);
-                } else {
-                    self.pluginNotWorking(false);
-                }
+                    const {
+                        totalItemCount,
+                        allSpools,
+                        catalogs,
+                        templateSpools,
+                    } = responseData;
 
-                totalItemCount = responseData["totalItemCount"];
-                allSpoolItems = responseData["allSpools"];
-                var allCatalogs = responseData["catalogs"];
+                    self.spoolItemTableHelper.updateCatalogs(catalogs);
+                    self.spoolDialog.updateCatalogs(catalogs);
+                    self.spoolDialog.updateTemplateSpools(templateSpools);
 
-                // assign catalogs to sidebarFilterSorter
-                // self.sidebarFilterSorter.updateCatalogs(allCatalogs);
-                // assign catalogs to tablehelper
-                self.spoolItemTableHelper.updateCatalogs(allCatalogs);
-                // assign all catalogs to editview
-                self.spoolDialog.updateCatalogs(allCatalogs);
+                    const dataRows = ko.utils.arrayMap(allSpools, function (spoolData) {
+                        return self.spoolDialog.createSpoolItemForTable(spoolData);
+                    });
 
-                templateSpoolsData = responseData["templateSpools"];
-                self.spoolDialog.updateTemplateSpools(templateSpoolsData);
-
-                var dataRows = ko.utils.arrayMap(allSpoolItems, function (spoolData) {
-                    var result = self.spoolDialog.createSpoolItemForTable(spoolData);
-                    return result;
+                    observableTotalItemCount(totalItemCount);
+                    observableTableModel(dataRows);
                 });
-
-                observableTotalItemCount(totalItemCount);
-                observableTableModel(dataRows);
-            });
             },
             10,
             "displayName",
